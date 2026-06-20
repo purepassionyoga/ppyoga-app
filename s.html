@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pure Passion Yoga — Sequence</title>
+<meta name="robots" content="noindex"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --rose:#C8A0A6; --roseDeep:#A87C83; --sage:#a8ad91; --ink:#4a4047;
+    --muted:#9a8f94; --bg:#FBF7F6; --card:#ffffff; --line:#efe5e8; --field:#f3f3f3;
+    --font-head:'Playfair Display',Georgia,serif; --font-body:'Poppins',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:var(--font-body);background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:28px 20px 60px}
+
+  /* loader */
+  #ppyLoader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:50;transition:opacity .25s}
+  #ppyLoader.hide{opacity:0;pointer-events:none}
+  @keyframes ppySpin{to{transform:rotate(360deg)}}
+  #ppyLoader .mark{font-size:52px;line-height:1;animation:ppySpin 1s linear infinite}
+  #ppyLoader .wm{font-family:var(--font-head);color:var(--roseDeep);font-size:18px;letter-spacing:.02em}
+  @media (prefers-reduced-motion:reduce){#ppyLoader .mark{animation:none}}
+
+  .brandbar{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+  .brandbar .lotus{font-size:22px}
+  .brandbar .name{font-family:var(--font-head);color:var(--roseDeep);font-size:15px;letter-spacing:.08em;text-transform:uppercase}
+
+  .head{border-bottom:2px solid var(--rose);padding-bottom:16px;margin-bottom:22px}
+  .head h1{font-family:var(--font-head);font-weight:700;color:var(--roseDeep);font-size:30px;margin:0 0 6px;line-height:1.15}
+  .meta{display:flex;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:13px}
+  .meta span::before{content:"·";margin-right:8px;color:var(--rose)}
+  .meta span:first-child::before{content:""}
+  .desc{margin-top:10px;color:var(--ink);font-size:14px;font-style:italic;opacity:.85}
+  .styles{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+  .styles span{font-size:11px;padding:3px 10px;border-radius:20px;background:#f0ebe8;color:var(--sage)}
+  .playlist{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:13px;color:var(--roseDeep);text-decoration:none;border:1px solid var(--line);padding:7px 12px;border-radius:20px}
+  .playlist:hover{background:var(--field)}
+
+  .seq{display:flex;flex-direction:column;gap:12px}
+  .card{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+  .num{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--field);color:var(--roseDeep);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:2px}
+  .thumb{flex:0 0 auto;width:62px;height:62px;border-radius:12px;background:var(--field);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:32px}
+  .thumb img{width:100%;height:100%;object-fit:contain}
+  .info{flex:1;min-width:0}
+  .pname{font-family:var(--font-head);font-weight:600;color:var(--roseDeep);font-size:17px;line-height:1.2}
+  .psan{font-size:12.5px;color:var(--sage);font-style:italic;margin-top:1px}
+  .pmeta{font-size:12px;color:var(--muted);margin-top:5px}
+  .pnotes{font-size:13.5px;color:var(--ink);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);line-height:1.55}
+  .section{display:flex;align-items:center;gap:12px;margin:10px 2px 2px}
+  .section .lbl{font-family:var(--font-head);color:var(--sage);font-size:13px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+  .section .ln{flex:1;height:1px;background:var(--line)}
+
+  .actions{display:flex;justify-content:center;margin:26px 0 6px}
+  .btn{font-family:var(--font-body);font-size:13px;font-weight:500;border:1px solid var(--rose);background:var(--rose);color:#fff;border-radius:10px;padding:9px 18px;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--roseDeep)}
+  .btn:hover{filter:brightness(.97)}
+
+  .foot{text-align:center;margin-top:30px;color:var(--muted);font-size:11.5px;letter-spacing:.04em}
+  .foot a{color:var(--roseDeep);text-decoration:none}
+
+  .empty{text-align:center;padding:60px 20px}
+  .empty .em{font-size:44px;margin-bottom:14px}
+  .empty h2{font-family:var(--font-head);color:var(--roseDeep);font-weight:600;font-size:22px;margin:0 0 8px}
+  .empty p{color:var(--muted);font-size:14px;max-width:380px;margin:0 auto}
+
+  @media print{
+    #ppyLoader,.actions,.playlist{display:none!important}
+    body{background:#fff}
+    .wrap{max-width:none;padding:0}
+    .card,.section{break-inside:avoid;page-break-inside:avoid}
+    .head h1{color:#A87C83}
+    @page{size:portrait;margin:14mm}
+  }
+</style>
+</head>
+<body>
+  <div id="ppyLoader"><div class="mark">🌸</div><div class="wm">Pure Passion Yoga</div></div>
+  <div class="wrap"><div id="content"></div></div>
+
+<script>
+(function(){
+  var SB="https://nxjbpgnpblqepathojzr.supabase.co";
+  var KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
+  function $(id){return document.getElementById(id);}
+  function esc(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+  function hideLoader(){var l=$("ppyLoader");if(l){l.classList.add("hide");setTimeout(function(){l.style.display="none";},260);}}
+
+  var token=new URLSearchParams(location.search).get("t");
+
+  function showEmpty(msg){
+    $("content").innerHTML='<div class="empty"><div class="em">🌸</div><h2>Sequence unavailable</h2>'
+      +'<p>'+esc(msg)+'</p></div>'
+      +'<div class="foot">© Pure Passion Yoga · <a href="https://purepassionyoga.com">purepassionyoga.com</a></div>';
+    hideLoader();
+  }
+
+  function render(d){
+    if(!d){showEmpty("This link is invalid or the sequence is no longer being shared. Please ask your teacher for an updated link.");return;}
+    var items=(d.items||[]);
+    var poses=items.filter(function(i){return i.item_type!=="section";});
+    var totalBreaths=poses.reduce(function(s,i){return s+((parseInt(i.custom_breaths)||5));},0);
+    var mins=Math.round(totalBreaths*6/60);
+    var meta=[d.level,d.duration_label,(poses.length+" poses"),("~"+mins+" min")].filter(Boolean)
+      .map(function(m){return "<span>"+esc(m)+"</span>";}).join("");
+    var styleStr=d.style||"";
+    var stylesHtml=styleStr?('<div class="styles">'+styleStr.split(",").map(function(s){return '<span>'+esc(s.trim())+'</span>';}).join("")+'</div>'):"";
+    var playlist=d.playlist_url?('<a class="playlist" href="'+esc(d.playlist_url)+'" target="_blank" rel="noopener">🎵 Open playlist</a>'):"";
+
+    var body=items.map(function(it){
+      if(it.item_type==="section"){
+        return '<div class="section"><span class="lbl">'+esc(it.custom_name||"Section")+'</span><span class="ln"></span></div>';
+      }
+      var thumb=it.image_url?('<img src="'+esc(it.image_url)+'" alt="">'):(esc(it.emoji||"🧘"));
+      var bits=[];
+      if(it.level)bits.push(esc(it.level));
+      if(it.custom_breaths)bits.push(esc(it.custom_breaths)+" breaths");
+      if(it.custom_breath_pattern&&it.custom_breath_pattern!=="Natural")bits.push(esc(it.custom_breath_pattern));
+      var pmeta=bits.length?('<div class="pmeta">'+bits.join(" &nbsp;·&nbsp; ")+'</div>'):"";
+      var notes=it.notes?('<div class="pnotes">'+esc(it.notes)+'</div>'):"";
+      return '<div class="card"><div class="num">'+(poses.indexOf(it)+1)+'</div>'
+        +'<div class="thumb">'+thumb+'</div>'
+        +'<div class="info"><div class="pname">'+esc(it.custom_name||"Pose")+'</div>'
+        +(it.custom_sanskrit?'<div class="psan">'+esc(it.custom_sanskrit)+'</div>':"")
+        +pmeta+notes+'</div></div>';
+    }).join("");
+
+    $("content").innerHTML=
+      '<div class="brandbar"><span class="lotus">🌸</span><span class="name">Pure Passion Yoga</span></div>'
+      +'<div class="head"><h1>'+esc(d.name||"Yoga Sequence")+'</h1>'
+      +'<div class="meta">'+meta+'</div>'
+      +(d.description?'<div class="desc">'+esc(d.description)+'</div>':"")
+      +stylesHtml+playlist+'</div>'
+      +'<div class="seq">'+(body||'<p style="color:var(--muted)">This sequence has no poses yet.</p>')+'</div>'
+      +'<div class="actions"><button class="btn ghost" onclick="window.print()">🖨 Print this sequence</button></div>'
+      +'<div class="foot">Shared with you by your teacher · © Pure Passion Yoga · <a href="https://purepassionyoga.com">purepassionyoga.com</a></div>';
+    hideLoader();
+  }
+
+  if(!token){showEmpty("No sequence was specified in this link.");return;}
+
+  fetch(SB+"/rest/v1/rpc/get_shared_sequence",{
+    method:"POST",
+    headers:{apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"},
+    body:JSON.stringify({p_token:token})
+  }).then(function(r){return r.ok?r.json():null;})
+    .then(render)
+    .catch(function(){showEmpty("Something went wrong loading this sequence. Please try again.");});
+
+  setTimeout(hideLoader,6000);
+})();
+</script>
+</body>
+</html>
