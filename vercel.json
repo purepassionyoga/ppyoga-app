@@ -10,6 +10,10 @@
       "destination": "/pricing.html"
     },
     {
+      "source": "/shop",
+      "destination": "/shop.html"
+    },
+    {
       "source": "/library",
       "destination": "https://ppyoga-library.vercel.app/"
     },
