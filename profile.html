@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>My Account · Pure Passion Yoga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="gf-head" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap">
+<link id="gf-body" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
+<style>
+  :root{
+    --bg:#F3F3F3; --card:#FFFFFF; --ink:#6C7682; --head:#3A2E48; --aub:#4A3A5A;
+    --clay:#C8A0A6; --clayDk:#A87C83; --sage:#a8ad91; --jade:#2E7D6B; --amber:#B98A1F;
+    --muted:#9C9AA6; --line:#ECE7EC; --lineDk:#DED5DE; --field:#FAF8FA;
+    --fontHead:'Playfair Display',Georgia,serif; --fontBody:'Poppins',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--fontBody);-webkit-font-smoothing:antialiased;font-size:14px}
+  .serif{font-family:var(--fontHead)}
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit;font-size:14px}
+  .hidden{display:none!important}
+  a{color:var(--clayDk)}
+  .btn{background:var(--clayDk);color:#fff;border:none;padding:10px 18px;border-radius:11px;font-weight:500;font-size:14px}
+  .btn:hover{filter:brightness(.95)}
+  .btn.ghost{background:#fff;color:var(--aub);border:1px solid var(--lineDk)}
+  .btn.ghost:hover{border-color:var(--clay)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.sm{padding:7px 13px;font-size:13px;border-radius:9px}
+
+  /* auth */
+  #auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .acard{background:#fff;border:1px solid var(--line);border-radius:24px;padding:40px 34px;width:100%;max-width:400px;box-shadow:0 20px 56px rgba(74,58,90,.10)}
+  .acard h1{font-family:var(--fontHead);color:var(--clayDk);font-size:27px;margin:0 0 4px;text-align:center}
+  .acard .sub{color:var(--muted);text-align:center;margin:0 0 22px;font-size:13px}
+  .seg{display:flex;background:var(--field);border:1px solid var(--line);border-radius:11px;padding:3px;margin-bottom:18px}
+  .seg button{flex:1;border:none;background:none;padding:8px;border-radius:8px;color:var(--muted);font-size:13px}
+  .seg button.on{background:#fff;color:var(--head);font-weight:600;box-shadow:0 1px 3px rgba(74,58,90,.10)}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%;padding:11px 13px;border:1px solid var(--lineDk);border-radius:11px;background:var(--field);color:var(--head);outline:none}
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--clay)}
+  .err{background:#FBE6DF;color:#A03A22;border-radius:11px;padding:10px 13px;font-size:13px;margin-bottom:12px}
+  .ok{background:#E5F0EC;color:#1F6B58;border-radius:11px;padding:10px 13px;font-size:13px;margin-bottom:12px}
+  .linkbtn{background:none;border:none;color:var(--clayDk);font-size:13px;padding:8px;width:100%;text-decoration:underline}
+  .divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:14px 0}
+  .divider::before,.divider::after{content:"";height:1px;background:var(--line);flex:1}
+  .oauth{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:var(--head);border:1px solid var(--lineDk);font-weight:500;margin-bottom:10px}
+  .oauth:hover{border-color:var(--clay);background:#fff;filter:none}
+  .oauth svg{width:18px;height:18px;flex:0 0 auto}
+
+  /* shell */
+  .top{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  .topin{max-width:920px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:12px}
+  .brand{font-family:var(--fontHead);font-weight:700;color:var(--clayDk);font-size:19px}
+  .topnav{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 22px 64px}
+
+  .hero{background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px;display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+  .ava{width:84px;height:84px;border-radius:24px;background:linear-gradient(135deg,var(--clay),var(--sage));display:flex;align-items:center;justify-content:center;font-size:38px;color:#fff;overflow:hidden;flex:0 0 auto;box-shadow:0 8px 22px rgba(168,128,134,.30)}
+  .ava img{width:100%;height:100%;object-fit:cover}
+  .heroinfo{flex:1;min-width:200px}
+  .heroinfo h1{font-family:var(--fontHead);color:var(--head);font-size:26px;margin:0 0 4px}
+  .heroinfo .meta{color:var(--muted);font-size:13px}
+  .tierpill{display:inline-block;font-size:11px;padding:3px 11px;border-radius:999px;text-transform:capitalize;font-weight:600;vertical-align:middle;margin-left:8px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  @media (max-width:720px){.grid2{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  .card .ch{padding:15px 18px;border-bottom:1px solid var(--line);font-family:var(--fontHead);color:var(--head);font-size:17px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .card .ch .mini{font-family:var(--fontBody);font-size:12px;color:var(--muted);font-weight:400}
+  .card .cb{padding:16px 18px}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line)}
+  .stat{background:#fff;padding:16px;text-align:center}
+  .stat .n{font-family:var(--fontHead);font-size:26px;color:var(--head)}
+  .stat .l{color:var(--muted);font-size:11px;margin-top:2px}
+
+  .heat{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px}
+  .heatcol{display:flex;flex-direction:column;gap:4px}
+  .heatcell{width:15px;height:15px;border-radius:4px;background:var(--field);border:1px solid var(--line)}
+  .heatcell.l1{background:#E7D4D8;border-color:#E7D4D8}
+  .heatcell.l2{background:var(--clay);border-color:var(--clay)}
+  .heatcell.l3{background:var(--clayDk);border-color:var(--clayDk)}
+
+  .row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:none}
+  .row .ic{width:38px;height:38px;border-radius:11px;background:var(--field);display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto;color:var(--clayDk)}
+  .row .mn{font-weight:500;color:var(--head)}
+  .row .ms{color:var(--muted);font-size:12px}
+  .row .right{margin-left:auto;text-align:right;font-size:12px;color:var(--muted)}
+  .xbtn{background:none;border:none;color:var(--muted);font-size:15px;padding:4px 6px;border-radius:6px}
+  .xbtn:hover{color:#A03A22;background:#FBE6DF}
+
+  .favgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+  .fav{border:1px solid var(--line);border-radius:13px;padding:12px;text-align:center;position:relative}
+  .fav .em{height:64px;display:flex;align-items:center;justify-content:center;font-size:34px}
+  .fav .em img{max-height:64px;max-width:100%;object-fit:contain}
+  .fav .nm{font-weight:500;color:var(--head);font-size:13px;margin-top:5px;line-height:1.25}
+  .fav .sn{color:var(--muted);font-size:11px;font-style:italic}
+  .fav .x{position:absolute;top:5px;right:5px}
+
+  .badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px}
+  .badge{text-align:center}
+  .badge .bd{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--amber),#E8C77A);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 6px;color:#fff;overflow:hidden}
+  .badge .bd img{width:100%;height:100%;object-fit:cover}
+  .badge .bt{font-size:12px;color:var(--head);font-weight:500;line-height:1.2}
+
+  .empty{padding:26px 8px;text-align:center;color:var(--muted);font-size:13px}
+  .empty .ei{font-size:24px;display:block;margin-bottom:6px;opacity:.65}
+  .empty a{font-weight:500}
+
+  .emojipick{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .emojipick button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--field);font-size:19px}
+  .emojipick button.on{border-color:var(--clayDk);background:#fff;box-shadow:0 0 0 2px rgba(168,124,131,.25)}
+  .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .toggle:last-child{border-bottom:none}
+  .toggle .tl{color:var(--head);font-weight:500}
+  .toggle .td{color:var(--muted);font-size:12px}
+  .sw{position:relative;width:44px;height:26px;flex:0 0 auto}
+  .sw input{opacity:0;width:0;height:0}
+  .sw .sl{position:absolute;inset:0;background:var(--lineDk);border-radius:999px;transition:.2s}
+  .sw .sl::before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+  .sw input:checked + .sl{background:var(--sage)}
+  .sw input:checked + .sl::before{transform:translateX(18px)}
+  .inlinemsg{font-size:12px;margin-top:8px}
+  .miniava{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+  .miniava .ava{width:60px;height:60px;border-radius:18px;font-size:26px}
+
+  /* ===== PPY site header ===== */
+.ppy-header{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(10px);border-bottom:1px solid var(--ppy-line,#EFE6E8)}
+.ppy-header [hidden]{display:none !important}
+.ppy-bar{max-width:1200px;margin:0 auto;padding:11px 22px;display:flex;align-items:center;gap:16px}
+.ppy-brand{display:flex;align-items:center;gap:9px;text-decoration:none;flex:0 0 auto}
+.ppy-brand .mark{width:34px;height:34px;flex:0 0 auto}
+.ppy-brand .wm{font-family:var(--ppy-fhead,'Playfair Display',Georgia,serif);font-weight:700;color:var(--ppy-accentDk,#A87C83);font-size:20px;line-height:1}
+.ppy-brand img.lg{height:42px;width:auto;display:block}
+.ppy-nav{display:flex;align-items:center;gap:2px;margin-left:6px}
+.ppy-nav a{display:inline-flex;align-items:center;color:var(--ppy-ink,#6C7682);text-decoration:none;font-size:14px;font-weight:500;font-family:var(--ppy-fbody,'Poppins',system-ui,sans-serif);padding:8px 12px;border-radius:10px;white-space:nowrap}
+.ppy-nav a:hover{background:var(--ppy-chip,#F6ECEF);color:var(--ppy-accentDk,#A87C83)}
+.ppy-nav a.active{color:var(--ppy-accent,#C8A0A6);font-weight:600}
+.ppy-nav a.locked{color:#A79FAC}
+.ppy-nav a .lk{margin-left:5px;opacity:.7}
+.ppy-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.ppy-tier{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ppy-accentDk,#A87C83);background:var(--ppy-chip,#F6ECEF);border-radius:999px;padding:4px 9px;font-weight:600;font-family:var(--ppy-fbody,'Poppins',sans-serif)}
+.ppy-btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:500;font-size:13.5px;font-family:var(--ppy-fbody,'Poppins',sans-serif);padding:8px 15px;border-radius:11px;white-space:nowrap;cursor:pointer;border:none}
+.ppy-btn.primary{background:var(--ppy-accentDk,#A87C83);color:#fff}
+.ppy-btn.ghost{background:#fff;color:var(--ppy-accentDk,#A87C83);border:1px solid var(--ppy-lineDk,#E2D7D9)}
+.ppy-btn.up{background:var(--ppy-accent,#C8A0A6);color:#fff}
+.ppy-btn.admin{background:#fff;color:var(--ppy-accentDk,#A87C83);border:1px solid var(--ppy-accent,#C8A0A6)}
+.ppy-burger{display:none;background:none;border:1px solid var(--ppy-lineDk,#E2D7D9);border-radius:10px;width:42px;height:38px;cursor:pointer;align-items:center;justify-content:center;color:var(--ppy-ink,#6C7682)}
+.ppy-burger svg{width:22px;height:22px}
+.ppy-mobile{display:none;border-top:1px solid var(--ppy-line,#EFE6E8);background:#fff}
+.ppy-mobile a{display:flex;align-items:center;padding:13px 22px;color:var(--ppy-ink,#6C7682);text-decoration:none;font-weight:500;font-family:var(--ppy-fbody,'Poppins',sans-serif);border-bottom:1px solid var(--ppy-line,#EFE6E8)}
+.ppy-mobile a .lk{margin-left:auto;opacity:.6}
+.ppy-mobile a.up{color:#fff;background:var(--ppy-accent,#C8A0A6)}
+.ppy-mobile a.admin{color:var(--ppy-accentDk,#A87C83)}
+@media (max-width:820px){.ppy-nav{display:none}.ppy-right .hide-sm{display:none}.ppy-burger{display:inline-flex}.ppy-mobile.open{display:block}}
+/* ===== end header ===== */
+.ppy-header{position:static}
+</style>
+</head>
+<body>
+<style id="ppyLoaderCSS">
+#ppyLoader{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#FBF7F6;opacity:1;transition:opacity .45s ease}
+#ppyLoader.hide{opacity:0;pointer-events:none}
+#ppyLoader .ppyl-mark{font-size:52px;line-height:1;animation:ppySpin 1s linear infinite;transform-origin:50% 50%}
+#ppyLoader .ppyl-word{font-family:'Playfair Display',Georgia,serif;color:#A87C83;font-size:14px;letter-spacing:.06em;opacity:.75}
+@keyframes ppySpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){#ppyLoader .ppyl-mark{animation:none}}
+</style>
+<div id="ppyLoader" aria-hidden="true">
+  <div class="ppyl-mark">🌸</div>
+  <div class="ppyl-word">Pure Passion Yoga</div>
+</div>
+<script>
+(function(){var el=document.getElementById('ppyLoader');if(!el)return;var done=false;function hide(){if(done)return;done=true;el.classList.add('hide');setTimeout(function(){if(el)el.style.display='none';},520);}window.ppyHideLoader=hide;if(document.readyState==='complete'){setTimeout(hide,180);}else{window.addEventListener('load',function(){setTimeout(hide,180);});}setTimeout(hide,6000);})();
+</script>
+<header class="ppy-header" id="ppyHeader">
+  <div class="ppy-bar">
+    <a class="ppy-brand" id="ppyBrand" href="/">
+      <svg class="mark" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 7c2.6 3.2 4 6.7 4 10.2 0 3.8-1.6 7.2-4 9.8-2.4-2.6-4-6-4-9.8C20 13.7 21.4 10.2 24 7Z" fill="#C8A0A6"/>
+        <path d="M13 14c3.7 1 6.6 2.9 8.6 5.3 2.2 2.6 3.2 5.8 3.1 9-3.4-.6-6.6-2.2-8.8-4.8-2-2.4-3-5.6-2.9-9.5Z" fill="#a8ad91"/>
+        <path d="M35 14c-3.7 1-6.6 2.9-8.6 5.3-2.2 2.6-3.2 5.8-3.1 9 3.4-.6 6.6-2.2 8.8-4.8 2-2.4 3-5.6 2.9-9.5Z" fill="#a8ad91"/>
+        <path d="M8 22c3.6-.2 6.8.6 9.4 2.3 2.7 1.8 4.5 4.4 5.4 7.4-3.4.5-6.8-.1-9.6-1.9C10.7 28.2 9 25.4 8 22Z" fill="#A87C83"/>
+        <path d="M40 22c-3.6-.2-6.8.6-9.4 2.3-2.7 1.8-4.5 4.4-5.4 7.4 3.4.5 6.8-.1 9.6-1.9 2.5-1.6 4.2-4.4 5.2-7.8Z" fill="#A87C83"/>
+        <path d="M12 31c4 0 12 1.6 12 8 0-6.4 8-8 12-8-1.5 5-6.5 9-12 9s-10.5-4-12-9Z" fill="#C8A0A6"/>
+      </svg>
+      <span class="wm brand">Pure Passion Yoga</span>
+    </a>
+    <nav class="ppy-nav" id="ppyNav">
+      <a href="/library">Pose Library</a>
+      <a href="/builder">Sequence Builder</a>
+      <a data-nav="classes" hidden href="/classes">Classes</a>
+      <a data-nav="challenges" hidden href="/challenges">Challenges</a>
+      <a data-nav="shop" hidden href="/shop">Shop</a>
+      <a href="https://purepassionyoga.com/about">About</a>
+    </nav>
+    <div class="ppy-right" id="ppyRight">
+      <span class="ppy-tier" id="ppyTier" hidden></span>
+      <a class="ppy-btn admin" id="ppyAdmin" hidden href="/admin">Admin</a>
+      <a class="ppy-btn primary" id="ppyAuth" href="/profile">Sign in</a>
+      <a class="ppy-btn ghost" id="ppySignout" hidden href="#">Sign out</a>
+    </div>
+    <button class="ppy-burger" id="ppyBurger" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="ppy-mobile" id="ppyMobile">
+    <a href="/library">Pose Library</a>
+    <a href="/builder">Sequence Builder</a>
+    <a data-nav="classes" hidden href="/classes">Classes</a>
+    <a data-nav="challenges" hidden href="/challenges">Challenges</a>
+    <a data-nav="shop" hidden href="/shop">Shop</a>
+    <a href="https://purepassionyoga.com/about">About</a>
+    <a class="admin" id="ppyAdminM" hidden href="/admin">Admin</a>
+    <a class="up" id="ppyAuthM" href="/profile">Sign in</a>
+    <a class="admin" id="ppySignoutM" hidden href="#">Sign out</a>
+  </div>
+</header>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="acard">
+    <h1 class="serif" id="authBrand">Pure Passion Yoga</h1>
+    <p class="sub" id="authSub">Sign in to your practice</p>
+    <div id="authMsg"></div>
+    <button id="oauthGoogle" class="btn oauth">
+      <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+      Continue with Google
+    </button>
+    <button id="oauthFacebook" class="btn oauth" hidden>
+      <svg viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+      Continue with Facebook
+    </button>
+    <div class="divider">or use email</div>
+    <div class="seg">
+      <button id="segIn" class="on" data-mode="in">Sign in</button>
+      <button id="segUp" data-mode="up">Create account</button>
+    </div>
+    <div class="field"><label>Email</label><input id="aEmail" type="email" autocomplete="username" /></div>
+    <div class="field"><label>Password</label><input id="aPass" type="password" autocomplete="current-password" /></div>
+    <label id="newsRow" class="hidden" style="display:flex;align-items:flex-start;gap:9px;margin:2px 0 12px;font-size:12.5px;color:var(--muted);cursor:pointer">
+      <input type="checkbox" id="aNews" style="margin-top:2px;flex:0 0 auto"/>
+      <span>Email me sequences &amp; studio news. You can change this anytime. <em>(optional)</em></span>
+    </label>
+    <button id="aGo" class="btn" style="width:100%">Sign in</button>
+    <div class="divider">or</div>
+    <button id="aMagic" class="btn ghost" style="width:100%">Email me a sign-in link</button>
+    <div class="sub" style="margin:16px 0 0;font-size:12px">No password needed with a sign-in link — great if you’re a returning member setting up your new account.</div>
+    <div class="sub" style="margin:14px 0 0;font-size:11.5px;text-align:center">By continuing you agree to our <a href="/legal?doc=terms-and-conditions" style="color:#A87C83;text-decoration:underline">Terms</a> and <a href="/legal?doc=privacy-policy" style="color:#A87C83;text-decoration:underline">Privacy Policy</a>.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <div class="top" style="display:none">
+    <div class="topin">
+      <span class="brand" id="navBrand">Pure Passion Yoga</span>
+      <div class="topnav">
+        <a id="navLibrary" class="btn ghost sm" href="#" target="_blank" rel="noopener">Pose library</a>
+        <button id="navSignout" class="btn ghost sm">Sign out</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- HERO -->
+    <div class="hero">
+      <div class="ava" id="heroAva"></div>
+      <div class="heroinfo">
+        <h1 id="heroName">—</h1>
+        <div class="meta" id="heroMeta"></div>
+      </div>
+      <button id="editToggle" class="btn ghost">Edit profile</button>
+    </div>
+
+    <!-- EDIT (hidden) -->
+    <div class="card hidden" id="editCard" style="margin-top:16px">
+      <div class="ch">Edit profile</div>
+      <div class="cb">
+        <div class="miniava">
+          <div class="ava" id="editAva"></div>
+          <div>
+            <label class="btn ghost sm" style="display:inline-block">Upload photo<input id="photoInput" type="file" accept="image/*" class="hidden"></label>
+            <button id="photoClear" class="btn ghost sm">Remove photo</button>
+            <div class="td" style="margin-top:6px;color:var(--muted);font-size:12px">A photo overrides the emoji below.</div>
+          </div>
+        </div>
+        <div class="field"><label>Display name</label><input id="editName" type="text" maxlength="60" /></div>
+        <label class="td" style="color:var(--muted);font-size:12px">Choose an avatar emoji</label>
+        <div class="emojipick" id="emojiPick"></div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
+          <button id="saveProfile" class="btn">Save changes</button>
+          <button id="cancelEdit" class="btn ghost">Cancel</button>
+          <span id="saveMsg" class="inlinemsg"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="card" style="margin-top:16px">
+      <div class="stats" id="statsGrid"></div>
+    </div>
+
+    <div class="grid2">
+      <!-- PRACTICE -->
+      <div class="card">
+        <div class="ch">Practice <span class="mini" id="practiceMini"></span></div>
+        <div class="cb">
+          <div class="heat" id="heat"></div>
+          <div style="margin-top:14px" id="recentPractice"></div>
+        </div>
+      </div>
+
+      <!-- ACHIEVEMENTS -->
+      <div class="card">
+        <div class="ch">Badges <span class="mini" id="badgeMini"></span></div>
+        <div class="cb"><div id="badges"></div></div>
+      </div>
+    </div>
+
+    <!-- FAVORITES -->
+    <div class="card" style="margin-top:16px">
+      <div class="ch">Favorite poses <span class="mini" id="favMini"></span></div>
+      <div class="cb"><div id="favorites"></div></div>
+    </div>
+
+    <!-- SEQUENCES -->
+    <div class="card" style="margin-top:16px">
+      <div class="ch">My sequences <span class="mini" id="seqMini"></span></div>
+      <div class="cb"><div id="sequences"></div></div>
+    </div>
+
+    <div class="grid2">
+      <!-- NOTIFICATIONS -->
+      <div class="card">
+        <div class="ch">Notifications</div>
+        <div class="cb">
+          <div id="newsSub"></div>
+          <div id="notifs"></div>
+          <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+            <button id="saveNotifs" class="btn sm">Save preferences</button>
+            <span id="notifMsg" class="inlinemsg"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCOUNT -->
+      <div class="card">
+        <div class="ch">Account</div>
+        <div class="cb">
+          <div class="row"><div><div class="mn">Email</div><div class="ms" id="accEmail"></div></div></div>
+          <div class="row"><div><div class="mn">Membership</div><div class="ms" id="accTier"></div></div><div class="right" id="accManage"></div></div>
+          <div class="row"><div><div class="mn">Member since</div><div class="ms" id="accSince"></div></div></div>
+          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+            <button id="changePass" class="btn ghost sm">Change password</button>
+            <button id="signout2" class="btn ghost sm">Sign out</button>
+          </div>
+          <div id="accMsg" class="inlinemsg"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL="https://nxjbpgnpblqepathojzr.supabase.co";
+const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
+const LIBRARY_URL="/library";
+const BUILDER_URL="/builder";
+const sb = supabase.createClient(SUPABASE_URL, ANON);
+
+const $=id=>document.getElementById(id);
+const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const TIER_C={free:"#8A8090",practitioner:"#A87C83",teacher:"#2E7D6B",ultimate:"#B98A1F",premium:"#7A6B8A",member:"#9A8FA8"};
+const EMOJIS=["🧘‍♀️","🧘","🌸","🪷","☀️","🌙","🌿","🕊️","💗","✨","🦋","🌺","🍃","🧡","🌅","💫"];
+const NOTIF_DEFS=[
+  ["practice_reminders","Practice reminders","Gentle nudges to keep your streak going",false],
+  ["achievement_alerts","Badge alerts","Know when you earn a new badge",true],
+  ["community_updates","Community updates","New community challenges and shared sequences",true],
+];
+
+let DESIGN={}, PROFILE=null, UID=null, EMAIL=null, NOTIFS={}, pendingEmoji=null, pendingPhotoUrl=undefined;
+
+/* ---------- design ---------- */
+function loadFont(linkId,name){ if(!name) return; const l=$(linkId); if(l) l.href="https://fonts.googleapis.com/css2?family="+encodeURIComponent(name)+":wght@400;500;600;700&display=swap"; }
+function darken(hex,amt){ try{ let c=hex.replace("#",""); if(c.length===3)c=c.split("").map(x=>x+x).join(""); const n=parseInt(c,16); let r=(n>>16)&255,g=(n>>8)&255,b=n&255; r=Math.max(0,Math.round(r*(1-amt)));g=Math.max(0,Math.round(g*(1-amt)));b=Math.max(0,Math.round(b*(1-amt))); return "#"+[r,g,b].map(x=>x.toString(16).padStart(2,"0")).join(""); }catch(e){ return hex; } }
+async function loadDesign(){
+  try{ const { data } = await sb.from("app_settings").select("value").eq("key","design").single(); DESIGN=(data&&data.value)||{}; }catch(e){ DESIGN={}; }
+  const d=DESIGN, r=document.documentElement.style;
+  if(d.color_page_bg) r.setProperty("--bg",d.color_page_bg);
+  if(d.color_surface) r.setProperty("--card",d.color_surface);
+  if(d.color_body_text) r.setProperty("--ink",d.color_body_text);
+  if(d.color_primary){ r.setProperty("--clay",d.color_primary); r.setProperty("--clayDk",d.color_primary); }
+  if(d.color_secondary) r.setProperty("--sage",d.color_secondary);
+  if(d.font_heading){ r.setProperty("--fontHead","'"+d.font_heading+"',Georgia,serif"); loadFont("gf-head",d.font_heading); }
+  if(d.font_body){ r.setProperty("--fontBody","'"+d.font_body+"',system-ui,sans-serif"); loadFont("gf-body",d.font_body); }
+  const name=d.app_name||"Pure Passion Yoga";
+  $("authBrand").textContent=name; $("navBrand").textContent=name;
+  $("navLibrary").href=LIBRARY_URL;
+}
+
+/* ---------- auth ---------- */
+let authMode="in";
+function setMode(m){ authMode=m; $("segIn").classList.toggle("on",m==="in"); $("segUp").classList.toggle("on",m==="up");
+  $("aGo").textContent=m==="in"?"Sign in":"Create account"; $("authSub").textContent=m==="in"?"Sign in to your practice":"Create your account";
+  $("aPass").setAttribute("autocomplete",m==="in"?"current-password":"new-password");
+  var nr=$("newsRow"); if(nr){ nr.classList.toggle("hidden", m!=="up"); if(m!=="up"){ var an=$("aNews"); if(an) an.checked=false; } } }
+$("segIn").onclick=()=>setMode("in"); $("segUp").onclick=()=>setMode("up");
+function authMsg(html,cls){ $("authMsg").innerHTML=html?`<div class="${cls||'err'}">${html}</div>`:""; }
+$("aGo").onclick=async()=>{
+  authMsg("");
+  const email=$("aEmail").value.trim(), password=$("aPass").value;
+  if(!email||!password){ authMsg("Enter your email and a password."); return; }
+  $("aGo").disabled=true; const orig=$("aGo").textContent; $("aGo").textContent="…";
+  let res;
+  if(authMode==="in") res=await sb.auth.signInWithPassword({ email, password });
+  else res=await sb.auth.signUp({ email, password, options:{ emailRedirectTo: location.href.split("#")[0], data:{ newsletter_optin: !!($("aNews")&&$("aNews").checked) } } });
+  $("aGo").disabled=false; $("aGo").textContent=orig;
+  if(res.error){ authMsg(esc(res.error.message)); return; }
+  if(authMode==="up" && !res.data.session){ authMsg("Check your email to confirm your account, then come back and sign in.","ok"); return; }
+  if(res.data.session) boot(res.data.session);
+};
+$("aMagic").onclick=async()=>{
+  authMsg("");
+  const email=$("aEmail").value.trim();
+  if(!email){ authMsg("Enter your email first, then tap the link button."); return; }
+  $("aMagic").disabled=true; const o=$("aMagic").textContent; $("aMagic").textContent="Sending…";
+  const { error } = await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.href.split("#")[0] } });
+  $("aMagic").disabled=false; $("aMagic").textContent=o;
+  if(error) authMsg(esc(error.message)); else authMsg("Sign-in link sent! Check your email (and spam folder).","ok");
+};
+$("aPass").addEventListener("keydown",e=>{ if(e.key==="Enter") $("aGo").click(); });
+async function oauth(provider){
+  authMsg("");
+  const { error } = await sb.auth.signInWithOAuth({ provider, options:{ redirectTo: location.href.split("#")[0] } });
+  if(error) authMsg(esc(error.message));
+}
+$("oauthGoogle").onclick=()=>oauth("google");
+$("oauthFacebook").onclick=()=>oauth("facebook");
+
+/* ---------- avatar render ---------- */
+function avatarHTML(p){
+  if(p && p.profile_pic_url) return `<img src="${esc(p.profile_pic_url)}" alt="">`;
+  if(p && p.avatar_emoji) return esc(p.avatar_emoji);
+  const nm=(p&&(p.display_name||p.email))||"";
+  return esc((nm.trim()[0]||"🧘").toUpperCase());
+}
+function tierPill(t){ const c=TIER_C[t]||"#8A8090"; return `<span class="tierpill" style="background:${c}22;color:${c}">${esc(t||"free")}</span>`; }
+
+/* ---------- boot / load ---------- */
+async function boot(session){
+  UID=session.user.id; EMAIL=session.user.email;
+  $("auth").classList.add("hidden"); $("app").classList.remove("hidden");
+  buildStaticBits();
+  await loadProfile();
+  await syncSignupOptIn(session);
+  renderNewsSub();
+  loadFavorites(); loadPractice(); loadBadges(); loadSequences();
+}
+function buildStaticBits(){
+  $("emojiPick").innerHTML=EMOJIS.map(e=>`<button data-e="${esc(e)}">${e}</button>`).join("");
+  $("emojiPick").querySelectorAll("[data-e]").forEach(b=>b.onclick=()=>{ pendingEmoji=b.dataset.e; pendingPhotoUrl=null;
+    $("emojiPick").querySelectorAll("button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); renderEditAva(); });
+}
+
+async function loadProfile(){
+  const { data, error } = await sb.from("profiles").select("*").eq("id",UID).single();
+  if(error){ /* profile row may lag right after signup */ PROFILE={ id:UID, email:EMAIL, tier:"free" }; }
+  else PROFILE=data;
+  NOTIFS=Object.assign({}, ...NOTIF_DEFS.map(n=>({[n[0]]:n[3]})), (PROFILE&&PROFILE.notification_prefs)||{});
+  renderProfile();
+}
+async function openBillingPortal(e){
+  if(e) e.preventDefault();
+  var mb=$("manageBtn"); if(mb){ mb.textContent="Opening\u2026"; mb.style.pointerEvents="none"; }
+  try{
+    const { data:{ session } } = await sb.auth.getSession();
+    const r = await fetch(SUPABASE_URL+"/functions/v1/stripe-billing-portal",{method:"POST",
+      headers:{apikey:ANON,Authorization:"Bearer "+(session&&session.access_token),"Content-Type":"application/json"},
+      body:JSON.stringify({return_url:location.origin})});
+    const j = await r.json().catch(function(){return {};});
+    if(j && j.url){ location.href=j.url; return; }
+    $("accManage").innerHTML='<span style="font-size:12px;color:#9A929C">'+esc(j&&j.error?j.error:"Unavailable")+'</span>';
+  }catch(_){
+    $("accManage").innerHTML='<a href="#" id="manageBtn">Manage</a>';
+    var b=$("manageBtn"); if(b) b.addEventListener("click",openBillingPortal);
+  }
+}
+function renderProfile(){
+  const p=PROFILE;
+  $("heroAva").innerHTML=avatarHTML(p);
+  $("heroName").textContent=(p.display_name&&p.display_name.trim())||"Welcome!";
+  $("heroMeta").innerHTML=`${esc(p.email||EMAIL||"")} ${tierPill(p.tier)}`;
+  // account card
+  $("accEmail").textContent=p.email||EMAIL||"";
+  $("accTier").innerHTML=`${tierPill(p.tier)} ${p.tier==="free"?"":""}`;
+  $("accSince").textContent=p.created_at?new Date(p.created_at).toLocaleDateString(undefined,{month:"long",year:"numeric"}):"—";
+  $("accManage").innerHTML=(p.tier && p.tier!=="free") ? `<a href="#" id="manageBtn">Manage</a>` : "";
+  (function(){ var mb=$("manageBtn"); if(mb) mb.addEventListener("click",openBillingPortal); })();
+  // notifications
+  $("notifs").innerHTML=NOTIF_DEFS.map(n=>`<div class="toggle"><div><div class="tl">${esc(n[1])}</div><div class="td">${esc(n[2])}</div></div>
+    <label class="sw"><input type="checkbox" data-n="${n[0]}" ${NOTIFS[n[0]]?"checked":""}/><span class="sl"></span></label></div>`).join("");
+  // edit fields
+  $("editName").value=p.display_name||"";
+  pendingEmoji=p.avatar_emoji||null; pendingPhotoUrl=undefined;
+  $("emojiPick").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.e===pendingEmoji));
+  renderEditAva();
+}
+function renderEditAva(){
+  const preview={ display_name:$("editName").value, email:EMAIL,
+    profile_pic_url: pendingPhotoUrl===undefined ? (PROFILE.profile_pic_url||null) : pendingPhotoUrl,
+    avatar_emoji: pendingEmoji };
+  $("editAva").innerHTML=avatarHTML(preview);
+}
+
+/* ---------- stats + practice ---------- */
+async function loadPractice(){
+  const { data } = await sb.from("practice_log").select("practiced_on,minutes,source")
+    .eq("user_id",UID).order("practiced_on",{ascending:false}).limit(400);
+  const rows=data||[];
+  const days=new Set(rows.map(r=>r.practiced_on));
+  const totalMin=rows.reduce((s,r)=>s+(r.minutes||0),0);
+  const today=new Date(); const weekAgo=new Date(today); weekAgo.setDate(today.getDate()-7);
+  const thisWeek=rows.filter(r=>new Date(r.practiced_on)>=weekAgo).length;
+  renderStats(rows.length, totalMin, days.size, thisWeek);
+  $("practiceMini").textContent=rows.length?`${days.size} days practiced`:"";
+  renderHeat(days);
+  // recent
+  if(!rows.length){ $("recentPractice").innerHTML=`<div class="empty"><span class="ei">🧘</span>No practice logged yet. Your sessions will show up here.</div>`; return; }
+  $("recentPractice").innerHTML=rows.slice(0,5).map(r=>`<div class="row"><div class="ic">🧘</div>
+    <div><div class="mn">${new Date(r.practiced_on).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"})}</div>
+    <div class="ms">${esc(r.source||"practice")}</div></div><div class="right">${r.minutes||0} min</div></div>`).join("");
+}
+function renderStats(practices, minutes, daysCount, thisWeek){
+  const p=PROFILE||{};
+  const cards=[
+    ["🔥 "+(p.streak_current||0),"Day streak"],
+    [p.streak_longest||0,"Longest streak"],
+    [thisWeek,"This week"],
+    [practices,"Total sessions"],
+    [minutes,"Total minutes"],
+    [daysCount,"Days practiced"],
+  ];
+  $("statsGrid").innerHTML=cards.map(c=>`<div class="stat"><div class="n">${c[0]}</div><div class="l">${c[1]}</div></div>`).join("");
+}
+function renderHeat(days){
+  const WEEKS=12, cells=[]; const today=new Date(); today.setHours(0,0,0,0);
+  const start=new Date(today); start.setDate(today.getDate()-(WEEKS*7-1));
+  // align start to Sunday
+  start.setDate(start.getDate()-start.getDay());
+  let html="";
+  for(let w=0;w<WEEKS+1;w++){
+    html+='<div class="heatcol">';
+    for(let d=0;d<7;d++){
+      const day=new Date(start); day.setDate(start.getDate()+w*7+d);
+      if(day>today){ html+='<div class="heatcell" style="visibility:hidden"></div>'; continue; }
+      const key=day.toISOString().slice(0,10);
+      const on=days.has(key);
+      html+=`<div class="heatcell${on?" l2":""}" title="${key}${on?" · practiced":""}"></div>`;
+    }
+    html+='</div>';
+  }
+  $("heat").innerHTML=html;
+}
+
+/* ---------- favorites ---------- */
+async function loadFavorites(){
+  const { data } = await sb.from("favorites")
+    .select("pose_id, created_at, poses(id,name,sanskrit_name,emoji,image_url,category,slug)")
+    .eq("user_id",UID).order("created_at",{ascending:false});
+  const rows=(data||[]).filter(r=>r.poses);
+  $("favMini").textContent=rows.length?`${rows.length}`:"";
+  if(!rows.length){ $("favorites").innerHTML=`<div class="empty"><span class="ei">💗</span>No favorites yet. <a href="${esc(LIBRARY_URL)}" target="_blank" rel="noopener">Browse the pose library</a> and tap the heart on poses you love.</div>`; return; }
+  $("favorites").innerHTML=`<div class="favgrid">`+rows.map(r=>{
+    const po=r.poses;
+    return `<div class="fav"><button class="xbtn x" data-unfav="${esc(r.pose_id)}" title="Remove">♡</button>
+      <div class="em">${po.image_url?`<img src="${esc(po.image_url)}" alt="${esc(po.name||"")}">`:esc(po.emoji||"🧘")}</div>
+      <div class="nm">${esc(po.name||"")}</div>
+      ${po.sanskrit_name?`<div class="sn">${esc(po.sanskrit_name)}</div>`:""}</div>`;
+  }).join("")+`</div>`;
+  $("favorites").querySelectorAll("[data-unfav]").forEach(b=>b.onclick=async()=>{
+    b.disabled=true;
+    const { error } = await sb.from("favorites").delete().eq("user_id",UID).eq("pose_id",b.dataset.unfav);
+    if(!error) loadFavorites();
+  });
+}
+
+/* ---------- badges ---------- */
+async function loadBadges(){
+  const { data } = await sb.from("user_achievements")
+    .select("awarded_at, achievements(key,title,description,badge_image_url)").eq("user_id",UID);
+  const rows=(data||[]).filter(r=>r.achievements);
+  $("badgeMini").textContent=rows.length?`${rows.length}`:"";
+  if(!rows.length){ $("badges").innerHTML=`<div class="empty"><span class="ei">🏅</span>No badges yet — they’ll appear as you build streaks and finish challenges.</div>`; return; }
+  $("badges").innerHTML=`<div class="badges">`+rows.map(r=>{
+    const a=r.achievements;
+    return `<div class="badge"><div class="bd">${a.badge_image_url?`<img src="${esc(a.badge_image_url)}" alt="">`:"🏅"}</div>
+      <div class="bt">${esc(a.title||a.key||"")}</div></div>`;
+  }).join("")+`</div>`;
+}
+
+/* ---------- sequences ---------- */
+async function loadSequences(){
+  const { data } = await sb.from("sequences")
+    .select("id,name,level,duration_label,visibility,is_template,updated_at")
+    .eq("owner_id",UID).order("updated_at",{ascending:false});
+  const rows=(data||[]);
+  $("seqMini").innerHTML=`<a href="${esc(BUILDER_URL)}" target="_blank" rel="noopener">Open builder ↗</a>`;
+  if(!rows.length){ $("sequences").innerHTML=`<div class="empty"><span class="ei">📝</span>No sequences yet. <a href="${esc(BUILDER_URL)}" target="_blank" rel="noopener">Open the Sequence Builder</a> to create one.</div>`; return; }
+  $("sequences").innerHTML=rows.map(s=>`<div class="row"><div class="ic">${s.is_template?"📐":"📝"}</div>
+    <div><div class="mn">${esc(s.name||"Untitled")}${s.is_template?' <span class="ms">· template</span>':''}</div>
+    <div class="ms">${esc(s.level||"all levels")}${s.duration_label?" · "+esc(s.duration_label):""} · ${esc(s.visibility||"private")}</div></div>
+    <div class="right">${s.updated_at?new Date(s.updated_at).toLocaleDateString():""}</div></div>`).join("");
+}
+
+/* ---------- edit profile ---------- */
+$("editToggle").onclick=()=>{ $("editCard").classList.toggle("hidden"); if(!$("editCard").classList.contains("hidden")) $("editCard").scrollIntoView({behavior:"smooth",block:"nearest"}); };
+$("cancelEdit").onclick=()=>{ $("editCard").classList.add("hidden"); renderProfile(); $("saveMsg").innerHTML=""; };
+$("editName").addEventListener("input",renderEditAva);
+$("photoClear").onclick=()=>{ pendingPhotoUrl=null; renderEditAva(); };
+$("photoInput").addEventListener("change",async e=>{
+  const file=e.target.files&&e.target.files[0]; if(!file) return;
+  $("saveMsg").innerHTML='<span style="color:var(--muted)">Uploading…</span>';
+  const ext=(file.name.split(".").pop()||"jpg").toLowerCase();
+  const path=`${UID}/${Date.now()}.${ext}`;
+  const { error } = await sb.storage.from("avatars").upload(path,file,{ upsert:true, contentType:file.type });
+  if(error){ $("saveMsg").innerHTML=`<span style="color:#A03A22">${esc(error.message)}</span>`; return; }
+  const { data } = sb.storage.from("avatars").getPublicUrl(path);
+  pendingPhotoUrl=data.publicUrl; renderEditAva(); $("saveMsg").innerHTML='<span style="color:var(--jade)">Photo ready — Save to apply.</span>';
+});
+$("saveProfile").onclick=async()=>{
+  const patch={ display_name:$("editName").value.trim() || null, avatar_emoji:pendingEmoji||null };
+  if(pendingPhotoUrl!==undefined) patch.profile_pic_url=pendingPhotoUrl;
+  $("saveProfile").disabled=true; $("saveMsg").innerHTML='<span style="color:var(--muted)">Saving…</span>';
+  const { error } = await sb.from("profiles").update(patch).eq("id",UID);
+  $("saveProfile").disabled=false;
+  if(error){ $("saveMsg").innerHTML=`<span style="color:#A03A22">${esc(error.message)}</span>`; return; }
+  Object.assign(PROFILE,patch); $("saveMsg").innerHTML='<span style="color:var(--jade)">Saved ✓</span>';
+  renderProfile(); setTimeout(()=>{ $("editCard").classList.add("hidden"); $("saveMsg").innerHTML=""; },800);
+};
+
+/* ---------- newsletter (unified mailing list) ---------- */
+async function callNewsletter(action){
+  const { data:{ session } } = await sb.auth.getSession();
+  const r = await fetch(SUPABASE_URL+"/functions/v1/manage-newsletter",{method:"POST",
+    headers:{apikey:ANON,Authorization:"Bearer "+(session&&session.access_token),"Content-Type":"application/json"},
+    body:JSON.stringify({action})});
+  return r.json().catch(()=>({}));
+}
+async function syncSignupOptIn(session){
+  try{
+    var wants = session && session.user && session.user.user_metadata && session.user.user_metadata.newsletter_optin===true;
+    var prefs = (PROFILE && PROFILE.notification_prefs) || {};
+    var already = Object.prototype.hasOwnProperty.call(prefs,"newsletter");
+    if(!wants || already) return;
+    var r = await callNewsletter("subscribe");
+    if(r && r.ok){
+      var np=Object.assign({}, prefs, {newsletter:true});
+      await sb.from("profiles").update({notification_prefs:np}).eq("id",UID);
+      if(PROFILE) PROFILE.notification_prefs=np; NOTIFS.newsletter=true;
+    }
+  }catch(e){}
+}
+async function renderNewsSub(){
+  var box=$("newsSub"); if(!box) return;
+  box.innerHTML='<div class="toggle"><div><div class="tl">Weekly sequence email</div><div class="td">Checking your subscription\u2026</div></div></div>';
+  var res=await callNewsletter("status");
+  drawNewsSub(!!(res&&res.subscribed));
+}
+function drawNewsSub(subbed){
+  var box=$("newsSub"); if(!box) return;
+  box.innerHTML='<div class="toggle"><div><div class="tl">Weekly sequence email</div>'
+    +'<div class="td">'+(subbed?"You\u2019re subscribed to the mailing list":"You\u2019re not on the mailing list \u2014 flip this on to receive it")+'</div></div>'
+    +'<label class="sw"><input type="checkbox" id="newsToggle" '+(subbed?"checked":"")+'/><span class="sl"></span></label></div>'
+    +'<div id="newsSubMsg" class="inlinemsg" style="display:block;margin:-4px 0 8px"></div>';
+  $("newsToggle").onchange=async function(){
+    var want=this.checked, self=this; self.disabled=true;
+    $("newsSubMsg").innerHTML='<span style="color:var(--muted)">Saving\u2026</span>';
+    var r=await callNewsletter(want?"subscribe":"unsubscribe");
+    self.disabled=false;
+    if(r && r.ok){
+      var td=$("newsSub").querySelector(".td");
+      if(td) td.textContent = want?"You\u2019re subscribed to the mailing list":"You\u2019re not on the mailing list \u2014 flip this on to receive it";
+      $("newsSubMsg").innerHTML='<span style="color:var(--jade)">'+(want?"Subscribed \u2713":"Unsubscribed \u2713")+'</span>';
+      try{ var prefs=Object.assign({}, (PROFILE&&PROFILE.notification_prefs)||{}, {newsletter:want});
+        await sb.from("profiles").update({notification_prefs:prefs}).eq("id",UID);
+        if(PROFILE) PROFILE.notification_prefs=prefs; NOTIFS.newsletter=want; }catch(e){}
+      setTimeout(function(){ var m=$("newsSubMsg"); if(m) m.innerHTML=""; },2200);
+    } else {
+      self.checked=!want;
+      $("newsSubMsg").innerHTML='<span style="color:#A03A22">'+esc((r&&r.error)||"Couldn\u2019t update \u2014 try again")+'</span>';
+    }
+  };
+}
+
+/* ---------- notifications ---------- */
+$("saveNotifs").onclick=async()=>{
+  const prefs=Object.assign({}, (PROFILE&&PROFILE.notification_prefs)||{}); $("notifs").querySelectorAll("[data-n]").forEach(c=>prefs[c.dataset.n]=c.checked);
+  $("saveNotifs").disabled=true; $("notifMsg").innerHTML='<span style="color:var(--muted)">Saving…</span>';
+  const { error } = await sb.from("profiles").update({ notification_prefs:prefs }).eq("id",UID);
+  $("saveNotifs").disabled=false;
+  if(error) $("notifMsg").innerHTML=`<span style="color:#A03A22">${esc(error.message)}</span>`;
+  else { NOTIFS=prefs; $("notifMsg").innerHTML='<span style="color:var(--jade)">Saved ✓</span>'; setTimeout(()=>$("notifMsg").innerHTML="",2000); }
+};
+
+/* ---------- account ---------- */
+$("changePass").onclick=async()=>{
+  const np=prompt("Enter a new password (at least 6 characters):"); if(!np) return;
+  if(np.length<6){ $("accMsg").innerHTML='<span style="color:#A03A22">Password too short.</span>'; return; }
+  const { error } = await sb.auth.updateUser({ password:np });
+  $("accMsg").innerHTML=error?`<span style="color:#A03A22">${esc(error.message)}</span>`:'<span style="color:var(--jade)">Password updated ✓</span>';
+};
+async function doSignout(){ await sb.auth.signOut(); location.reload(); }
+$("navSignout").onclick=doSignout; $("signout2").onclick=doSignout;
+
+/* ---------- init ---------- */
+(async function init(){
+  await loadDesign();
+  setMode("in");
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session) boot(session);
+  sb.auth.onAuthStateChange((_e,s)=>{ if(s && $("app").classList.contains("hidden")) boot(s); });
+})();
+</script>
+
+<script>
+/* ===== PPY adaptive header controller =====
+   Self-contained, no external deps. Cross-origin safe.
+   Logged-out / cross-origin -> shows the public shell.
+   Same-origin session -> tier pill, Account, Admin (if is_admin), Sign out. */
+(function(){
+  var SB="https://nxjbpgnpblqepathojzr.supabase.co", KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik", REF="nxjbpgnpblqepathojzr";
+  var $=function(id){return document.getElementById(id);};
+
+  var burger=$("ppyBurger"), mob=$("ppyMobile");
+  if(burger&&mob) burger.addEventListener("click",function(){mob.classList.toggle("open");});
+
+  try{
+    var norm=function(h,p){return h+(p||"/").replace(/\/index\.html$/,"/").replace(/\/+$/,"/");};
+    var here=norm(location.host, location.pathname);
+    document.querySelectorAll("#ppyNav a").forEach(function(a){
+      try{var u=new URL(a.href); if(norm(u.host,u.pathname)===here) a.classList.add("active");}catch(e){}
+    });
+  }catch(e){}
+
+  fetch(SB+"/rest/v1/app_settings?select=key,value&key=in.(design,site)",
+        {headers:{apikey:KEY,Authorization:"Bearer "+KEY}})
+    .then(function(r){return r.ok?r.json():[];})
+    .then(function(rows){
+      var map={}; (rows||[]).forEach(function(x){map[x.key]=x.value||{};});
+      var d=map.design||{}, site=map.site||{};
+      (function(){ var R=document.documentElement.style, P=d.color_primary, S=d.color_secondary, f=function(k,v){ if(v) R.setProperty(k,v); };
+        if(P){ ['--ppy-accent','--ppy-accentDk','--rose','--roseDeep','--roseTitle','--clay','--clayDk','--head','--aub'].forEach(function(k){ R.setProperty(k,P); }); }
+        f('--ppy-sage',S); f('--sage',S);
+        f('--ppy-ink',d.color_body_text); f('--ink',d.color_body_text);
+        f('--ppy-bg',d.color_page_bg); f('--bg',d.color_page_bg);
+        f('--ppy-surface',d.color_surface); f('--card',d.color_surface); f('--field',d.color_surface);
+        f('--ppy-muted',d.color_secondary_text); f('--muted',d.color_secondary_text);
+      })();
+      if(d.app_name){ document.querySelectorAll(".ppy-brand .wm").forEach(function(e){e.textContent=d.app_name;}); }
+      if(d.logo_url){
+        document.querySelectorAll(".ppy-brand").forEach(function(b){
+          var mark=b.querySelector(".mark");
+          var img=document.createElement("img"); img.className="lg"; img.src=d.logo_url; img.alt=(d.app_name||"Pure Passion Yoga");
+          if(mark) b.replaceChild(img,mark);
+          var wm=b.querySelector(".wm"); if(wm) wm.style.display="none";
+        });
+      }
+      if(site.classes_enabled)    document.querySelectorAll("[data-nav='classes']").forEach(function(e){e.hidden=false;});
+      if(site.challenges_enabled) document.querySelectorAll("[data-nav='challenges']").forEach(function(e){e.hidden=false;});
+      fetch(SB+"/rest/v1/app_settings?select=value&key=eq.shop",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}}).then(function(r){return r.ok?r.json():[];}).then(function(rows){if(rows&&rows[0]&&rows[0].value&&rows[0].value.enabled){document.querySelectorAll("[data-nav='shop']").forEach(function(e){e.hidden=false;});}}).catch(function(){});
+    }).catch(function(){});
+
+  function readSession(){
+    try{
+      var raw=localStorage.getItem("sb-"+REF+"-auth-token");
+      if(!raw) return null;
+      if(raw.indexOf("base64-")===0){ raw=decodeURIComponent(escape(atob(raw.slice(7)))); }
+      var s=JSON.parse(raw);
+      if(s && s.access_token && s.user && s.user.id) return s;
+    }catch(e){}
+    return null;
+  }
+  var sess=readSession();
+  if(!sess) return;
+
+  function signOut(e){
+    if(e) e.preventDefault();
+    try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf("sb-"+REF+"-auth-token")===0) localStorage.removeItem(k); }); }catch(_){}
+    location.reload();
+  }
+  var auth=$("ppyAuth"), authM=$("ppyAuthM"), so=$("ppySignout"), som=$("ppySignoutM");
+  if(auth) auth.textContent="Account";
+  if(authM) authM.textContent="Account";
+  if(so){ so.hidden=false; so.addEventListener("click",signOut); }
+  if(som){ som.hidden=false; som.addEventListener("click",signOut); }
+
+  fetch(SB+"/rest/v1/profiles?select=tier,is_admin&id=eq."+encodeURIComponent(sess.user.id),
+        {headers:{apikey:KEY,Authorization:"Bearer "+sess.access_token}})
+    .then(function(r){return r.ok?r.json():[];})
+    .then(function(rows){
+      var p=(rows&&rows[0])||{};
+      if(p.tier){ var t=$("ppyTier"); if(t){ t.textContent=p.tier; t.hidden=false; } }
+      if(p.is_admin){ var a=$("ppyAdmin"); if(a) a.hidden=false; var am=$("ppyAdminM"); if(am) am.hidden=false; }
+    }).catch(function(){});
+})();
+</script>
+
+<script>
+/* OAuth provider visibility — Facebook hidden until site.auth_facebook is on */
+(function(){
+  var SB="https://nxjbpgnpblqepathojzr.supabase.co", KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
+  fetch(SB+"/rest/v1/app_settings?select=value&key=eq.site",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}})
+    .then(function(r){return r.ok?r.json():[];}).then(function(rows){
+      var s=(rows&&rows[0]&&rows[0].value)||{};
+      var fb=document.getElementById("oauthFacebook"), gg=document.getElementById("oauthGoogle");
+      if(fb && s.auth_facebook===true) fb.hidden=false;
+      if(gg && s.auth_google===false)  gg.hidden=true;
+    }).catch(function(){});
+})();
+</script>
+</body>
+</html>
