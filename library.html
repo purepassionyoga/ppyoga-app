@@ -513,5 +513,34 @@ initAuth();loadDesign();loadLib();load();
     }).catch(function(){});
 })();
 </script>
+<script>
+/* ===== PPY theme palette applier (light + dark, admin-driven) ===== */
+(function(){
+  var SB="https://nxjbpgnpblqepathojzr.supabase.co", KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
+  var R=document.documentElement.style, DESIGN=null;
+  var BG=['--bg','--ppy-bg','--stage'], SF=['--card','--ppy-surface','--paper'],
+      TX=['--ink','--ppy-ink','--body'], MU=['--muted','--ppy-muted','--taupe'],
+      AC=['--ppy-accent','--ppy-accentDk','--rose','--roseDeep','--roseTitle','--clay','--clayDk','--head','--aub'],
+      SG=['--sage','--ppy-sage'];
+  function imp(keys,v){ if(!v) return; for(var i=0;i<keys.length;i++) R.setProperty(keys[i],v,"important"); }
+  function clr(keys){ for(var i=0;i<keys.length;i++) R.removeProperty(keys[i]); }
+  function apply(){
+    if(!DESIGN) return; var d=DESIGN, dark=document.documentElement.getAttribute("data-theme")==="dark";
+    clr(BG.concat(SF,TX,MU,AC,SG));
+    if(dark){
+      imp(BG,d.dark_color_page_bg); imp(SF,d.dark_color_surface); imp(TX,d.dark_color_body_text);
+      imp(MU,d.dark_color_secondary_text); imp(AC,d.dark_color_primary||d.color_primary); imp(SG,d.dark_color_secondary||d.color_secondary);
+    } else {
+      imp(BG,d.color_page_bg); imp(SF,d.color_surface); imp(TX,d.color_body_text);
+      imp(MU,d.color_secondary_text); imp(AC,d.color_primary); imp(SG,d.color_secondary);
+    }
+  }
+  function load(){ fetch(SB+"/rest/v1/app_settings?select=value&key=eq.design",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}})
+    .then(function(r){return r.ok?r.json():[];}).then(function(rows){ DESIGN=(rows&&rows[0]&&rows[0].value)||{}; apply(); }).catch(function(){}); }
+  window.ppyApplyPalette=apply; window.ppyRefreshPalette=load;
+  load();
+  document.addEventListener("click",function(e){ var t=e.target; if(t&&t.closest&&(t.closest("#ppyTheme")||t.closest("#ppyThemeM"))) setTimeout(apply,20); });
+})();
+</script>
 </body>
 </html>
