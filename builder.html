@@ -107,8 +107,10 @@
   .sc-rm{background:none;border:none;color:var(--clayDk);font-size:14px;cursor:pointer;line-height:1}
   .sc-th{height:72px;display:flex;align-items:center;justify-content:center;font-size:38px;margin:3px 0;position:relative}
   .mir{transform:scaleX(-1)}
-  .sc-mir{position:absolute;bottom:0;right:0;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1;cursor:pointer;border-radius:7px;padding:2px 6px}
-  .sc-mir.on{color:#fff;background:var(--clayDk);border-color:var(--clayDk)}
+  .sc-mir{background:none;border:none;color:var(--muted);font-size:15px;line-height:1;cursor:pointer;padding:0}
+  .sc-mir.on{color:var(--clayDk)}
+  .seqcard[draggable="true"]{cursor:grab}
+  .seqcard.drag{cursor:grabbing;opacity:.6}
   .sc-th img{max-height:100%;max-width:100%;object-fit:contain}
   .sc-name{font-family:var(--font-head);color:var(--rose);font-size:14px;line-height:1.15}
   .sc-san{color:var(--sage);font-style:italic;font-size:11px;margin-top:1px}
@@ -500,9 +502,9 @@ function renderCanvas(){
         <input value="${esc(it.title)}" oninput="setItem(${i},'title',this.value)"/>
         <button class="sc-rm" onclick="removeItem(${i})">✕</button></div>`;
     pn++;const p=it.pose;const thumb=p.image_url?`<img class="${it.mirror?'mir':''}" src="${esc(p.image_url)}">`:(p.emoji||"🧘");
-    return `<div class="seqcard" data-i="${i}">
-      <div class="sc-top"><span class="sc-handle" draggable="true">⠿</span><span class="sc-num">${pn}</span><button class="sc-rm" onclick="removeItem(${i})">✕</button></div>
-      <div class="sc-th">${thumb}${p.image_url?`<button class="sc-mir ${it.mirror?'on':''}" onclick="toggleMirror(${i})" title="Mirror left / right">\u21c4</button>`:""}</div>
+    return `<div class="seqcard" data-i="${i}" draggable="true">
+      <div class="sc-top">${p.image_url?`<button class="sc-mir ${it.mirror?'on':''}" onclick="toggleMirror(${i})" title="Mirror left / right">\u21c4</button>`:`<span></span>`}<span class="sc-num">${pn}</span><button class="sc-rm" onclick="removeItem(${i})">✕</button></div>
+      <div class="sc-th">${thumb}</div>
       <div class="sc-name">${esc(p.name)}</div>
       <div class="sc-san">${esc(p.sanskrit_name||"")}</div>
       <div class="sc-cue">${esc(it.notes||"")}</div>
@@ -525,8 +527,10 @@ function handleDrop(target){
 function wireCanvasDnD(){
   document.querySelectorAll("#seqgrid .seqcard").forEach(card=>{
     const i=+card.dataset.i;const h=card.querySelector(".sc-handle");
-    if(h){h.ondragstart=e=>{DRAG={kind:"move",from:i};card.classList.add("drag");e.dataTransfer.setData("text/plain","move");e.dataTransfer.effectAllowed="move";};
-          h.ondragend=()=>{card.classList.remove("drag");};}
+    const startDrag=e=>{DRAG={kind:"move",from:i};card.classList.add("drag");try{e.dataTransfer.setData("text/plain","move");e.dataTransfer.effectAllowed="move";}catch(_){}};
+    const endDrag=()=>{card.classList.remove("drag");};
+    if(h){ h.ondragstart=startDrag; h.ondragend=endDrag; }
+    else { card.ondragstart=e=>{ if(e.target.closest&&e.target.closest("button,input,select,textarea,a")){e.preventDefault();return;} startDrag(e); }; card.ondragend=endDrag; }
     card.ondragover=e=>{if(DRAG){e.preventDefault();card.classList.add("over");}};
     card.ondragleave=()=>card.classList.remove("over");
     card.ondrop=e=>{if(!DRAG)return;e.preventDefault();e.stopPropagation();card.classList.remove("over");handleDrop(i);};
