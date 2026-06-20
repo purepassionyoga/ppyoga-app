@@ -1,0 +1,14 @@
+{
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/legal", "destination": "/legal.html" },
+    { "source": "/library", "destination": "https://ppyoga-library.vercel.app/" },
+    { "source": "/library/(.*)", "destination": "https://ppyoga-library.vercel.app/$1" },
+    { "source": "/builder", "destination": "https://ppyoga-builder.vercel.app/" },
+    { "source": "/builder/(.*)", "destination": "https://ppyoga-builder.vercel.app/$1" },
+    { "source": "/profile", "destination": "https://ppyoga-profile.vercel.app/" },
+    { "source": "/profile/(.*)", "destination": "https://ppyoga-profile.vercel.app/$1" },
+    { "source": "/admin", "destination": "https://ppyoga-admin.vercel.app/" },
+    { "source": "/admin/(.*)", "destination": "https://ppyoga-admin.vercel.app/$1" }
+  ]
+}
