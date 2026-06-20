@@ -712,20 +712,17 @@ function printDoc(layout){
     +'.cnm{font-family:\'Playfair Display\',serif;font-size:14px;font-weight:600;color:'+ROSE+';line-height:1.2}'
     +'.csn{font-size:10px;color:'+SAGE+';font-style:italic}.cm{font-size:10px;color:#888;margin-top:2px}'
     +'.cnotes{font-size:10px;color:#666;font-style:italic;border-top:1px solid #f0ebe8;padding-top:6px;margin-top:2px;width:100%;line-height:1.4}';
-  var page, body;
+  var body;
   if(layout==="cards"){
-    page="landscape";
     body='<div class="grid">'+poseItems.map(function(it,i){ var p=it.pose;
       return '<div class="card"><div class="cn">'+(i+1)+'</div><div class="ci">'+img(p,120)+'</div>'
         +'<div class="cnm">'+E(p.name)+'</div><div class="csn">'+E(p.sanskrit_name||"")+'</div>'
         +'<div class="cm">'+E(p.difficulty_level||"")+' &nbsp;\u00b7&nbsp; '+((parseInt(it.breaths)||5))+' breaths</div>'
         +(it.notes?('<div class="cnotes">'+E(it.notes)+'</div>'):"")+'</div>'; }).join("")+'</div>';
   } else if(layout==="notes"){
-    page="portrait";
     var nr=poseItems.filter(function(it){return it.notes;}).map(function(it){ return '<tr><td class="pn">'+E(it.pose.name)+'</td><td class="nt">'+E(it.notes)+'</td></tr>'; }).join("");
     body='<table><thead><tr><th>Pose</th><th>Notes &amp; cues</th></tr></thead><tbody>'+(nr||'<tr><td colspan="2" style="color:#999">No notes added yet.</td></tr>')+'</tbody></table>';
   } else {
-    page="portrait";
     body='<table><thead><tr><th>#</th><th></th><th>Pose</th><th>Level</th><th>Hold</th><th>Notes</th></tr></thead><tbody>'
       +poseItems.map(function(it,i){ var p=it.pose;
         return '<tr><td class="num">'+(i+1)+'</td><td class="im">'+img(p,34)+'</td>'
@@ -736,7 +733,7 @@ function printDoc(layout){
   var metaLine=[level,dur,poseItems.length+" poses","~"+mins+" min"].filter(Boolean).join(" &nbsp;\u00b7&nbsp; ");
   var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+E(title)+'</title>'
     +'<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">'
-    +'<style>'+CSS+'@page{size:'+page+';margin:14mm}</style></head><body>'
+    +'<style>'+CSS+'@page{margin:14mm}</style></head><body>'
     +'<div class="phead"><div class="brand">'+E(brand)+'</div><h1>'+E(title)+'</h1><div class="meta">'+metaLine+'</div>'
     +(style?('<div class="styles">'+style.split(",").map(function(s){return '<span>'+E(s.trim())+'</span>';}).join("")+'</div>'):"")+'</div>'
     +body+'<div class="footer">\u00a9 '+E(brand)+' \u00b7 purepassionyoga.com \u00b7 All rights reserved</div>'
