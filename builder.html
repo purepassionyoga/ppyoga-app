@@ -925,18 +925,19 @@ function applyBuilderDefaults(){
 let flowIdx=0,flowRemain=0,flowTimer=null,flowPaused=false,flowChime=false,flowVoice=false,flowVoiceName="",flowBreathSec=5;
 function startFlow(){
   if(!items.length)return toast("Add poses to your flow first.");
-  flowBreathSec=parseInt(BSET.flow_breath)||5;flowChime=!!BSET.flow_chime;flowVoice=!!BSET.flow_voice;flowIdx=0;flowPaused=false;try{flowVoiceName=localStorage.getItem("ppy-flow-voice")||"";}catch(e){}
+  flowBreathSec=parseInt(BSET.flow_breath)||5;flowChime=!!BSET.flow_chime;flowVoice=!!BSET.flow_voice;flowIdx=0;flowPaused=true;
+  try{var _sc=localStorage.getItem("ppy-flow-chime");if(_sc!==null)flowChime=_sc==="1";var _sv=localStorage.getItem("ppy-flow-voice-on");if(_sv!==null)flowVoice=_sv==="1";flowVoiceName=localStorage.getItem("ppy-flow-voice")||"";}catch(e){}
   document.getElementById("flowRoot").innerHTML=`<div class="flow"><div class="flow-prog" id="flowProg"></div>
     <button class="flow-exit" onclick="endFlow()">✕</button><div id="flowMain"></div>
     <div class="flow-ctrls"><button onclick="flowPrev()">◀ Prev</button>
-      <button class="primary" id="flowPause" onclick="flowToggle()">Pause</button>
+      <button class="primary" id="flowPause" onclick="flowToggle()">▶ Play</button>
       <button onclick="flowNext()">Next ▶</button></div>
     <div class="flow-toggles"><label><input type="checkbox" id="flowChimeT" ${flowChime?"checked":""}> Chime</label>
       <label><input type="checkbox" id="flowVoiceT" ${flowVoice?"checked":""}> Voice</label></div>
     <div class="flow-voicepick"><span>Voice</span><select id="flowVoiceSel"></select><button type="button" id="flowVoiceTest">\ud83d\udd0a Test</button></div></div>`;
   document.body.style.overflow="hidden";
-  document.getElementById("flowChimeT").onchange=e=>{flowChime=e.target.checked;};
-  document.getElementById("flowVoiceT").onchange=e=>{flowVoice=e.target.checked;if(!flowVoice&&window.speechSynthesis)speechSynthesis.cancel();};
+  document.getElementById("flowChimeT").onchange=e=>{flowChime=e.target.checked;try{localStorage.setItem("ppy-flow-chime",flowChime?"1":"0");}catch(_){}};
+  document.getElementById("flowVoiceT").onchange=e=>{flowVoice=e.target.checked;try{localStorage.setItem("ppy-flow-voice-on",flowVoice?"1":"0");}catch(_){}if(!flowVoice&&window.speechSynthesis)speechSynthesis.cancel();};
   initFlowVoices();
   flowStep();
 }
@@ -946,7 +947,7 @@ function flowStep(){
   const it=items[flowIdx];document.getElementById("flowProg").textContent=(flowIdx+1)+" / "+items.length;
   if(it.kind==="section"){
     document.getElementById("flowMain").innerHTML=`<div class="flow-k">Section</div><div class="flow-name">${esc(it.title)}</div><div class="flow-count" id="flowCount"></div>`;
-    speakFlow(it.title);flowRemain=4;tickStart();return;
+    if(!flowPaused)speakFlow(flowCueText(it));flowRemain=4;tickStart();return;
   }
   const pp=it.pose,thumb=pp.image_url?`<img src="${esc(pp.image_url)}">`:(pp.emoji||"🧘"),breaths=parseInt(it.breaths)||5;
   flowRemain=breaths*flowBreathSec;
@@ -954,11 +955,17 @@ function flowStep(){
     <div class="flow-name">${esc(pp.name)}</div><div class="flow-san">${esc(pp.sanskrit_name||"")}</div>
     ${it.notes?`<div class="flow-cue">${esc(it.notes)}</div>`:""}
     <div class="flow-count" id="flowCount"></div><div class="flow-sub">${breaths} breaths</div>`;
-  speakFlow(pp.name+(pp.sanskrit_name?", "+pp.sanskrit_name:""));tickStart();
+  if(!flowPaused)speakFlow(flowCueText(it));tickStart();
 }
 function tickStart(){updateFlowCount();flowTimer=setInterval(()=>{if(flowPaused)return;flowRemain--;if(flowRemain<=0){clearInterval(flowTimer);if(flowChime)chimeFlow();flowIdx++;flowStep();return;}updateFlowCount();},1000);}
 function updateFlowCount(){const c=document.getElementById("flowCount");if(c)c.textContent=flowRemain;}
-function flowToggle(){flowPaused=!flowPaused;const b=document.getElementById("flowPause");if(b)b.textContent=flowPaused?"Resume":"Pause";}
+function flowCueText(it){ if(!it)return""; if(it.kind==="section")return it.title||""; const p=it.pose||{}; return (p.name||"")+(it.notes?". "+it.notes:""); }
+function flowToggle(){
+  flowPaused=!flowPaused;
+  const b=document.getElementById("flowPause");if(b)b.textContent=flowPaused?"▶ Play":"❚❚ Pause";
+  if(flowPaused){ if(window.speechSynthesis)speechSynthesis.cancel(); }
+  else { const it=items[flowIdx]; if(it)speakFlow(flowCueText(it)); }
+}
 function flowNext(){clearInterval(flowTimer);flowIdx++;flowStep();}
 function flowPrev(){clearInterval(flowTimer);flowIdx=Math.max(0,flowIdx-1);flowStep();}
 function flowDone(){clearInterval(flowTimer);document.getElementById("flowMain").innerHTML=`<div class="flow-th">🌸</div><div class="flow-name">Complete</div><div class="flow-sub">Beautiful practice.</div>`;const c=document.querySelector(".flow-ctrls");if(c)c.style.display="none";}
@@ -977,7 +984,7 @@ function initFlowVoices(){
   populateFlowVoices();
   if((speechSynthesis.getVoices()||[]).length===0){ try{speechSynthesis.onvoiceschanged=populateFlowVoices;}catch(e){} setTimeout(populateFlowVoices,300); }
   sel.onchange=e=>{ flowVoiceName=e.target.value; try{localStorage.setItem("ppy-flow-voice",flowVoiceName);}catch(_){}
-    if(flowVoiceName){ flowVoice=true; const cb=document.getElementById("flowVoiceT"); if(cb)cb.checked=true; } };
+    if(flowVoiceName){ flowVoice=true; const cb=document.getElementById("flowVoiceT"); if(cb)cb.checked=true; try{localStorage.setItem("ppy-flow-voice-on","1");}catch(_){} } };
   if(test) test.onclick=()=>{ try{ const u=new SpeechSynthesisUtterance("Mountain pose. Tadasana. Breathe in."); u.rate=0.9; const v=flowVoiceObj(); if(v){u.voice=v;u.lang=v.lang;} speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(_){} };
 }
 function speakFlow(t){try{if(flowVoice&&"speechSynthesis"in window){const u=new SpeechSynthesisUtterance(t);u.rate=0.9;const v=flowVoiceObj();if(v){u.voice=v;u.lang=v.lang;}speechSynthesis.cancel();speechSynthesis.speak(u);}}catch(e){}}
