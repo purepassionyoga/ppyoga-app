@@ -14,6 +14,10 @@
       "destination": "/shop.html"
     },
     {
+      "source": "/s",
+      "destination": "/s.html"
+    },
+    {
       "source": "/library",
       "destination": "https://ppyoga-library.vercel.app/"
     },
