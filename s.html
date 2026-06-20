@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<script>(function(){try{var t=localStorage.getItem("ppy-theme");var mm=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches;var dark=t?t==="dark":mm;document.documentElement.setAttribute("data-theme",dark?"dark":"light");}catch(e){}})();</script>
 <title>Pure Passion Yoga — Sequence</title>
 <meta name="robots" content="noindex"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -12,6 +13,11 @@
     --rose:#C8A0A6; --roseDeep:#A87C83; --sage:#a8ad91; --ink:#4a4047;
     --muted:#9a8f94; --bg:#FBF7F6; --card:#ffffff; --line:#efe5e8; --field:#f3f3f3;
     --font-head:'Playfair Display',Georgia,serif; --font-body:'Poppins',system-ui,sans-serif;
+  }
+  :root[data-theme="dark"]{
+    --bg:#191317 !important; --card:#241c21 !important; --field:#2c2229 !important;
+    --ink:#E8DEE3 !important; --muted:#B49EA8 !important; --line:#352b32 !important;
+    --roseDeep:#D9AAB1 !important;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -37,7 +43,7 @@
   .meta span:first-child::before{content:""}
   .desc{margin-top:10px;color:var(--ink);font-size:14px;font-style:italic;opacity:.85}
   .styles{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
-  .styles span{font-size:11px;padding:3px 10px;border-radius:20px;background:#f0ebe8;color:var(--sage)}
+  .styles span{font-size:11px;padding:3px 10px;border-radius:20px;background:var(--field);color:var(--sage)}
   .playlist{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:13px;color:var(--roseDeep);text-decoration:none;border:1px solid var(--line);padding:7px 12px;border-radius:20px}
   .playlist:hover{background:var(--field)}
 
@@ -70,7 +76,7 @@
 
   @media print{
     #ppyLoader,.actions,.playlist{display:none!important}
-    body{background:#fff}
+    body{background:var(--card)}
     .wrap{max-width:none;padding:0}
     .card,.section{break-inside:avoid;page-break-inside:avoid}
     .head h1{color:#A87C83}
