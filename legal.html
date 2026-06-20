@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Legal Center · Pure Passion Yoga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="gf-head" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap">
+<link id="gf-body" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
+<style>
+  :root{ --bg:#F3F3F3; --card:#fff; --ink:#5C5664; --head:#3A2E48; --clay:#C8A0A6; --clayDk:#A87C83; --sage:#a8ad91; --line:#ECE7EC;
+    --fontHead:'Playfair Display',Georgia,serif; --fontBody:'Poppins',system-ui,sans-serif; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--fontBody);line-height:1.65;font-size:15px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:780px;margin:0 auto;padding:46px 22px 80px}
+  a{color:var(--clayDk);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .brand{font-family:var(--fontHead);color:var(--clayDk);font-weight:700;font-size:18px}
+  .accent{height:4px;width:54px;background:linear-gradient(90deg,var(--clay),var(--sage));border-radius:999px;margin:18px 0 4px}
+  .badge{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--clayDk);font-weight:600}
+  h1{font-family:var(--fontHead);color:var(--head);font-size:34px;margin:6px 0 8px;font-weight:700}
+  .lede{font-size:16px;margin:0 0 8px}
+  .back{display:inline-block;margin-bottom:14px;font-size:13px}
+  .cat{margin-top:30px}
+  .cat h2{font-family:var(--fontHead);color:var(--head);font-size:19px;margin:0 0 4px;font-weight:600}
+  .catline{height:1px;background:var(--line);margin:8px 0 4px}
+  .doclink{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line)}
+  .doclink:last-child{border-bottom:none}
+  .doclink .dot{width:7px;height:7px;border-radius:50%;background:var(--sage);flex:0 0 auto}
+  .doclink a{color:var(--head);font-weight:500}
+  .doclink .arr{margin-left:auto;color:var(--clay)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 32px;margin-top:18px;box-shadow:0 10px 30px rgba(74,58,90,.05)}
+  .card h2{font-family:var(--fontHead);color:var(--head);font-size:20px;margin:26px 0 8px;font-weight:600}
+  .card h3{color:var(--clayDk);font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin:16px 0 4px;font-weight:600}
+  .card p{margin:8px 0}
+  .card ul{padding-left:20px;margin:6px 0}
+  .card li{margin:4px 0}
+  .card .contact{background:#FBF7FA;border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:8px}
+  .card .mail{display:inline-block;background:var(--clayDk);color:#fff;text-decoration:none;padding:11px 20px;border-radius:11px;font-weight:500}
+  .meta{color:#9A95A0;font-size:13px;margin:2px 0 0}
+  .note{font-size:13px;color:#9A95A0;border-top:1px solid var(--line);margin-top:30px;padding-top:16px}
+  .empty{padding:40px 10px;text-align:center;color:#9A95A0}
+  .spin{padding:50px;text-align:center;color:#9A95A0}
+</style>
+</head>
+<body>
+  <div class="wrap" id="root"><div class="spin">Loading…</div></div>
+
+<script>
+const SUPABASE_URL="https://nxjbpgnpblqepathojzr.supabase.co";
+const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
+const sb = supabase.createClient(SUPABASE_URL, ANON);
+const $=id=>document.getElementById(id);
+const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const CAT_ORDER=["Core Legal","Privacy & Data","Commerce & Orders","Disclosures","Community & Content","Safety & Wellness","Accessibility","Company & Values"];
+let APP_NAME="Pure Passion Yoga", SITE_URL="https://purepassionyoga.com";
+
+function loadFont(id,name){ if(!name) return; const l=$(id); if(l) l.href="https://fonts.googleapis.com/css2?family="+encodeURIComponent(name)+":wght@400;500;600;700&display=swap"; }
+async function applyDesign(){
+  try{
+    const { data } = await sb.from("app_settings").select("value").eq("key","design").single();
+    const d=(data&&data.value)||{}, r=document.documentElement.style;
+    if(d.color_page_bg) r.setProperty("--bg",d.color_page_bg);
+    if(d.color_surface) r.setProperty("--card",d.color_surface);
+    if(d.color_body_text) r.setProperty("--ink",d.color_body_text);
+    if(d.color_primary){ r.setProperty("--clay",d.color_primary); r.setProperty("--clayDk",d.color_primary); }
+    if(d.color_secondary) r.setProperty("--sage",d.color_secondary);
+    if(d.font_heading){ r.setProperty("--fontHead","'"+d.font_heading+"',Georgia,serif"); loadFont("gf-head",d.font_heading); }
+    if(d.font_body){ r.setProperty("--fontBody","'"+d.font_body+"',system-ui,sans-serif"); loadFont("gf-body",d.font_body); }
+    if(d.app_name) APP_NAME=d.app_name;
+    if(d.website_url) SITE_URL=d.website_url;
+  }catch(e){}
+}
+
+function header(){ return `<span class="brand">${esc(APP_NAME)}</span><div class="accent"></div>`; }
+
+async function renderIndex(){
+  const { data, error } = await sb.from("legal_pages")
+    .select("slug,title,category,sort_order").order("sort_order");
+  if(error){ $("root").innerHTML=header()+`<div class="empty">Couldn’t load right now. Please try again later.</div>`; return; }
+  const rows=data||[];
+  if(!rows.length){ $("root").innerHTML=header()+`<p class="badge">Legal</p><h1>Legal Center</h1><div class="empty">No policies are published yet.</div>`; return; }
+  const cats={}; rows.forEach(r=>{ (cats[r.category]=cats[r.category]||[]).push(r); });
+  const order=[...CAT_ORDER.filter(c=>cats[c]), ...Object.keys(cats).filter(c=>!CAT_ORDER.includes(c))];
+  let html=header()+`<p class="badge">Legal</p><h1>Legal Center</h1>
+    <p class="lede">Our policies, terms, and disclosures — all in one place. Tap any item to read it.</p>`;
+  order.forEach(cat=>{
+    html+=`<div class="cat"><h2>${esc(cat)}</h2><div class="catline"></div>`;
+    cats[cat].forEach(r=>{
+      html+=`<div class="doclink"><span class="dot"></span><a href="?doc=${encodeURIComponent(r.slug)}">${esc(r.title)}</a><span class="arr">›</span></div>`;
+    });
+    html+=`</div>`;
+  });
+  html+=`<p class="note">Questions? Email <a href="mailto:support@purepassionyoga.com">support@purepassionyoga.com</a> · <a href="${esc(SITE_URL)}" target="_blank" rel="noopener">${esc(SITE_URL.replace(/^https?:\/\//,""))}</a></p>`;
+  $("root").innerHTML=html;
+}
+
+async function renderDoc(slug){
+  const { data, error } = await sb.from("legal_pages")
+    .select("title,category,body,updated_at").eq("slug",slug).maybeSingle();
+  if(error || !data){
+    $("root").innerHTML=header()+`<a class="back" href="?">‹ Legal Center</a><div class="empty">This page isn’t available.</div>`; return;
+  }
+  if(!data.body){
+    $("root").innerHTML=header()+`<a class="back" href="?">‹ Legal Center</a><p class="badge">${esc(data.category||"Legal")}</p><h1>${esc(data.title)}</h1><div class="empty">This policy is coming soon.</div>`; return;
+  }
+  const upd=data.updated_at?new Date(data.updated_at).toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"}):"";
+  $("root").innerHTML=header()+
+    `<a class="back" href="?">‹ Legal Center</a>
+     <p class="badge">${esc(data.category||"Legal")}</p>
+     <h1>${esc(data.title)}</h1>
+     ${upd?`<p class="meta">Last updated ${esc(upd)}</p>`:""}
+     <div class="card">${data.body}</div>
+     <p class="note">See all policies in our <a href="?">Legal Center</a>. Questions? Email <a href="mailto:support@purepassionyoga.com">support@purepassionyoga.com</a>.</p>`;
+  document.title=data.title+" · "+APP_NAME;
+}
+
+(async function(){
+  await applyDesign();
+  const slug=new URLSearchParams(location.search).get("doc");
+  if(slug) renderDoc(slug); else renderIndex();
+})();
+window.addEventListener("popstate",()=>location.reload());
+</script>
+</body>
+</html>
