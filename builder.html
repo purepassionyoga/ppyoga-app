@@ -105,7 +105,10 @@
   .sc-num{font-size:12px;color:var(--muted);font-weight:600}
   .sc-handle{cursor:grab;color:var(--lineDk);font-size:14px;user-select:none}
   .sc-rm{background:none;border:none;color:var(--clayDk);font-size:14px;cursor:pointer;line-height:1}
-  .sc-th{height:72px;display:flex;align-items:center;justify-content:center;font-size:38px;margin:3px 0}
+  .sc-th{height:72px;display:flex;align-items:center;justify-content:center;font-size:38px;margin:3px 0;position:relative}
+  .mir{transform:scaleX(-1)}
+  .sc-mir{position:absolute;bottom:0;right:0;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1;cursor:pointer;border-radius:7px;padding:2px 6px}
+  .sc-mir.on{color:#fff;background:var(--clayDk);border-color:var(--clayDk)}
   .sc-th img{max-height:100%;max-width:100%;object-fit:contain}
   .sc-name{font-family:var(--font-head);color:var(--rose);font-size:14px;line-height:1.15}
   .sc-san{color:var(--sage);font-style:italic;font-size:11px;margin-top:1px}
@@ -495,10 +498,10 @@ function renderCanvas(){
       return `<div class="seqcard section" data-i="${i}"><span class="sc-handle" draggable="true">⠿</span>
         <input value="${esc(it.title)}" oninput="setItem(${i},'title',this.value)"/>
         <button class="sc-rm" onclick="removeItem(${i})">✕</button></div>`;
-    pn++;const p=it.pose;const thumb=p.image_url?`<img src="${esc(p.image_url)}">`:(p.emoji||"🧘");
+    pn++;const p=it.pose;const thumb=p.image_url?`<img class="${it.mirror?'mir':''}" src="${esc(p.image_url)}">`:(p.emoji||"🧘");
     return `<div class="seqcard" data-i="${i}">
       <div class="sc-top"><span class="sc-handle" draggable="true">⠿</span><span class="sc-num">${pn}</span><button class="sc-rm" onclick="removeItem(${i})">✕</button></div>
-      <div class="sc-th">${thumb}</div>
+      <div class="sc-th">${thumb}${p.image_url?`<button class="sc-mir ${it.mirror?'on':''}" onclick="toggleMirror(${i})" title="Mirror left / right">\u21c4</button>`:""}</div>
       <div class="sc-name">${esc(p.name)}</div>
       <div class="sc-san">${esc(p.sanskrit_name||"")}</div>
       <div class="sc-cue">${esc(it.notes||"")}</div>
@@ -510,6 +513,8 @@ function renderCanvas(){
   renderStats();
 }
 function removeItem(i){items.splice(i,1);renderCanvas();}
+function toggleMirror(i){if(items[i]){items[i].mirror=!items[i].mirror;renderCanvas();}}
+window.toggleMirror=toggleMirror;
 function handleDrop(target){
   if(!DRAG)return;
   if(DRAG.kind==="new"){addAt(target,DRAG.id);}
@@ -931,7 +936,8 @@ function startFlow(){
     <button class="flow-exit" onclick="endFlow()">✕</button><div id="flowMain"></div>
     <div class="flow-ctrls"><button onclick="flowPrev()">◀ Prev</button>
       <button class="primary" id="flowPause" onclick="flowToggle()">▶ Play</button>
-      <button onclick="flowNext()">Next ▶</button></div>
+      <button onclick="flowNext()">Next ▶</button>
+      <button onclick="flowMirror()" title="Mirror left / right">\u21c4 Mirror</button></div>
     <div class="flow-toggles"><label><input type="checkbox" id="flowChimeT" ${flowChime?"checked":""}> Chime</label>
       <label><input type="checkbox" id="flowVoiceT" ${flowVoice?"checked":""}> Voice</label></div>
     <div class="flow-voicepick"><span>Voice</span><select id="flowVoiceSel"></select><button type="button" id="flowVoiceTest">\ud83d\udd0a Test</button></div></div>`;
@@ -949,7 +955,7 @@ function flowStep(){
     document.getElementById("flowMain").innerHTML=`<div class="flow-k">Section</div><div class="flow-name">${esc(it.title)}</div><div class="flow-count" id="flowCount"></div>`;
     if(!flowPaused)speakFlow(flowCueText(it));flowRemain=4;tickStart();return;
   }
-  const pp=it.pose,thumb=pp.image_url?`<img src="${esc(pp.image_url)}">`:(pp.emoji||"🧘"),breaths=parseInt(it.breaths)||5;
+  const pp=it.pose,thumb=pp.image_url?`<img class="${it.mirror?'mir':''}" src="${esc(pp.image_url)}">`:(pp.emoji||"🧘"),breaths=parseInt(it.breaths)||5;
   flowRemain=breaths*flowBreathSec;
   document.getElementById("flowMain").innerHTML=`<div class="flow-th">${thumb}</div>
     <div class="flow-name">${esc(pp.name)}</div><div class="flow-san">${esc(pp.sanskrit_name||"")}</div>
@@ -990,7 +996,8 @@ function initFlowVoices(){
 function speakFlow(t){try{if(flowVoice&&"speechSynthesis"in window){const u=new SpeechSynthesisUtterance(t);u.rate=0.9;const v=flowVoiceObj();if(v){u.voice=v;u.lang=v.lang;}speechSynthesis.cancel();speechSynthesis.speak(u);}}catch(e){}}
 function chimeFlow(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type="sine";o.frequency.value=528;g.gain.setValueAtTime(0.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.25,ctx.currentTime+0.05);g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+1.1);o.start();o.stop(ctx.currentTime+1.15);}catch(e){}}
 $("b_flow").onclick=startFlow;
-window.endFlow=endFlow;window.flowPrev=flowPrev;window.flowNext=flowNext;window.flowToggle=flowToggle;
+function flowMirror(){const it=items[flowIdx];if(!it||it.kind!=="pose")return;it.mirror=!it.mirror;const img=document.querySelector("#flowMain .flow-th img");if(img)img.classList.toggle("mir",!!it.mirror);}
+window.endFlow=endFlow;window.flowPrev=flowPrev;window.flowNext=flowNext;window.flowToggle=flowToggle;window.flowMirror=flowMirror;
 /* ---------- AI GENERATE ---------- */
 const FN_URL=SUPABASE_URL+"/functions/v1/generate-sequence";
 $("b_ai").onclick=openAI;
@@ -1022,6 +1029,8 @@ async function runAI(){
       if(p)built.push({kind:"pose",pose:p,notes:it.cue||"",breaths:parseInt(it.breaths)||5});else missed++;});
     if(!built.length)throw new Error("No matching poses came back \u2014 try rephrasing.");
     items=built;if(out.title&&!$("m_name").value.trim())$("m_name").value=out.title;
+    if(out.style&&$("m_style")&&!$("m_style").value)setSel("m_style",out.style);
+    if(out.description&&$("m_description")&&!$("m_description").value.trim())$("m_description").value=out.description;
     if($("ai_level").value)setSel("m_level",$("ai_level").value);if($("ai_duration").value)setSel("m_duration",$("ai_duration").value);
     closeModal();renderCanvas();toast("Generated "+built.length+" poses"+(missed?" ("+missed+" skipped)":"")+" \u2713");
   }catch(e){const el=$("ai_err");el.textContent=e.message;el.classList.remove("hidden");$("ai_status").textContent="";}
