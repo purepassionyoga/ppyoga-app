@@ -191,6 +191,11 @@ async function renderIndex(){
   $("root").innerHTML=html;
 }
 
+function fmtBody(b){
+  if(!b) return "";
+  if(/<(p|div|h[1-6]|ul|ol|li|br|table|section|article|blockquote)\b/i.test(b)) return b;
+  return b.trim().split(/\n\s*\n/).map(function(p){ return "<p>"+esc(p.trim()).replace(/\n/g,"<br>")+"</p>"; }).join("");
+}
 async function renderDoc(slug){
   const { data, error } = await sb.from("legal_pages")
     .select("title,category,body,updated_at").eq("slug",slug).maybeSingle();
@@ -206,7 +211,7 @@ async function renderDoc(slug){
      <p class="badge">${esc(data.category||"Legal")}</p>
      <h1>${esc(data.title)}</h1>
      ${upd?`<p class="meta">Last updated ${esc(upd)}</p>`:""}
-     <div class="card">${data.body}</div>
+     <div class="card">${fmtBody(data.body)}</div>
      <p class="note">See all policies in our <a href="?">Legal Center</a>. Questions? Email <a href="mailto:support@purepassionyoga.com">support@purepassionyoga.com</a>.</p>`;
   document.title=data.title+" · "+APP_NAME;
 }
