@@ -261,6 +261,7 @@
 #ppyLoader .ppyl-mark{font-size:52px;line-height:1;animation:ppySpin 1s linear infinite;transform-origin:50% 50%}
 #ppyLoader .ppyl-word{font-family:'Playfair Display',Georgia,serif;color:#A87C83;font-size:14px;letter-spacing:.06em;opacity:.75}
 @keyframes ppySpin{to{transform:rotate(360deg)}}
+.ai-spin{display:inline-block;animation:ppySpin 1s linear infinite}
 @media (prefers-reduced-motion:reduce){#ppyLoader .ppyl-mark{animation:none}}
 </style>
 <div id="ppyLoader" aria-hidden="true">
@@ -539,18 +540,19 @@ function editItem(i){
     <div class="field"><label>Breaths</label><input id="ie_breaths" type="number" min="1" value="${esc(it.breaths||"")}"/></div>
     <div class="field"><label>Breath pattern</label><select id="ie_breath" class="ie-select">${BREATH_PATTERNS.map(bp=>`<option value="${bp}"${(it.breath_pattern||'Natural')===bp?' selected':''}>${bp}</option>`).join("")}</select></div>
     <div class="field"><label>Replace pose</label><select id="ie_replace" class="ie-select" onchange="substitutePose(${i},this.value)"><option value="">Swap this pose for another\u2026</option>${POSES.map(p=>`<option value="${p.id}">${esc(p.name)}${p.sanskrit_name?" \u2014 "+esc(p.sanskrit_name):""}</option>`).join("")}</select><div style="font-size:11px;color:var(--muted);margin-top:4px">Keeps your notes, breaths &amp; breath pattern.</div></div>
+    <div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="ie_mirror" ${it.mirror?"checked":""}/> Mirror image (show the opposite side)</label></div>
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="btn ghost" style="flex:1" onclick="closeModal()">Cancel</button>
       <button class="btn" style="flex:1" onclick="saveItem(${i})">Done</button>
     </div></div></div>`;
   $("ovl").onclick=closeModal;
 }
-function saveItem(i){items[i].notes=$("ie_notes").value;const b=$("ie_breaths").value;items[i].breaths=b?parseInt(b):"";items[i].breath_pattern=$("ie_breath").value;closeModal();renderCanvas();}
+function saveItem(i){items[i].notes=$("ie_notes").value;const b=$("ie_breaths").value;items[i].breaths=b?parseInt(b):"";items[i].breath_pattern=$("ie_breath").value;const mc=$("ie_mirror");if(mc)items[i].mirror=mc.checked;closeModal();renderCanvas();}
 function substitutePose(i,pid){
   if(!pid)return;
   const np=POSES.find(x=>String(x.id)===String(pid)); if(!np)return;
   const cur=items[i]||{};
-  items[i]={kind:"pose",pose:np,notes:cur.notes||"",breaths:cur.breaths||"",breath_pattern:cur.breath_pattern||"Natural"};
+  items[i]={kind:"pose",pose:np,notes:cur.notes||"",breaths:cur.breaths||"",breath_pattern:cur.breath_pattern||"Natural",mirror:cur.mirror};
   closeModal();renderCanvas();toast("Replaced with "+np.name);
 }
 
@@ -575,7 +577,7 @@ $("b_save").onclick=async()=>{
     custom_name:it.kind==="section"?it.title:it.pose.name,
     custom_sanskrit:it.kind==="pose"?it.pose.sanskrit_name:null,
     notes:it.notes||null,custom_breaths:it.kind==="pose"&&it.breaths?parseInt(it.breaths):null,custom_breath_pattern:it.kind==="pose"?(it.breath_pattern||null):null,
-    emoji:it.kind==="pose"?it.pose.emoji:null,level:it.kind==="pose"?it.pose.difficulty_level:null}));
+    emoji:it.kind==="pose"?it.pose.emoji:null,level:it.kind==="pose"?it.pose.difficulty_level:null,mirrored:it.kind==="pose"?!!it.mirror:false}));
   if(rows.length){const r=await sb.from("sequence_items").insert(rows);if(r.error)return toast("Saved sequence, but poses failed: "+r.error.message);}
   toast("Saved ✓");
 };
@@ -694,7 +696,7 @@ function printDoc(layout){
   var poseItems=items.filter(function(it){return it.kind==="pose";});
   var mins=Math.round(poseItems.reduce(function(s,it){return s+((parseInt(it.breaths)||5)*6);},0)/60);
   function E(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-  function img(p,sz){ return p.image_url?('<img src="'+E(p.image_url)+'" style="width:'+sz+'px;height:'+sz+'px;object-fit:contain">'):('<span style="font-size:'+Math.round(sz*0.5)+'px">'+(p.emoji||"\ud83e\uddd8")+'</span>'); }
+  function img(p,sz,mir){ return p.image_url?('<img src="'+E(p.image_url)+'" style="width:'+sz+'px;height:'+sz+'px;object-fit:contain'+(mir?';transform:scaleX(-1)':'')+'">'):('<span style="font-size:'+Math.round(sz*0.5)+'px">'+(p.emoji||"\ud83e\uddd8")+'</span>'); }
   var CSS='*{box-sizing:border-box;margin:0;padding:0}'
     +'body{font-family:Poppins,system-ui,sans-serif;padding:30px 34px;color:#3a3a3a;background:#fff}'
     +'.phead{margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid '+ROSE+'}'
@@ -723,7 +725,7 @@ function printDoc(layout){
   var body;
   if(layout==="cards"){
     body='<div class="grid">'+poseItems.map(function(it,i){ var p=it.pose;
-      return '<div class="card"><div class="cn">'+(i+1)+'</div><div class="ci">'+img(p,120)+'</div>'
+      return '<div class="card"><div class="cn">'+(i+1)+'</div><div class="ci">'+img(p,120,it.mirror)+'</div>'
         +'<div class="cnm">'+E(p.name)+'</div><div class="csn">'+E(p.sanskrit_name||"")+'</div>'
         +'<div class="cm">'+E(p.difficulty_level||"")+' &nbsp;\u00b7&nbsp; '+((parseInt(it.breaths)||5))+' breaths</div>'
         +(it.notes?('<div class="cnotes">'+E(it.notes)+'</div>'):"")+'</div>'; }).join("")+'</div>';
@@ -733,7 +735,7 @@ function printDoc(layout){
   } else {
     body='<table><thead><tr><th>#</th><th></th><th>Pose</th><th>Level</th><th>Hold</th><th>Notes</th></tr></thead><tbody>'
       +poseItems.map(function(it,i){ var p=it.pose;
-        return '<tr><td class="num">'+(i+1)+'</td><td class="im">'+img(p,34)+'</td>'
+        return '<tr><td class="num">'+(i+1)+'</td><td class="im">'+img(p,34,it.mirror)+'</td>'
           +'<td><strong>'+E(p.name)+'</strong><span class="san">'+E(p.sanskrit_name||"")+'</span></td>'
           +'<td class="lv">'+E(p.difficulty_level||"")+'</td><td class="hold">'+((parseInt(it.breaths)||5))+' breaths</td>'
           +'<td class="nts">'+E(it.notes||"\u2014")+'</td></tr>'; }).join("")+'</tbody></table>';
@@ -784,7 +786,7 @@ async function snapshotExisting(seqId){
     if(!src)return;
     const{data:its}=await sb.from("sequence_items").select("*").eq("sequence_id",seqId).order("position");
     const snapshot={meta:{name:src.name,level:src.level,style:src.style,duration_label:src.duration_label,description:src.description,playlist_url:src.playlist_url,tags:src.tags,visibility:src.visibility,theme:src.theme},
-      items:(its||[]).map(it=>({position:it.position,item_type:it.item_type,pose_id:it.pose_id,custom_name:it.custom_name,custom_sanskrit:it.custom_sanskrit,notes:it.notes,custom_breaths:it.custom_breaths,custom_breath_pattern:it.custom_breath_pattern,emoji:it.emoji,level:it.level}))};
+      items:(its||[]).map(it=>({position:it.position,item_type:it.item_type,pose_id:it.pose_id,custom_name:it.custom_name,custom_sanskrit:it.custom_sanskrit,notes:it.notes,custom_breaths:it.custom_breaths,custom_breath_pattern:it.custom_breath_pattern,emoji:it.emoji,level:it.level,mirrored:it.mirrored}))};
     const ins=await sb.from("sequence_versions").insert({sequence_id:seqId,owner_id:SESSION.user.id,snapshot});
     if(ins.error)return;
     const{data:vs}=await sb.from("sequence_versions").select("id").eq("sequence_id",seqId).order("created_at",{ascending:false});
@@ -819,11 +821,11 @@ async function restoreVersion(seqId,vid){
   items=(snap.items||[]).map(it=>{
     if(it.item_type==="section")return{kind:"section",title:it.custom_name||"Section"};
     const p=POSES.find(x=>String(x.id)===String(it.pose_id))||{id:it.pose_id,name:it.custom_name,sanskrit_name:it.custom_sanskrit,emoji:it.emoji};
-    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural"};
+    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored};
   });
   closeModal();renderCanvas();toast("Restored \u2014 review and Save to keep it.");
 }
-function copyItemRows(its,newId){return (its||[]).map(it=>({sequence_id:newId,position:it.position,item_type:it.item_type,pose_id:it.pose_id,custom_name:it.custom_name,custom_sanskrit:it.custom_sanskrit,notes:it.notes,custom_breaths:it.custom_breaths,custom_breath_pattern:it.custom_breath_pattern,emoji:it.emoji,level:it.level}));}
+function copyItemRows(its,newId){return (its||[]).map(it=>({sequence_id:newId,position:it.position,item_type:it.item_type,pose_id:it.pose_id,custom_name:it.custom_name,custom_sanskrit:it.custom_sanskrit,notes:it.notes,custom_breaths:it.custom_breaths,custom_breath_pattern:it.custom_breath_pattern,emoji:it.emoji,level:it.level,mirrored:it.mirrored}));}
 async function dupSeq(id){
   const{data:src}=await sb.from("sequences").select("*").eq("id",id).single();
   const{data:its}=await sb.from("sequence_items").select("*").eq("sequence_id",id).order("position");
@@ -890,7 +892,7 @@ async function loadSeq(id){
   items=(its||[]).map(it=>{
     if(it.item_type==="section")return{kind:"section",title:it.custom_name||"Section"};
     const p=POSES.find(x=>String(x.id)===String(it.pose_id))||{id:it.pose_id,name:it.custom_name,sanskrit_name:it.custom_sanskrit,emoji:it.emoji};
-    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural"};
+    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored};
   });
   closeModal();renderCanvas();toast("Loaded “"+(s.name||"")+"”");
 }
@@ -1006,8 +1008,14 @@ function openAI(){
     <h3 class="serif">Generate with AI</h3>
     <div class="field"><label>Describe the class you want</label><textarea id="ai_prompt" rows="3" placeholder="e.g. 45-minute energizing vinyasa focused on hip openers, peaking with pigeon"></textarea></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="field"><label>Level</label><input id="ai_level" value="${esc($("m_level").value||"")}" placeholder="Beginner / Intermediate"/></div>
-      <div class="field"><label>Duration</label><input id="ai_duration" value="${esc($("m_duration").value||"")}" placeholder="30 min"/></div></div>
+      <div class="field"><label>Level</label><select id="ai_level" style="width:100%">
+        <option value="">Any level</option>
+        ${["Beginner","Beginner-Intermediate","Intermediate","Intermediate-Advanced","Advanced"].map(v=>`<option value="${v}"${$("m_level").value===v?" selected":""}>${v}</option>`).join("")}
+      </select></div>
+      <div class="field"><label>Duration</label><select id="ai_duration" style="width:100%">
+        <option value="">Any length</option>
+        ${["15 min","20 min","30 min","45 min","60 min","75 min","90 min"].map(v=>`<option value="${v}"${$("m_duration").value===v?" selected":""}>${v}</option>`).join("")}
+      </select></div></div>
     <div id="ai_err" class="err hidden"></div>
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="btn ghost" style="flex:1" onclick="closeModal()">Cancel</button>
@@ -1017,7 +1025,7 @@ function openAI(){
 }
 async function runAI(){
   $("ai_err").classList.add("hidden");
-  $("ai_go").disabled=true;$("ai_go").textContent="Generating\u2026";$("ai_status").textContent="Designing your sequence\u2026 this can take a few seconds.";
+  $("ai_go").disabled=true;$("ai_go").textContent="Generating\u2026";$("ai_status").innerHTML='<span class="ai-spin">\ud83c\udf38</span> Designing your sequence\u2026 this can take a few seconds.';
   try{
     const{data:{session}}=await sb.auth.getSession();
     const res=await fetch(FN_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":ANON,"Authorization":"Bearer "+(session&&session.access_token)},
@@ -1062,7 +1070,7 @@ async function loadCommunity(id){
   $("m_tags").value=arr(s.tags).join(", ");$("m_share").checked=false;
   items=(its||[]).map(it=>{if(it.item_type==="section")return{kind:"section",title:it.custom_name||"Section"};
     const p=POSES.find(x=>String(x.id)===String(it.pose_id))||{id:it.pose_id,name:it.custom_name,sanskrit_name:it.custom_sanskrit,emoji:it.emoji};
-    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural"};});
+    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored};});
   closeModal();renderCanvas();toast("Loaded a copy \u2014 tweak and Save to make it yours");
 }
 window.openAI=openAI;window.runAI=runAI;window.openCommunity=openCommunity;window.loadCommunity=loadCommunity;
@@ -1089,7 +1097,7 @@ async function saveAsTemplate(){
   const rows=items.map((it,i)=>({sequence_id:data.id,position:i,item_type:it.kind,pose_id:it.kind==="pose"?it.pose.id:null,
     custom_name:it.kind==="section"?it.title:it.pose.name,custom_sanskrit:it.kind==="pose"?it.pose.sanskrit_name:null,
     notes:it.notes||null,custom_breaths:it.kind==="pose"&&it.breaths?parseInt(it.breaths):null,custom_breath_pattern:it.kind==="pose"?(it.breath_pattern||null):null,
-    emoji:it.kind==="pose"?it.pose.emoji:null,level:it.kind==="pose"?it.pose.difficulty_level:null}));
+    emoji:it.kind==="pose"?it.pose.emoji:null,level:it.kind==="pose"?it.pose.difficulty_level:null,mirrored:it.kind==="pose"?!!it.mirror:false}));
   if(rows.length)await sb.from("sequence_items").insert(rows);
   toast("Saved as template \u2713");openTemplates();
 }
@@ -1101,7 +1109,7 @@ async function loadTemplate(id){
   setSel("m_level",s.level);setSel("m_duration",s.duration_label);setSel("m_style",s.style);$("m_tags").value=arr(s.tags).join(", ");$("m_share").checked=false;applyTheme(s.theme||"classic");
   items=(its||[]).map(it=>{if(it.item_type==="section")return{kind:"section",title:it.custom_name||"Section"};
     const p=POSES.find(x=>String(x.id)===String(it.pose_id))||{id:it.pose_id,name:it.custom_name,sanskrit_name:it.custom_sanskrit,emoji:it.emoji};
-    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural"};});
+    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored};});
   closeModal();renderCanvas();toast("Template loaded");
 }
 
