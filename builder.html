@@ -142,6 +142,9 @@
   .flow-ctrls button{background:var(--card);border:1px solid var(--lineDk);color:var(--aub);border-radius:10px;padding:9px 16px;font-size:14px;cursor:pointer}
   .flow-ctrls button.primary{background:var(--clayDk);color:#fff;border-color:var(--clayDk)}
   .flow-toggles{position:absolute;bottom:20px;display:flex;gap:18px;color:var(--muted);font-size:13px}
+  .flow-voicepick{position:absolute;bottom:54px;display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px;max-width:92vw}
+  .flow-voicepick select{max-width:220px;padding:5px 8px;border-radius:8px;border:1px solid var(--lineDk);background:var(--card);color:var(--ink);font-size:12px}
+  .flow-voicepick button{padding:5px 10px;border-radius:8px;border:1px solid var(--lineDk);background:var(--card);color:var(--ink);cursor:pointer;font-size:12px}
   .flow-toggles label{display:flex;align-items:center;gap:6px;cursor:pointer}
   .printhead{display:none}
   @media print{
@@ -919,20 +922,22 @@ function applyBuilderDefaults(){
   if(!$("m_duration").value&&BSET.default_duration)setSel("m_duration",BSET.default_duration);
   const pf=$("printFooter");if(pf)pf.textContent=BSET.print_footer||"";
 }
-let flowIdx=0,flowRemain=0,flowTimer=null,flowPaused=false,flowChime=false,flowVoice=false,flowBreathSec=5;
+let flowIdx=0,flowRemain=0,flowTimer=null,flowPaused=false,flowChime=false,flowVoice=false,flowVoiceName="",flowBreathSec=5;
 function startFlow(){
   if(!items.length)return toast("Add poses to your flow first.");
-  flowBreathSec=parseInt(BSET.flow_breath)||5;flowChime=!!BSET.flow_chime;flowVoice=!!BSET.flow_voice;flowIdx=0;flowPaused=false;
+  flowBreathSec=parseInt(BSET.flow_breath)||5;flowChime=!!BSET.flow_chime;flowVoice=!!BSET.flow_voice;flowIdx=0;flowPaused=false;try{flowVoiceName=localStorage.getItem("ppy-flow-voice")||"";}catch(e){}
   document.getElementById("flowRoot").innerHTML=`<div class="flow"><div class="flow-prog" id="flowProg"></div>
     <button class="flow-exit" onclick="endFlow()">✕</button><div id="flowMain"></div>
     <div class="flow-ctrls"><button onclick="flowPrev()">◀ Prev</button>
       <button class="primary" id="flowPause" onclick="flowToggle()">Pause</button>
       <button onclick="flowNext()">Next ▶</button></div>
     <div class="flow-toggles"><label><input type="checkbox" id="flowChimeT" ${flowChime?"checked":""}> Chime</label>
-      <label><input type="checkbox" id="flowVoiceT" ${flowVoice?"checked":""}> Voice</label></div></div>`;
+      <label><input type="checkbox" id="flowVoiceT" ${flowVoice?"checked":""}> Voice</label></div>
+    <div class="flow-voicepick"><span>Voice</span><select id="flowVoiceSel"></select><button type="button" id="flowVoiceTest">\ud83d\udd0a Test</button></div></div>`;
   document.body.style.overflow="hidden";
   document.getElementById("flowChimeT").onchange=e=>{flowChime=e.target.checked;};
   document.getElementById("flowVoiceT").onchange=e=>{flowVoice=e.target.checked;if(!flowVoice&&window.speechSynthesis)speechSynthesis.cancel();};
+  initFlowVoices();
   flowStep();
 }
 function flowStep(){
@@ -958,7 +963,24 @@ function flowNext(){clearInterval(flowTimer);flowIdx++;flowStep();}
 function flowPrev(){clearInterval(flowTimer);flowIdx=Math.max(0,flowIdx-1);flowStep();}
 function flowDone(){clearInterval(flowTimer);document.getElementById("flowMain").innerHTML=`<div class="flow-th">🌸</div><div class="flow-name">Complete</div><div class="flow-sub">Beautiful practice.</div>`;const c=document.querySelector(".flow-ctrls");if(c)c.style.display="none";}
 function endFlow(){clearInterval(flowTimer);if(window.speechSynthesis)speechSynthesis.cancel();document.getElementById("flowRoot").innerHTML="";document.body.style.overflow="";}
-function speakFlow(t){try{if(flowVoice&&"speechSynthesis"in window){const u=new SpeechSynthesisUtterance(t);u.rate=0.9;speechSynthesis.cancel();speechSynthesis.speak(u);}}catch(e){}}
+function flowVoiceObj(){try{return (speechSynthesis.getVoices()||[]).find(x=>x.name===flowVoiceName)||null;}catch(e){return null;}}
+function populateFlowVoices(){
+  const sel=document.getElementById("flowVoiceSel"); if(!sel||!("speechSynthesis"in window))return;
+  const vs=speechSynthesis.getVoices()||[];
+  sel.innerHTML='<option value="">Default voice</option>'+vs.map(v=>`<option value="${esc(v.name)}">${esc(v.name)} \u2014 ${esc(v.lang)}${v.default?" (device default)":""}</option>`).join("");
+  sel.value=flowVoiceName||"";
+}
+function initFlowVoices(){
+  const sel=document.getElementById("flowVoiceSel"); if(!sel)return;
+  const test=document.getElementById("flowVoiceTest");
+  if(!("speechSynthesis"in window)){ sel.innerHTML='<option>Speech not supported on this browser</option>'; sel.disabled=true; if(test)test.disabled=true; return; }
+  populateFlowVoices();
+  if((speechSynthesis.getVoices()||[]).length===0){ try{speechSynthesis.onvoiceschanged=populateFlowVoices;}catch(e){} setTimeout(populateFlowVoices,300); }
+  sel.onchange=e=>{ flowVoiceName=e.target.value; try{localStorage.setItem("ppy-flow-voice",flowVoiceName);}catch(_){}
+    if(flowVoiceName){ flowVoice=true; const cb=document.getElementById("flowVoiceT"); if(cb)cb.checked=true; } };
+  if(test) test.onclick=()=>{ try{ const u=new SpeechSynthesisUtterance("Mountain pose. Tadasana. Breathe in."); u.rate=0.9; const v=flowVoiceObj(); if(v){u.voice=v;u.lang=v.lang;} speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(_){} };
+}
+function speakFlow(t){try{if(flowVoice&&"speechSynthesis"in window){const u=new SpeechSynthesisUtterance(t);u.rate=0.9;const v=flowVoiceObj();if(v){u.voice=v;u.lang=v.lang;}speechSynthesis.cancel();speechSynthesis.speak(u);}}catch(e){}}
 function chimeFlow(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type="sine";o.frequency.value=528;g.gain.setValueAtTime(0.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.25,ctx.currentTime+0.05);g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+1.1);o.start();o.stop(ctx.currentTime+1.15);}catch(e){}}
 $("b_flow").onclick=startFlow;
 window.endFlow=endFlow;window.flowPrev=flowPrev;window.flowNext=flowNext;window.flowToggle=flowToggle;
