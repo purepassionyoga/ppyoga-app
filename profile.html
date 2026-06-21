@@ -130,6 +130,12 @@
   .miniava{display:flex;gap:14px;align-items:center;margin-bottom:12px}
   .miniava .ava{width:60px;height:60px;border-radius:18px;font-size:26px}
 
+  .avapick{display:flex;gap:10px;flex-wrap:wrap}
+  .avaopt{display:flex;flex-direction:column;align-items:center;gap:6px;width:86px;padding:8px;border:1px solid var(--line,#eee);border-radius:12px;background:var(--card,#fff);cursor:pointer}
+  .avaopt.on{border-color:var(--rose,#C8A0A6);box-shadow:0 0 0 2px var(--rose,#C8A0A6) inset}
+  .avaopt-img{width:54px;height:54px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--field,#f3f3f3);font-size:24px}
+  .avaopt-img img{width:100%;height:100%;object-fit:cover}
+  .avaopt-nm{font-size:12px;color:var(--ink,#333);text-align:center;line-height:1.2}
   /* ===== Dark mode palette ===== */
   :root[data-theme="dark"]{
     --paper:#241c21 !important; --stage:#191317 !important;
@@ -341,6 +347,15 @@
       </div>
     </div>
 
+    <!-- POSE AVATAR (hidden unless enabled) -->
+    <div class="card hidden" id="avatarPickCard" style="margin-top:16px">
+      <div class="ch">Pose avatar</div>
+      <div class="cb">
+        <div class="td" style="color:var(--muted);font-size:13px;margin-bottom:12px">Choose an illustrated character to appear on pose images across the app. “Default photos” uses the standard pose pictures.</div>
+        <div id="avatarPick" class="avapick"></div>
+      </div>
+    </div>
+
     <!-- STATS -->
     <div class="card" style="margin-top:16px">
       <div class="stats" id="statsGrid"></div>
@@ -508,10 +523,13 @@ function buildStaticBits(){
     $("emojiPick").querySelectorAll("button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); renderEditAva(); });
 }
 
+let AVATARS=[],AVATARS_ON=false,AVATAR_ID=null;
 async function loadProfile(){
   const { data, error } = await sb.from("profiles").select("*").eq("id",UID).single();
   if(error){ /* profile row may lag right after signup */ PROFILE={ id:UID, email:EMAIL, tier:"free" }; }
   else PROFILE=data;
+  try{ const {data:av}=await sb.from("app_settings").select("value").eq("key","avatars").single(); const v=(av&&av.value)||{}; AVATARS_ON=!!v.enabled; AVATARS=Array.isArray(v.list)?v.list:[]; }catch(e){ AVATARS=[]; AVATARS_ON=false; }
+  AVATAR_ID=(PROFILE&&PROFILE.avatar_id)||null;
   NOTIFS=Object.assign({}, ...NOTIF_DEFS.map(n=>({[n[0]]:n[3]})), (PROFILE&&PROFILE.notification_prefs)||{});
   renderProfile();
 }
@@ -550,6 +568,21 @@ function renderProfile(){
   pendingEmoji=p.avatar_emoji||null; pendingPhotoUrl=undefined;
   $("emojiPick").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.e===pendingEmoji));
   renderEditAva();
+  renderAvatarPicker();
+}
+function renderAvatarPicker(){
+  const card=$("avatarPickCard"); if(!card)return;
+  if(!AVATARS_ON||!AVATARS.length){ card.classList.add("hidden"); return; }
+  card.classList.remove("hidden");
+  let html=`<button class="avaopt ${!AVATAR_ID?"on":""}" data-av=""><div class="avaopt-img"><span>\ud83d\uddbc\ufe0f</span></div><div class="avaopt-nm">Default photos</div></button>`;
+  html+=AVATARS.map(a=>`<button class="avaopt ${AVATAR_ID===a.id?"on":""}" data-av="${esc(a.id)}"><div class="avaopt-img">${a.thumb_url?`<img src="${esc(a.thumb_url)}">`:"<span>\ud83e\uddd8</span>"}</div><div class="avaopt-nm">${esc(a.name||a.id)}</div></button>`).join("");
+  $("avatarPick").innerHTML=html;
+  $("avatarPick").querySelectorAll("[data-av]").forEach(b=>b.onclick=()=>selectAvatar(b.dataset.av));
+}
+async function selectAvatar(id){
+  AVATAR_ID=id||null;
+  $("avatarPick").querySelectorAll("[data-av]").forEach(b=>b.classList.toggle("on",(b.dataset.av||"")===(AVATAR_ID||"")));
+  try{ await sb.from("profiles").update({avatar_id:AVATAR_ID}).eq("id",UID); if(PROFILE)PROFILE.avatar_id=AVATAR_ID; }catch(e){}
 }
 function renderEditAva(){
   const preview={ display_name:$("editName").value, email:EMAIL,
