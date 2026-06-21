@@ -275,6 +275,7 @@
 .vtile-th{width:100%;aspect-ratio:1;background:var(--field,#faf6f4);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:30px}
 .vtile-th img{width:100%;height:100%;object-fit:contain}
 .vtile-l{font-size:11px;color:var(--ink,#4a4047);text-align:center;line-height:1.25;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pstyle{width:100%;margin:0 0 8px;padding:8px 10px;border:1px solid var(--lineDk,#e7dcdf);border-radius:10px;background:var(--field,#faf6f4) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23A87C83' stroke-width='1.6' stroke-linecap='round'/></svg>") no-repeat right 10px center;-webkit-appearance:none;appearance:none;color:var(--ink,#4a4047);font-family:inherit;font-size:13px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -381,6 +382,7 @@
     <div class="panel" id="picker">
       <h3>Poses</h3>
       <input id="psearch" class="psearch" placeholder="Search poses…"/>
+      <select id="styleFilter" class="pstyle"><option value="">All styles</option></select>
       <div id="cats" class="cats"></div>
       <div id="plist" class="plist"></div>
     </div>
@@ -438,7 +440,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const arr=v=>Array.isArray(v)?v:[];
 
-let SESSION=null, POSES=[], catFilter="", items=[], currentId=null, DRAG=null, seqTheme="classic", IS_ADMIN=false, FAVS=new Set(), AVATARS_ON=false, AVATAR_ID=null, CUE_DEPTH="off";
+let SESSION=null, POSES=[], catFilter="", styleFilter="", items=[], currentId=null, DRAG=null, seqTheme="classic", IS_ADMIN=false, FAVS=new Set(), AVATARS_ON=false, AVATAR_ID=null, CUE_DEPTH="off";
 var VARS={};
 
 /* AUTH */
@@ -486,7 +488,7 @@ window.openVarPicker=openVarPicker; window.pickVar=pickVar;
 function addCueToNote(btn){ const t=$("ie_notes"); if(!t)return; const c=btn.textContent; t.value=(t.value.trim()?t.value.trim()+" ":"")+c; t.focus(); }
 window.addCueToNote=addCueToNote;
 async function loadPoses(){
-  const{data,error}=await sb.from("poses").select("id,name,sanskrit_name,emoji,image_url,avatar_images,category,difficulty_level,teaching_cues,short_description,cue_variations").order("canonical_pose_id");
+  const{data,error}=await sb.from("poses").select("id,name,sanskrit_name,emoji,image_url,avatar_images,category,difficulty_level,teaching_cues,short_description,cue_variations,yoga_styles").order("canonical_pose_id");
   try{ const {data:vrs}=await sb.from("pose_variations").select("id,pose_id,name,sanskrit_name,image_url,emoji,cue_variations,default_breaths,notes,position").order("position"); VARS={}; (vrs||[]).forEach(v=>{ (VARS[v.pose_id]=VARS[v.pose_id]||[]).push(v); }); }catch(e){ VARS={}; }
   if(error){$("plist").innerHTML='<div style="color:#A03A22;padding:8px">'+esc(error.message)+'</div>';return;}
   POSES=data||[];
@@ -495,11 +497,14 @@ async function loadPoses(){
   const favChip=FAVS.size?`<span class="cat ${catFilter==="__fav__"?"on":""}" data-c="__fav__">\u2665 Favorites (${FAVS.size})</span>`:"";
   $("cats").innerHTML=`<span class="cat ${catFilter===""?"on":""}" data-c="">All</span>`+favChip+cats.map(c=>`<span class="cat ${catFilter===c?"on":""}" data-c="${esc(c)}">${esc(c)}</span>`).join("");
   $("cats").querySelectorAll(".cat").forEach(el=>el.onclick=()=>{catFilter=el.dataset.c;loadPoses();renderPicker();});
+  const styles=[...new Set(POSES.flatMap(p=>Array.isArray(p.yoga_styles)?p.yoga_styles:[]))].sort();
+  const sf=$("styleFilter");
+  if(sf){ const cur=styleFilter; sf.innerHTML='<option value="">All styles</option>'+styles.map(st=>`<option value="${esc(st)}"${cur===st?" selected":""}>${esc(st.replace(/ Yoga$/,""))}</option>`).join(""); sf.onchange=()=>{ styleFilter=sf.value; renderPicker(); }; }
   renderPicker();
 }
 function renderPicker(){
   const q=($("psearch").value||"").toLowerCase();
-  const list=POSES.filter(p=>(catFilter==="__fav__"?FAVS.has(String(p.id)):(!catFilter||p.category===catFilter))&&(!q||(p.name||"").toLowerCase().includes(q)||(p.sanskrit_name||"").toLowerCase().includes(q)));
+  const list=POSES.filter(p=>(catFilter==="__fav__"?FAVS.has(String(p.id)):(!catFilter||p.category===catFilter))&&(!styleFilter||(Array.isArray(p.yoga_styles)&&p.yoga_styles.includes(styleFilter)))&&(!q||(p.name||"").toLowerCase().includes(q)||(p.sanskrit_name||"").toLowerCase().includes(q)));
   $("plist").innerHTML=list.map(p=>{
     const cue=arr(p.teaching_cues)[0]||p.short_description||"";
     const _iu=poseImgUrl(p);const thumb=_iu?`<img src="${esc(_iu)}">`:(p.emoji||"🧘");
