@@ -411,9 +411,12 @@ function renderPractice(p){
 }
 /* ---------- STUDENTS ---------- */
 let STUD=[], ME=null, MYSEQS=[], STUD_FILTER={q:"",status:""};
+let SIGNATURE="", SIGNAME_PH="Your name", QUEUED=0;
 async function loadStudents(){
   if(!ME){ try{ const {data:{user}}=await sb.auth.getUser(); ME=user?user.id:null; }catch(e){} }
   try{ const {data:seqs}=await sb.from("sequences").select("id,name").eq("owner_id",ME).order("updated_at",{ascending:false}); MYSEQS=seqs||[]; }catch(e){ MYSEQS=[]; }
+  try{ const {data:pr}=await sb.from("profiles").select("display_name,teacher_signature").eq("id",ME).single(); if(pr){ SIGNATURE=pr.teacher_signature||""; SIGNAME_PH=pr.display_name||"Your name"; } }catch(e){}
+  try{ const {count}=await sb.from("student_reminders").select("id",{count:"exact",head:true}).eq("status","queued"); QUEUED=count||0; }catch(e){ QUEUED=0; }
   const {data,error}=await sb.rpc("get_teacher_roster");
   if(error){ $("roster").innerHTML='<div class="err">'+esc(error.message)+'</div>'; return; }
   STUD=(data&&data.students)||[];
@@ -451,6 +454,12 @@ function renderStudents(){
   }).join("")||'<div style="color:var(--muted);padding:14px 0">No students yet. Click \u201c+ Add student\u201d to start your roster.</div>';
   $("roster").innerHTML='<div id="stuErr" class="err hidden"></div>'
     +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px">'+kpis+'</div>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;background:var(--field);border-radius:12px;padding:10px 12px">'
+    +'<span style="font-size:12px;color:var(--muted)">Emails sign off as</span>'
+    +'<input id="stu_sig" value="'+esc(SIGNATURE)+'" placeholder="'+esc(SIGNAME_PH)+'" style="flex:1;min-width:160px"/>'
+    +'<button class="btn ghost" id="stu_sigsave">Save signature</button>'
+    +(QUEUED>0?'<button class="btn" id="stu_sendq">Send all queued ('+QUEUED+')</button>':'')
+    +'</div>'
     +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">'
     +'<input id="stu_q" placeholder="Search students\u2026" value="'+esc(STUD_FILTER.q)+'" style="flex:1;min-width:180px"/>'
     +'<select id="stu_status"><option value="">All statuses</option>'+["active","inactive","prospect"].map(x=>'<option value="'+x+'"'+(st===x?" selected":"")+'>'+x+'</option>').join("")+'</select>'
@@ -460,6 +469,8 @@ function renderStudents(){
   $("stu_status").onchange=()=>{STUD_FILTER.status=$("stu_status").value;renderStudents();};
   $("stu_add").onclick=()=>openStudent(null);
   $("stu_csv").onclick=exportStudentsCSV;
+  $("stu_sigsave").onclick=saveSignature;
+  var _sq=$("stu_sendq"); if(_sq) _sq.onclick=sendAllQueued;
   document.querySelectorAll("#roster .srow").forEach(r=>r.onclick=()=>openStudent(r.dataset.sid));
 }
 async function openStudent(sid){
@@ -589,6 +600,20 @@ function exportStudentsCSV(){
   const lines=STUD.map(s=>cols.map(c=>ec(s[c])).join(","));
   const blob=new Blob([cols.join(",")+"\n"+lines.join("\n")],{type:"text/csv"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="ppy-students.csv"; a.click();
+}
+
+async function saveSignature(){
+  const v=$("stu_sig").value.trim();
+  const {error}=await sb.from("profiles").update({teacher_signature:v||null}).eq("id",ME);
+  if(error){ stuErr(error.message); return; }
+  SIGNATURE=v; alert("Signature saved \u2713");
+}
+async function sendAllQueued(){
+  if(!confirm("Send all "+QUEUED+" queued reminder(s) now?"))return;
+  const {data,error}=await sb.functions.invoke("send-student-email",{body:{action:"send_queued"}});
+  if(error||(data&&data.error)){ stuErr((data&&data.error)||(error&&error.message)||"Send failed."); return; }
+  alert("Sent "+(data.sent||0)+" reminder(s)"+(data.failed?(", "+data.failed+" skipped (no email)"):"")+" \u2713");
+  loadStudents();
 }
 
 function switchView(v){
