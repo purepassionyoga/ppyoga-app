@@ -460,13 +460,18 @@ function renderStudents(){
   $("stu_status").onchange=()=>{STUD_FILTER.status=$("stu_status").value;renderStudents();};
   $("stu_add").onclick=()=>openStudent(null);
   $("stu_csv").onclick=exportStudentsCSV;
-  document.querySelectorAll("#students .srow").forEach(r=>r.onclick=()=>openStudent(r.dataset.sid));
+  document.querySelectorAll("#roster .srow").forEach(r=>r.onclick=()=>openStudent(r.dataset.sid));
 }
 async function openStudent(sid){
   let s = sid ? Object.assign({}, STUD.find(x=>x.id===sid)) : {id:null,name:"",email:"",phone:"",status:"active",tags:[],joined_on:new Date().toISOString().slice(0,10),notes:"",member_id:null};
-  let notes=[];
-  if(s.id){ try{ const {data}=await sb.from("student_notes").select("*").eq("student_id",s.id).order("created_at",{ascending:false}); notes=data||[]; }catch(e){} }
+  let notes=[], rems=[];
+  if(s.id){
+    try{ const {data}=await sb.from("student_notes").select("*").eq("student_id",s.id).order("created_at",{ascending:false}); notes=data||[]; }catch(e){}
+    try{ const {data}=await sb.from("student_reminders").select("*").eq("student_id",s.id).order("created_at",{ascending:false}); rems=data||[]; }catch(e){}
+  }
   const seqOpts='<option value="">(no sequence)</option>'+MYSEQS.map(q=>'<option value="'+q.id+'">'+esc(q.name||"Untitled")+'</option>').join("");
+  const cardOpts='<option value="">Choose a sequence\u2026</option>'+MYSEQS.map(q=>'<option value="'+q.id+'">'+esc(q.name||"Untitled")+'</option>').join("");
+  const hasEmail = (s.email&&s.email.trim()) || s.member_email;
   const memberPanel = s.member_id ? '<div class="grp"><div class="gt">App member</div>'
       +'<div style="font-size:13px;color:var(--muted);margin-bottom:8px">'+esc(s.member_name||s.member_email||"")+(s.member_tier?" \u00b7 "+esc(s.member_tier):"")+'</div>'
       +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px">'
@@ -477,6 +482,11 @@ async function openStudent(sid){
       return '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-size:13px">'+esc(n.body)+'</div>'
         +'<div style="font-size:11px;color:var(--muted)">'+fmtD(n.created_at)+(seq?(" \u00b7 "+esc(seq.name)):"")+' <a href="#" data-delnote="'+n.id+'" style="color:#A03A22;margin-left:6px">delete</a></div></div>';
     }).join("") : '<div style="color:var(--muted);font-size:13px">No notes yet.</div>';
+  const remsHtml = rems.length ? rems.map(r=>{
+      const sentBadge = r.status==="sent" ? '<span style="font-size:10px;color:#2E7D6B">\u2713 sent '+fmtD(r.sent_at||r.created_at)+'</span>'
+        : '<span style="font-size:10px;color:#B98A1F">queued</span> <a href="#" data-sendrem="'+r.id+'" style="color:var(--head);margin-left:4px">send now</a>';
+      return '<div style="padding:7px 0;border-bottom:1px solid var(--line)"><div style="font-size:13px">'+esc(r.message)+'</div><div style="font-size:11px;color:var(--muted)">'+sentBadge+'</div></div>';
+    }).join("") : '<div style="color:var(--muted);font-size:13px">No reminders yet.</div>';
   $("roster").innerHTML='<div id="stuErr" class="err hidden"></div>'
     +'<button class="btn ghost" id="stu_back" style="margin-bottom:14px">\u2190 Back to roster</button>'
     +'<div class="grp"><div class="gt">'+(s.id?"Edit student":"New student")+'</div>'
@@ -495,9 +505,16 @@ async function openStudent(sid){
       +'<div class="field" style="margin-top:10px"><label>Add a note</label><textarea id="se_newnote" rows="2" placeholder="What you worked on, focus areas, modifications\u2026"></textarea></div>'
       +'<div class="row2"><div class="field"><label>Link to a sequence (optional)</label><select id="se_noteseq">'+seqOpts+'</select></div>'
       +'<div class="field" style="display:flex;align-items:flex-end"><button class="btn" id="se_addnote">Add note</button></div></div></div>'
-      +'<div class="grp"><div class="gt">Practice reminder</div><div class="field"><label>Message</label><textarea id="se_remind" rows="2" placeholder="A gentle nudge to practice this week\u2026"></textarea></div>'
-      +'<button class="btn ghost" id="se_queue">Queue reminder</button>'
-      +'<div class="hint">Saved to the reminder log. Email delivery can be wired to your weekly-email function next.</div></div>'):"");
+      +'<div class="grp"><div class="gt">Take-home sequence card</div>'
+      +(hasEmail?"":'<div class="hint" style="color:#B98A1F;margin-bottom:8px">Add an email above (or link a member) to send.</div>')
+      +'<div class="field"><label>Sequence</label><select id="se_cardseq">'+cardOpts+'</select></div>'
+      +'<div class="field"><label>Personal note (optional)</label><textarea id="se_cardnote" rows="2" placeholder="A line to your student\u2026"></textarea></div>'
+      +'<button class="btn" id="se_sendcard"'+(hasEmail?"":" disabled")+'>Email sequence card</button>'
+      +'<div class="hint">Sends the full sequence (poses, cues, playlist) to the student\u2019s email, with you as reply-to.</div></div>'
+      +'<div class="grp"><div class="gt">Practice reminders</div><div id="se_remslist">'+remsHtml+'</div>'
+      +'<div class="field" style="margin-top:10px"><label>Message</label><textarea id="se_remind" rows="2" placeholder="A gentle nudge to practice this week\u2026"></textarea></div>'
+      +'<div style="display:flex;gap:10px"><button class="btn" id="se_send"'+(hasEmail?"":" disabled")+'>Send now</button><button class="btn ghost" id="se_queue">Queue for later</button></div>'
+      +(hasEmail?"":'<div class="hint" style="color:#B98A1F">Add an email to send; you can still queue.</div>')+'</div>'):"");
   let LINKED = s.member_id || null;
   $("stu_back").onclick=()=>renderStudents();
   $("se_save").onclick=()=>saveStudent(s.id, LINKED);
@@ -510,39 +527,61 @@ async function openStudent(sid){
   };
   const an=$("se_addnote"); if(an) an.onclick=()=>addNote(s.id);
   const qn=$("se_queue"); if(qn) qn.onclick=()=>queueReminder(s.id);
+  const sn=$("se_send"); if(sn) sn.onclick=()=>sendReminderNow(s.id);
+  const sc=$("se_sendcard"); if(sc) sc.onclick=()=>sendCard(s.id);
   document.querySelectorAll("[data-delnote]").forEach(a=>a.onclick=(e)=>{e.preventDefault();deleteNote(a.dataset.delnote, s.id);});
+  document.querySelectorAll("[data-sendrem]").forEach(a=>a.onclick=(e)=>{e.preventDefault();sendQueuedReminder(a.dataset.sendrem, s.id);});
+}
+function stuErr(msg){ const e=$("stuErr"); e.textContent=msg; e.classList.remove("hidden"); }
+function emailResult(error,data,sid,okMsg){
+  if(error||(data&&data.error)){ stuErr((data&&data.error)||(error&&error.message)||"Send failed."); return; }
+  $("stuErr").classList.add("hidden"); alert(okMsg); openStudent(sid);
 }
 async function saveStudent(id, linked){
   const row={ name:$("se_name").value.trim(), email:$("se_email").value.trim()||null, phone:$("se_phone").value.trim()||null,
     status:$("se_status").value, tags:$("se_tags").value.split(",").map(x=>x.trim()).filter(Boolean),
     joined_on:$("se_joined").value||null, notes:$("se_notes").value, member_id:linked||null };
-  if(!row.name && !row.email){ const e=$("stuErr"); e.textContent="Add at least a name or email."; e.classList.remove("hidden"); return; }
+  if(!row.name && !row.email){ stuErr("Add at least a name or email."); return; }
   let res;
   if(id){ res=await sb.from("students").update(row).eq("id",id); }
   else { row.teacher_id=ME; res=await sb.from("students").insert(row); }
-  if(res.error){ const e=$("stuErr"); e.textContent=res.error.message; e.classList.remove("hidden"); return; }
+  if(res.error){ stuErr(res.error.message); return; }
   await loadStudents();
 }
 async function deleteStudent(id){
   if(!confirm("Delete this student and their notes? This cannot be undone."))return;
   const {error}=await sb.from("students").delete().eq("id",id);
-  if(error){ const e=$("stuErr"); e.textContent=error.message; e.classList.remove("hidden"); return; }
+  if(error){ stuErr(error.message); return; }
   await loadStudents();
 }
 async function addNote(sid){
   const body=$("se_newnote").value.trim(); if(!body)return;
   const seq=$("se_noteseq").value||null;
   const {error}=await sb.from("student_notes").insert({teacher_id:ME,student_id:sid,sequence_id:seq,body:body});
-  if(error){ const e=$("stuErr"); e.textContent=error.message; e.classList.remove("hidden"); return; }
+  if(error){ stuErr(error.message); return; }
   openStudent(sid);
 }
 async function deleteNote(nid,sid){ const {error}=await sb.from("student_notes").delete().eq("id",nid); if(!error) openStudent(sid); }
 async function queueReminder(sid){
   const msg=$("se_remind").value.trim(); if(!msg)return;
   const {error}=await sb.from("student_reminders").insert({teacher_id:ME,student_id:sid,message:msg,status:"queued"});
-  const e=$("stuErr");
-  if(error){ e.textContent=error.message; e.classList.remove("hidden"); return; }
-  $("se_remind").value=""; e.textContent=""; e.classList.add("hidden"); alert("Reminder queued \u2713");
+  if(error){ stuErr(error.message); return; }
+  openStudent(sid);
+}
+async function sendReminderNow(sid){
+  const msg=$("se_remind").value.trim(); if(!msg){ stuErr("Write a message first."); return; }
+  const {data,error}=await sb.functions.invoke("send-student-email",{body:{action:"send_reminder",student_id:sid,message:msg}});
+  emailResult(error,data,sid,"Reminder sent \u2713");
+}
+async function sendQueuedReminder(rid,sid){
+  const {data,error}=await sb.functions.invoke("send-student-email",{body:{action:"send_reminder",student_id:sid,reminder_id:rid}});
+  emailResult(error,data,sid,"Reminder sent \u2713");
+}
+async function sendCard(sid){
+  const seq=$("se_cardseq").value; if(!seq){ stuErr("Pick a sequence first."); return; }
+  const note=$("se_cardnote").value.trim();
+  const {data,error}=await sb.functions.invoke("send-student-email",{body:{action:"send_sequence_card",student_id:sid,sequence_id:seq,note:note}});
+  emailResult(error,data,sid,"Sequence card sent \u2713");
 }
 function exportStudentsCSV(){
   const cols=["name","email","phone","status","tags","joined_on","member_email","sessions","minutes","last_practiced","note_count"];
