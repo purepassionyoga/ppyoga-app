@@ -4,204 +4,142 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script>(function(){try{var t=localStorage.getItem("ppy-theme");var m=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches;var dark=t?t==="dark":m;document.documentElement.setAttribute("data-theme",dark?"dark":"light");}catch(e){}})();</script>
-<title>Sequence Builder · Pure Passion Yoga</title>
+<title>Admin · Pure Passion Yoga</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
 <style>
   :root{
     --bg:#F5F1F4; --card:#fff; --ink:#2C2238; --head:#3A2E48; --aub:#4A3A5A;
-    --rose:#C8A0A6; --clayDk:#A87C83; --sage:#a8ad91; --jade:#2E7D6B; --amber:#B98A1F;
-    --muted:#8A8090; --line:#ECE5EC; --lineDk:#DDD2DD; --field:#f3f3f3;
-    --font-head:'Playfair Display',Georgia,serif; --font-body:'Poppins',system-ui,sans-serif;
+    --clay:#C8A0A6; --clayDk:#A87C83; --jade:#2E7D6B; --amber:#B98A1F;
+    --muted:#8A8090; --line:#ECE5EC; --lineDk:#DDD2DD; --field:#FBF9FB;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;-webkit-font-smoothing:antialiased}
-  .serif{font-family:var(--font-head)}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Poppins',system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-size:14px}
+  .serif{font-family:'Playfair Display',Georgia,serif}
   button{font-family:inherit;cursor:pointer}
   input,select,textarea{font-family:inherit;font-size:14px}
   .hidden{display:none!important}
-  .btn{background:var(--clayDk);color:#fff;border:none;padding:8px 14px;border-radius:9px;font-weight:500;font-size:13px}
+  .btn{background:var(--clayDk);color:#fff;border:none;padding:9px 18px;border-radius:10px;font-weight:500;font-size:14px}
   .btn:hover{background:#925266}
   .btn.ghost{background:var(--card);color:var(--aub);border:1px solid var(--lineDk)}
-  .btn.ghost:hover{border-color:var(--rose)}
-  .btn.soon{background:var(--field);color:#B3A8B8;border:1px solid var(--line)}
-  .btn:disabled{opacity:.5}
+  .btn.ghost:hover{border-color:var(--clay)}
+  .btn:disabled{opacity:.5;cursor:default}
 
+  /* login */
   #login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
   .lcard{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:38px 34px;width:100%;max-width:380px;box-shadow:0 18px 50px rgba(74,58,90,.08)}
-  .lcard h1{font-family:var(--font-head);color:var(--clayDk);font-size:26px;margin:0 0 4px;text-align:center}
+  .lcard h1{font-family:'Playfair Display',serif;color:var(--clayDk);font-size:26px;margin:0 0 4px;text-align:center}
   .lcard p{color:var(--muted);text-align:center;margin:0 0 24px;font-size:13px}
-  .field{margin-bottom:13px}
+  .field{margin-bottom:14px}
   .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
-  .field input,.field select,.field textarea{width:100%;padding:9px 12px;border:1px solid var(--lineDk);border-radius:9px;background:var(--field);color:var(--ink);outline:none}
-  .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--rose)}
-  .err{background:#FBE6DF;color:#A03A22;border-radius:9px;padding:9px 12px;font-size:13px;margin-bottom:12px}
+  .field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--lineDk);border-radius:10px;background:var(--field);color:var(--ink);outline:none}
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--clay)}
+  .err{background:#FBE6DF;color:#A03A22;border-radius:10px;padding:9px 12px;font-size:13px;margin-bottom:12px}
+  .ok{background:#E5F0EC;color:#1F6B58;border-radius:10px;padding:9px 12px;font-size:13px;margin-bottom:12px}
 
+  /* app shell */
   .top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
-  .topin{max-width:1320px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px}
-  .brand{font-family:var(--font-head);font-weight:700;color:var(--clayDk);font-size:18px}
+  .topin{max-width:1180px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:16px}
+  .brand{font-family:'Playfair Display',serif;font-weight:700;color:var(--clayDk);font-size:19px}
   .tag-admin{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
   .who{margin-left:auto;color:var(--muted);font-size:13px;display:flex;align-items:center;gap:12px}
+  .tabs{max-width:1180px;margin:0 auto;padding:0 22px;display:flex;gap:6px}
+  .tab{background:none;border:none;padding:12px 14px;color:var(--muted);font-size:14px;border-bottom:2px solid transparent}
+  .tab.on{color:var(--clayDk);border-bottom-color:var(--clayDk);font-weight:500}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 22px 60px}
 
-  .layout{max-width:1320px;margin:0 auto;padding:16px 20px 60px;display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start}
-  @media (max-width:860px){.layout{grid-template-columns:1fr}}
+  /* dashboard */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+  .stat .n{font-family:'Playfair Display',serif;font-size:30px;color:var(--head)}
+  .stat .l{color:var(--muted);font-size:12px;margin-top:2px}
+  h2.sec{font-family:'Playfair Display',serif;color:var(--head);font-weight:600;font-size:20px;margin:26px 0 12px}
 
-  /* picker */
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;position:sticky;top:74px;max-height:calc(100vh - 92px);display:flex;flex-direction:column}
-  .panel h3{font-family:var(--font-head);color:var(--head);margin:0 0 10px;font-size:16px}
-  .psearch{width:100%;padding:8px 11px;border:1px solid var(--lineDk);border-radius:9px;background:var(--field);outline:none;margin-bottom:8px}
-  .cats{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
-  .cat{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
-  .cat.on{background:var(--rose);color:#fff;border-color:var(--rose)}
-  .plist{overflow:auto;flex:1;margin:0 -6px;padding:0 6px}
-  .pitem{display:flex;gap:10px;align-items:flex-start;padding:8px;border-radius:10px;cursor:pointer}
-  .pitem:hover{background:var(--field)}
-  .pth{width:34px;height:34px;border-radius:8px;background:var(--field);display:flex;align-items:center;justify-content:center;font-size:17px;overflow:hidden;flex:0 0 auto}
-  .pth img{max-width:100%;max-height:100%;object-fit:contain}
-  .pn{font-weight:500;color:var(--head);font-size:13px;line-height:1.2}
-  .ps{color:var(--sage);font-style:italic;font-size:11px}
-  .pc{color:var(--muted);font-size:11px;margin-top:1px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
-  .lv{font-size:10px;color:var(--amber);float:right}
+  /* poses list */
+  .toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .toolbar input{flex:1;min-width:200px;padding:10px 12px;border:1px solid var(--lineDk);border-radius:10px;background:var(--card);outline:none}
+  .plist{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .prow{display:flex;align-items:center;gap:14px;padding:11px 16px;border-bottom:1px solid var(--line);cursor:pointer}
+  .prow:last-child{border-bottom:none}
+  .prow:hover{background:var(--field)}
+  .pthumb{width:40px;height:40px;border-radius:9px;background:var(--field);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;flex:0 0 auto}
+  .pthumb img{max-width:100%;max-height:100%;object-fit:contain}
+  .pname{font-weight:500;color:var(--head)}
+  .psan{color:var(--muted);font-size:12px}
+  .pmeta{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .badge{font-size:11px;padding:2px 9px;border-radius:999px}
+  .dot{font-size:10px;padding:2px 8px;border-radius:999px}
+  .dot.pub{background:#E5F0EC;color:var(--jade)} .dot.dr{background:var(--field);color:var(--muted)}
 
-  /* builder */
-  .build{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
-  .titlein{font-family:var(--font-head);font-size:24px;color:var(--clayDk);border:1px solid var(--line);border-radius:10px;outline:none;width:100%;background:var(--field);padding:8px 14px;margin-bottom:12px}
-  .titlein:focus{border-color:var(--rose)}
-  .titlein::placeholder{color:var(--clayDk);opacity:.5}
-  .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
-  .meta .full{grid-column:1/-1}
-  .meta input,.meta select,.meta textarea{width:100%;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:var(--field);outline:none}
-  .bar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:12px 0;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-  .share{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:13px;margin:8px 0}
+  /* editor */
+  .ovl{position:fixed;inset:0;background:rgba(44,34,56,.4);z-index:50;display:flex;justify-content:center;overflow:auto;padding:18px}
+  .ed{background:var(--card);border-radius:22px;width:100%;max-width:780px;margin:14px 0;align-self:flex-start}
+  .edtop{position:sticky;top:0;background:var(--card);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;gap:12px;border-radius:22px 22px 0 0;z-index:2}
+  .edtop h2{font-family:'Playfair Display',serif;color:var(--head);margin:0;font-size:18px}
+  .edbody{padding:18px 22px 30px}
+  .grp{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+  .grp>.gt{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clayDk);margin-bottom:12px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .field textarea{min-height:64px;resize:vertical;line-height:1.5}
+  .hint{font-size:11px;color:var(--muted);margin-top:3px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+  .chip{background:var(--field);color:var(--aub);font-size:12px;padding:3px 8px;border-radius:999px;display:flex;align-items:center;gap:6px}
+  .chip b{cursor:pointer;color:var(--clayDk);font-weight:700}
+  .toggle{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);padding-top:8px}
+  .imgrow{display:flex;gap:14px;align-items:center}
+  .imgprev{width:84px;height:84px;border-radius:12px;background:var(--field);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}
+  .imgprev img{max-width:100%;max-height:100%;object-fit:contain}
+  @media (max-width:640px){.row2{grid-template-columns:1fr}}
 
-  .canvas{margin-top:14px;min-height:160px}
-  .empty{border:2px dashed var(--lineDk);border-radius:14px;padding:48px 20px;text-align:center;color:var(--muted)}
-  .empty .fl{font-size:30px}
-  .empty h4{font-family:var(--font-head);font-style:italic;color:var(--rose);font-size:22px;margin:8px 0 4px;font-weight:500}
-  .item{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:9px}
-  .item.drag{opacity:.4}
-  .item.over{border-color:var(--rose);box-shadow:0 0 0 2px rgba(194,132,143,.2)}
-  .handle{cursor:grab;color:var(--lineDk);font-size:18px;padding-top:4px;user-select:none}
-  .ith{width:42px;height:42px;border-radius:9px;background:var(--field);display:flex;align-items:center;justify-content:center;font-size:21px;overflow:hidden;flex:0 0 auto}
-  .ith img{max-width:100%;max-height:100%;object-fit:contain}
-  .ibody{flex:1;min-width:0}
-  .iname{font-weight:500;color:var(--head)}
-  .isan{color:var(--sage);font-style:italic;font-size:12px}
-  .iopts{display:flex;gap:8px;align-items:center;margin-top:7px}
-  .iopts input.notes{flex:1;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--field);outline:none;font-size:13px}
-  .iopts input.br{width:78px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--field);outline:none;font-size:13px}
-  .rm{background:none;border:none;color:var(--clayDk);font-size:16px;padding:2px 6px}
-  .section{background:var(--field);border:1px dashed var(--rose);border-radius:12px;padding:9px 12px;margin-bottom:9px;display:flex;gap:10px;align-items:center}
-  .section input{flex:1;border:none;background:none;outline:none;font-family:var(--font-head);font-style:italic;color:var(--clayDk);font-size:17px}
-  .pos{color:var(--muted);font-size:11px;width:20px;text-align:right;padding-top:3px}
-  .seqgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:12px}
-  .seqcard{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:9px 9px 10px;display:flex;flex-direction:column;text-align:center;position:relative}
-  .seqcard.over{border-color:var(--rose);box-shadow:0 0 0 2px rgba(194,132,143,.25)}
-  .seqcard.drag{opacity:.4}
-  .seqcard.section{grid-column:1/-1;flex-direction:row;align-items:center;gap:10px;text-align:left;background:var(--field);border-style:dashed;border-color:var(--rose)}
-  .seqcard.section input{flex:1;border:none;background:none;outline:none;font-family:var(--font-head);font-style:italic;color:var(--clayDk);font-size:16px}
-  .sc-top{display:flex;align-items:center;justify-content:space-between}
-  .sc-num{font-size:12px;color:var(--muted);font-weight:600}
-  .sc-handle{cursor:grab;color:var(--lineDk);font-size:14px;user-select:none}
-  .sc-rm{background:none;border:none;color:var(--clayDk);font-size:14px;cursor:pointer;line-height:1}
-  .sc-th{height:72px;display:flex;align-items:center;justify-content:center;font-size:38px;margin:3px 0;position:relative}
-  .mir{transform:scaleX(-1)}
-  .sc-mir{background:none;border:none;color:var(--muted);font-size:15px;line-height:1;cursor:pointer;padding:0}
-  .sc-mir.on{color:var(--clayDk)}
-  .seqcard[draggable="true"]{cursor:grab}
-  .seqcard.drag{cursor:grabbing;opacity:.6}
-  .sc-th img{max-height:100%;max-width:100%;object-fit:contain}
-  .sc-name{font-family:var(--font-head);color:var(--rose);font-size:14px;line-height:1.15}
-  .sc-san{color:var(--sage);font-style:italic;font-size:11px;margin-top:1px}
-  .sc-cue{color:var(--muted);font-size:11px;margin:5px 0 4px;min-height:28px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .sc-br{color:var(--amber);font-size:11px;font-weight:600;min-height:15px}
-  .sc-edit{margin-top:6px;background:var(--field);color:var(--clayDk);border:none;border-radius:8px;padding:5px 0;font-size:12px;cursor:pointer}
-  .sc-edit:hover{background:#EFE2EC}
-  .seqstats{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:2px 0 10px;padding:10px 14px;background:var(--card,#fff);border:1px solid var(--line);border-radius:12px}
-  .seqstats.hidden{display:none}
-  .st-score{display:flex;align-items:baseline;gap:3px}
-  .st-num{font-family:var(--font-head);font-size:22px;font-weight:600;color:var(--rose)}
-  .st-of{font-size:12px;color:var(--muted)}
-  .st-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-left:4px}
-  .st-bar{display:flex;gap:2px;flex:1;min-width:120px;align-items:center}
-  .st-bar .seg{height:10px;flex:1;border-radius:2px;min-width:3px}
-  .st-right{display:flex;align-items:center;gap:10px;margin-left:auto}
-  .st-meta{font-size:11.5px;color:var(--muted);white-space:nowrap}
-  .st-fit{padding:6px 12px;font-size:12px}
-  .ie-select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--field);font:inherit;font-size:13px;color:var(--ink);outline:none}
-  .ie-select:focus{border-color:var(--rose)}
+  /* engagement */
+  .erow-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;flex-wrap:wrap}
+  .note{color:var(--muted);font-size:12px}
+  .tierbars{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 18px;margin-top:14px}
+  .tbar{display:flex;align-items:center;gap:12px;margin:9px 0}
+  .tbar .nm{width:108px;font-size:13px;color:var(--ink);text-transform:capitalize}
+  .tbar .track{flex:1;background:var(--field);border-radius:999px;height:10px;overflow:hidden}
+  .tbar .fill{height:100%;border-radius:999px;min-width:3px}
+  .tbar .ct{width:34px;text-align:right;font-size:13px;color:var(--muted)}
+  .ecols{display:grid;grid-template-columns:1.45fr 1fr;gap:16px;margin-top:8px;align-items:start}
+  @media (max-width:860px){.ecols{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:16px}
+  .panel .ph{padding:13px 16px;border-bottom:1px solid var(--line);font-family:'Playfair Display',serif;color:var(--head);font-size:16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .panel .ph .cnt{font-family:'Poppins',sans-serif;font-size:12px;color:var(--muted)}
+  .erow{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line)}
+  .erow:last-child{border-bottom:none}
+  .erow .av{width:34px;height:34px;border-radius:9px;background:var(--field);display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 auto;color:var(--clayDk);font-weight:600}
+  .erow .mn{font-weight:500;color:var(--head)}
+  .erow .ms{color:var(--muted);font-size:12px}
+  .erow .right{margin-left:auto;text-align:right;font-size:12px;color:var(--muted)}
+  .tierpill{font-size:11px;padding:2px 9px;border-radius:999px;text-transform:capitalize;font-weight:500}
+  .empty{padding:26px 16px;text-align:center;color:var(--muted);font-size:13px}
+  .empty .em-ic{font-size:22px;display:block;margin-bottom:6px;opacity:.65}
+  .esearch{padding:10px 14px;border-bottom:1px solid var(--line)}
+  .esearch input{width:100%;padding:8px 11px;border:1px solid var(--lineDk);border-radius:9px;background:var(--field);outline:none}
 
-  .flow{position:fixed;inset:0;background:linear-gradient(165deg,#fff,#F6EFF4);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
-  .flow-exit{position:absolute;top:16px;right:20px;background:none;border:none;font-size:24px;color:var(--muted);cursor:pointer;line-height:1}
-  .flow-prog{position:absolute;top:20px;left:24px;color:var(--muted);font-size:13px}
-  .flow-th{height:200px;display:flex;align-items:center;justify-content:center;font-size:96px;margin-bottom:6px}
-  .flow-th img{max-height:200px;max-width:60vw;object-fit:contain}
-  .flow-k{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--clayDk)}
-  .flow-name{font-family:var(--font-head);color:var(--rose);font-size:44px;line-height:1.05}
-  .flow-san{font-family:var(--font-head);font-style:italic;color:var(--sage);font-size:22px;margin-top:4px}
-  .flow-cue{color:var(--ink);font-size:16px;max-width:560px;margin:14px auto 0;line-height:1.5}
-  .flow-count{font-family:var(--font-head);color:var(--clayDk);font-size:54px;margin-top:14px}
-  .flow-sub{color:var(--muted);font-size:13px;margin-top:2px}
-  .flow-ctrls{display:flex;gap:10px;align-items:center;margin-top:24px}
-  .flow-ctrls button{background:var(--card);border:1px solid var(--lineDk);color:var(--aub);border-radius:10px;padding:9px 16px;font-size:14px;cursor:pointer}
-  .flow-ctrls button.primary{background:var(--clayDk);color:#fff;border-color:var(--clayDk)}
-  .flow-toggles{position:absolute;bottom:20px;display:flex;gap:18px;color:var(--muted);font-size:13px}
-  .flow-voicepick{position:absolute;bottom:54px;display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px;max-width:92vw}
-  .flow-voicepick select{max-width:220px;padding:5px 8px;border-radius:8px;border:1px solid var(--lineDk);background:var(--card);color:var(--ink);font-size:12px}
-  .flow-voicepick button{padding:5px 10px;border-radius:8px;border:1px solid var(--lineDk);background:var(--card);color:var(--ink);cursor:pointer;font-size:12px}
-  .flow-toggles label{display:flex;align-items:center;gap:6px;cursor:pointer}
-  .printhead{display:none}
-  @media print{
-    .printhead{display:block;text-align:center;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid #C8A0A6}
-    .printhead h1{font-family:var(--font-head);color:#A87C83;margin:0 0 4px;font-size:26px}
-    .printhead .meta{color:#888;font-size:13px}
-    body.theme-minimal .printhead{border-bottom:1px solid #ccc}
-    body.theme-minimal .printhead h1{font-family:var(--font-body);color:#222;font-size:22px}
-    body.theme-botanical .printhead{border-bottom:2px solid #a8ad91}
-    body.theme-botanical .printhead h1{color:#7E8466}
-  }
-  .printfoot{display:none}
-  @media print{.printfoot{display:block;text-align:center;color:#999;margin-top:22px;font-size:12px}}
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--head);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;z-index:80;opacity:0;transition:.25s}
-  .toast.show{opacity:1}
-  .ovl{position:fixed;inset:0;background:rgba(44,34,56,.4);z-index:60;display:flex;align-items:center;justify-content:center;padding:18px}
-  .modal{background:var(--card);border-radius:18px;width:100%;max-width:440px;max-height:80vh;overflow:auto;padding:20px}
-  .modal h3{font-family:var(--font-head);color:var(--head);margin:0 0 12px}
-  .savedrow{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer}
-  .savedrow:hover{background:var(--field)}
-  .savedacts{display:flex;gap:4px;flex:0 0 auto}
-  .mini{border:1px solid var(--line);background:var(--card);border-radius:7px;padding:4px 8px;font-size:13px;cursor:pointer;color:var(--muted);line-height:1}
-  .mini:hover{background:var(--field);color:var(--head)}
-  .mini.danger:hover{background:#fbeaea;color:#b3261e;border-color:#e6b8b8}
-  .printmodal{max-width:580px;width:100%;max-height:86vh;display:flex;flex-direction:column;padding:0;overflow:hidden}
-  .pm-head{padding:22px 26px 14px;border-bottom:1px solid var(--line)}
-  .pm-title{font-family:var(--font-head);color:var(--head);font-size:22px}
-  .pm-sub{font-size:12.5px;color:var(--muted);margin-top:2px}
-  .pm-tabs{display:flex;gap:8px;margin-top:14px;align-items:center}
-  .pm-tabs .lbl{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-right:2px}
-  .pm-tab{font:inherit;font-size:12px;font-weight:500;padding:6px 14px;border-radius:8px;border:1.5px solid var(--lineDk);background:transparent;color:var(--muted);cursor:pointer}
-  .pm-tab.on{background:var(--rose);border-color:var(--rose);color:#fff}
-  .pm-list{padding:6px 26px;overflow-y:auto;flex:1}
-  .pm-row{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
-  .pm-num{color:#bbb;font-size:12px;width:16px;text-align:right;padding-top:3px}
-  .pm-img{width:40px;height:40px;border-radius:8px;background:var(--field);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto;font-size:22px}
-  .pm-img img{width:100%;height:100%;object-fit:contain}
-  .pm-info{flex:1;min-width:0}
-  .pm-name{font-family:var(--font-head);color:var(--rose);font-size:15px;font-weight:600}
-  .pm-san{font-size:11px;color:var(--sage);font-style:italic;margin-bottom:6px}
-  .pm-note{width:100%;padding:8px 10px;border:1px solid var(--lineDk);border-radius:8px;background:var(--field);font:inherit;font-size:13px;color:var(--ink);outline:none;resize:vertical}
-  .pm-note:focus{border-color:var(--rose)}
-  .pm-foot{padding:14px 26px 20px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
-  .pm-hint{font-size:12px;color:var(--muted)}
+  /* advanced */
+  .okpill{display:inline-block;background:#E5F0EC;color:#1F6B58;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;margin-right:6px}
+  .badpill{display:inline-block;background:#FBE6DF;color:#A03A22;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;margin-right:6px}
+  .jsonbox{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--aub);overflow:auto;margin:0;white-space:pre-wrap;word-break:break-word}
+  .abody{padding:16px}
+  .exbtns{margin-left:auto;display:flex;gap:8px}
+  .exbtns .btn{padding:6px 12px}
 
-  @media print{
-    body{background:var(--card)}
-    .top,.panel,.bar,.share,.handle,.rm,.sc-handle,.sc-rm,.sc-edit,#picker{display:none!important}
-    .layout{display:block;padding:0}
-    .build{border:none;padding:0}
-    .item,.section{break-inside:avoid}
-  }
+  /* legal */
+  .lcat{font-family:'Playfair Display',serif;color:var(--head);font-size:16px;margin:22px 0 6px}
+  .lrow{display:flex;align-items:center;gap:14px;padding:11px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+  .lrow .mn{font-weight:500;color:var(--head)}
+  .lrow .ms{color:var(--muted);font-size:12px}
+  .lrow .lright{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .pill-on{font-size:11px;color:var(--jade);background:#E5F0EC;padding:2px 9px;border-radius:999px}
+  .pill-off{font-size:11px;color:var(--muted);background:var(--field);padding:2px 9px;border-radius:999px}
+  .sw{position:relative;width:42px;height:24px;flex:0 0 auto;display:inline-block}
+  .sw input{opacity:0;width:0;height:0}
+  .sw .sl{position:absolute;inset:0;background:var(--lineDk);border-radius:999px;transition:.2s;cursor:pointer}
+  .sw .sl::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:var(--card);border-radius:50%;transition:.2s}
+  .sw input:checked + .sl{background:var(--jade)}
+  .sw input:checked + .sl::before{transform:translateX(18px)}
 
   /* ===== Dark mode palette ===== */
   :root[data-theme="dark"]{
@@ -263,7 +201,6 @@
 #ppyLoader .ppyl-mark{font-size:52px;line-height:1;animation:ppySpin 1s linear infinite;transform-origin:50% 50%}
 #ppyLoader .ppyl-word{font-family:'Playfair Display',Georgia,serif;color:#A87C83;font-size:14px;letter-spacing:.06em;opacity:.75}
 @keyframes ppySpin{to{transform:rotate(360deg)}}
-.ai-spin{display:inline-block;animation:ppySpin 1s linear infinite}
 @media (prefers-reduced-motion:reduce){#ppyLoader .ppyl-mark{animation:none}}
 </style>
 <div id="ppyLoader" aria-hidden="true">
@@ -336,803 +273,1294 @@
 })();
 </script>
 
+<!-- LOGIN -->
 <div id="login">
   <div class="lcard">
     <h1 class="serif">Pure Passion Yoga</h1>
-    <p>Sequence Builder — teacher sign-in</p>
+    <p>Admin sign-in</p>
     <div id="loginErr" class="err hidden"></div>
-    <div class="field"><label>Email</label><input id="email" type="email" autocomplete="username"/></div>
-    <div class="field"><label>Password</label><input id="password" type="password" autocomplete="current-password"/></div>
+    <div class="field"><label>Email</label><input id="email" type="email" autocomplete="username" /></div>
+    <div class="field"><label>Password</label><input id="password" type="password" autocomplete="current-password" /></div>
     <button id="signin" class="btn" style="width:100%;margin-top:6px">Sign in</button>
   </div>
 </div>
 
+<!-- APP -->
 <div id="app" class="hidden">
-  <div class="top" style="display:none"><div class="topin">
-    <span class="brand">Pure Passion Yoga</span><span class="tag-admin">Sequence Builder</span>
-    <span class="who"><span id="whoami"></span><button id="signout" class="btn ghost" style="padding:6px 12px">Sign out</button></span>
-  </div></div>
+  <div class="top">
+    <div class="topin" style="display:none">
+      <span class="brand">Pure Passion Yoga</span>
+      <span class="tag-admin">Admin</span>
+      <span class="who"><span id="whoami"></span><button id="signout" class="btn ghost" style="padding:6px 12px">Sign out</button></span>
+    </div>
+    <div class="tabs">
+      <button class="tab on" data-tab="dash">Dashboard</button>
+      <button class="tab" data-tab="engage">Engagement</button>
+      <button class="tab" data-tab="poses">Poses</button>
+      <button class="tab" data-tab="avatars">Avatars</button>
+      <button class="tab" data-tab="design">Design</button>
+      <button class="tab" data-tab="library">Library</button>
+      <button class="tab" data-tab="builder">Builder</button>
+      <button class="tab" data-tab="email">Email</button>
+      <button class="tab" data-tab="advanced">Advanced</button>
+      <button class="tab" data-tab="legal">Legal</button>
+      <button class="tab" data-tab="site">Site</button>
+      <button class="tab" data-tab="billing">Billing</button>
+      <button class="tab" data-tab="shop">Shop</button>
+    </div>
+  </div>
 
-  <div class="layout">
-    <!-- PICKER -->
-    <div class="panel" id="picker">
-      <h3>Poses</h3>
-      <input id="psearch" class="psearch" placeholder="Search poses…"/>
-      <div id="cats" class="cats"></div>
+  <div class="wrap">
+    <div id="dash">
+      <div id="stats" class="stats"></div>
+    </div>
+    <div id="engage" class="hidden"></div>
+    <div id="poses" class="hidden">
+      <div class="toolbar">
+        <input id="search" placeholder="Search poses by name or Sanskrit…" />
+        <button id="newPose" class="btn">+ New pose</button>
+      </div>
       <div id="plist" class="plist"></div>
     </div>
-
-    <!-- BUILDER -->
-    <div class="build">
-      <input id="m_name" class="titlein" placeholder="My Yoga Sequence"/>
-      <div class="meta">
-        <textarea id="m_description" class="full" rows="2" placeholder="Sequence description, intention, or theme… (optional)"></textarea>
-        <input id="m_playlist" class="full" placeholder="🎵 Playlist link — Spotify, YouTube, Apple Music… (optional)"/>
-        <select id="m_level"><option value="">Level…</option><option value="Beginner">Beginner</option><option value="Beginner-Intermediate">Beginner-Intermediate</option><option value="Intermediate">Intermediate</option><option value="Intermediate-Advanced">Intermediate-Advanced</option><option value="Advanced">Advanced</option></select>
-        <select id="m_duration"><option value="">Duration…</option><option value="5 min">5 min</option><option value="10 min">10 min</option><option value="15 min">15 min</option><option value="20 min">20 min</option><option value="25 min">25 min</option><option value="30 min">30 min</option><option value="45 min">45 min</option><option value="60 min">60 min</option><option value="90 min">90 min</option></select>
-        <select id="m_style"><option value="">Yoga style…</option><option value="Acro">Acro</option><option value="Aerial">Aerial</option><option value="Alexander">Alexander</option><option value="Ananda">Ananda</option><option value="Anusara">Anusara</option><option value="Aqua">Aqua</option><option value="Ashtanga">Ashtanga</option><option value="Backmitra">Backmitra</option><option value="Ball">Ball</option><option value="Baptiste">Baptiste</option><option value="Bhakti">Bhakti</option><option value="Bikram">Bikram</option><option value="BMC">BMC</option><option value="Bo">Bo</option><option value="Body Positive">Body Positive</option><option value="Bouddha">Bouddha</option><option value="Chair">Chair</option><option value="Continuum">Continuum</option><option value="Dhyana">Dhyana</option><option value="Do In">Do In</option><option value="Dru">Dru</option><option value="Energy Medicine (EM)">Energy Medicine (EM)</option><option value="Forrest">Forrest</option><option value="Gentle">Gentle</option><option value="Hatha">Hatha</option><option value="Hot">Hot</option><option value="Hypopressive">Hypopressive</option><option value="Integrative">Integrative</option><option value="Iyengar">Iyengar</option><option value="Jain">Jain</option><option value="Jivamukti">Jivamukti</option><option value="Jnana">Jnana</option><option value="Kaiut">Kaiut</option><option value="Karma">Karma</option><option value="Kemetic">Kemetic</option><option value="Kids">Kids</option><option value="Kripalu">Kripalu</option><option value="Kundalini">Kundalini</option><option value="Kurunta">Kurunta</option><option value="Laya">Laya</option><option value="Mandala">Mandala</option><option value="Mantra">Mantra</option><option value="Meridian">Meridian</option><option value="Mommy &amp; Me">Mommy &amp; Me</option><option value="Ortho-Bionomy">Ortho-Bionomy</option><option value="Other">Other</option><option value="Paddle">Paddle</option><option value="Partner">Partner</option><option value="Patanjala">Patanjala</option><option value="Pilates">Pilates</option><option value="Postnatal">Postnatal</option><option value="Power">Power</option><option value="Prenatal">Prenatal</option><option value="Purna">Purna</option><option value="Qigong">Qigong</option><option value="Restorative">Restorative</option><option value="Rocket">Rocket</option><option value="Sattva">Sattva</option><option value="Satyananda">Satyananda</option><option value="Scaravelli">Scaravelli</option><option value="Sculpt">Sculpt</option><option value="Seniors">Seniors</option><option value="Shadow">Shadow</option><option value="Sivananda">Sivananda</option><option value="Somatic">Somatic</option><option value="Tantra">Tantra</option><option value="Teens Yoga">Teens Yoga</option><option value="Therapy">Therapy</option><option value="Viniyoga">Viniyoga</option><option value="Vinyasa">Vinyasa</option><option value="Wheel">Wheel</option><option value="Yang">Yang</option><option value="Yin">Yin</option><option value="Yin-Yang">Yin-Yang</option><option value="Yinyasa">Yinyasa</option><option value="Yoni">Yoni</option></select>
-        <input id="m_tags" placeholder="Tags (comma separated)"/>
-      </div>
-
-      <div class="bar">
-        <button class="btn" id="b_save">💾 Save</button>
-        <button class="btn ghost" id="b_load">📂 Load Saved…</button>
-        <button class="btn ghost" id="b_new">✦ New</button>
-        <button class="btn ghost" id="b_section">＋ Section</button>
-        <button class="btn ghost" id="b_print">🖨 Print</button>
-        <button class="btn ghost" id="b_share">🔗 Share</button>
-        <button class="btn ghost" id="b_email" hidden>✉ Weekly email</button>
-        <button class="btn ghost" id="b_clear">🧹 Clear</button>
-        <span style="flex:1"></span>
-        <button class="btn ghost" id="b_templates">📋 Templates</button>
-        <button class="btn ghost" id="b_community">🌐 Community</button>
-        <button class="btn ghost" id="b_ai">✨ AI</button>
-        <button class="btn ghost" id="b_flow">▶ Flow</button>
-        <button class="btn ghost" id="b_theme">🎨 Theme</button>
-      </div>
-      <label class="share"><input type="checkbox" id="m_share"/> Share with community when saving</label>
-
-      <div id="seqstats" class="seqstats hidden"></div>
-      <div id="printHead" class="printhead"></div>
-      <div id="canvas" class="canvas"></div>
-      <div id="printFooter" class="printfoot"></div>
-    </div>
+    <div id="avatars" class="hidden"></div>
+    <div id="design" class="hidden"></div>
+    <div id="library" class="hidden"></div>
+    <div id="builder" class="hidden"></div>
+    <div id="emailtab" class="hidden"></div>
+    <div id="advanced" class="hidden"></div>
+    <div id="legal" class="hidden"></div>
+    <div id="site" class="hidden"></div>
+    <div id="billing" class="hidden"></div>
+    <div id="shop" class="hidden"></div>
   </div>
 </div>
 
-<div id="modalRoot"></div>
-<div id="flowRoot"></div>
-<div id="toast" class="toast"></div>
+<div id="edRoot"></div>
 
 <script>
 const SUPABASE_URL="https://nxjbpgnpblqepathojzr.supabase.co";
 const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
-const sb=supabase.createClient(SUPABASE_URL,ANON);
+const sb = supabase.createClient(SUPABASE_URL, ANON);
+
+let POSES=[], SUG={}, editing=null, tagState={};
 const $=id=>document.getElementById(id);
 const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const arr=v=>Array.isArray(v)?v:[];
 
-let SESSION=null, POSES=[], catFilter="", items=[], currentId=null, DRAG=null, seqTheme="classic", IS_ADMIN=false, FAVS=new Set();
+// fields
+const TAG_FIELDS=["alternate_names","chakras","body_focus","muscle_groups","movement_actions","yoga_styles","pose_phases","benefit_tags","contraindication_tags","required_props","keywords"];
+const LIST_FIELDS=["instructions","teaching_cues","breath_cues","modifications","advanced_variations"];
+const SUG_FIELDS=["category","difficulty_level","primary_movement"].concat(TAG_FIELDS);
+const YOGA_STYLES=["Yoni", "Yinyasa", "Yin-Yang", "Yin", "Yang", "Wheel", "Vinyasa", "Viniyoga", "Therapy", "Teens Yoga", "Tantra", "Somatic", "Sivananda", "Shadow", "Seniors", "Sculpt", "Scaravelli", "Satyananda", "Sattva", "Rocket", "Restorative", "Qigong", "Purna", "Prenatal", "Power", "Postnatal", "Pilates", "Patanjala", "Partner", "Paddle", "Other", "Ortho-Bionomy", "Mommy & Me", "Meridian", "Mantra", "Mandala", "Laya", "Kurunta", "Kundalini", "Kripalu", "Kids", "Kemetic", "Karma", "Kaiut", "Jnana", "Jivamukti", "Jain", "Integrative", "Iyengar", "Hypopressive", "Hot", "Hatha", "Gentle", "Forrest", "Energy Medicine (EM)", "Dru", "Do In", "Dhyana", "Continuum", "Chair", "Bouddha", "Body Positive", "Bo", "Bikram", "BMC", "Bhakti", "Baptiste", "Ball", "Backmitra", "Ashtanga", "Aqua", "Anusara", "Ananda", "Alexander", "Aerial", "Acro"];
 
-/* AUTH */
-async function init(){const{data:{session}}=await sb.auth.getSession();if(session)showApp(session);else $("login").classList.remove("hidden");}
-async function showApp(s){SESSION=s;$("login").classList.add("hidden");$("app").classList.remove("hidden");$("whoami").textContent=s.user.email;sb.from("profiles").select("is_admin").eq("id",s.user.id).single().then(function(r){IS_ADMIN=!!(r.data&&r.data.is_admin);if(IS_ADMIN){var be=$("b_email");if(be)be.hidden=false;}}).catch(function(){});await loadPoses();renderCanvas();loadBuilderSettings();}
+function buildSuggestions(){
+  SUG={};
+  SUG_FIELDS.forEach(f=>{const set=new Set();POSES.forEach(p=>{const v=p[f];(Array.isArray(v)?v:[v]).forEach(x=>{if(x)set.add(x);});});SUG[f]=[...set].sort((a,b)=>a.localeCompare(b));});
+  SUG.yoga_styles=[...new Set([...(SUG.yoga_styles||[]),...YOGA_STYLES])].sort((a,b)=>a.localeCompare(b));
+}
+
+/* ---------- AUTH ---------- */
+async function init(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session) showApp(session); else showLogin();
+}
+function showLogin(){ $("login").classList.remove("hidden"); $("app").classList.add("hidden"); }
+async function showApp(session){
+  $("login").classList.add("hidden"); $("app").classList.remove("hidden");
+  $("whoami").textContent = session.user.email;
+  await loadPoses(); loadDesign(); loadLibrary(); loadBuilderSettings(); loadEmail();
+}
 $("signin").onclick=async()=>{
   $("loginErr").classList.add("hidden");
-  const email=$("email").value.trim(),password=$("password").value;if(!email||!password)return;
-  $("signin").disabled=true;$("signin").textContent="Signing in…";
-  const{data,error}=await sb.auth.signInWithPassword({email,password});
-  $("signin").disabled=false;$("signin").textContent="Sign in";
-  if(error){$("loginErr").textContent=error.message;$("loginErr").classList.remove("hidden");return;}
+  const email=$("email").value.trim(), password=$("password").value;
+  if(!email||!password){return;}
+  $("signin").disabled=true; $("signin").textContent="Signing in…";
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  $("signin").disabled=false; $("signin").textContent="Sign in";
+  if(error){ $("loginErr").textContent=error.message; $("loginErr").classList.remove("hidden"); return; }
   showApp(data.session);
 };
 $("password").addEventListener("keydown",e=>{if(e.key==="Enter")$("signin").click();});
-$("signout").onclick=async()=>{await sb.auth.signOut();location.reload();};
+$("signout").onclick=async()=>{ await sb.auth.signOut(); POSES=[]; showLogin(); };
 
-/* POSES (picker) */
-async function loadPoses(){
-  const{data,error}=await sb.from("poses").select("id,name,sanskrit_name,emoji,image_url,category,difficulty_level,teaching_cues,short_description").order("canonical_pose_id");
-  if(error){$("plist").innerHTML='<div style="color:#A03A22;padding:8px">'+esc(error.message)+'</div>';return;}
-  POSES=data||[];
-  try{ if(SESSION){ const f=await sb.from("favorites").select("pose_id").eq("user_id",SESSION.user.id); FAVS=new Set((f.data||[]).map(r=>String(r.pose_id))); } }catch(e){}
-  const cats=[...new Set(POSES.map(p=>p.category).filter(Boolean))].sort();
-  const favChip=FAVS.size?`<span class="cat ${catFilter==="__fav__"?"on":""}" data-c="__fav__">\u2665 Favorites (${FAVS.size})</span>`:"";
-  $("cats").innerHTML=`<span class="cat ${catFilter===""?"on":""}" data-c="">All</span>`+favChip+cats.map(c=>`<span class="cat ${catFilter===c?"on":""}" data-c="${esc(c)}">${esc(c)}</span>`).join("");
-  $("cats").querySelectorAll(".cat").forEach(el=>el.onclick=()=>{catFilter=el.dataset.c;loadPoses();renderPicker();});
-  renderPicker();
+/* ---------- TABS ---------- */
+/* ---------- AVATARS ---------- */
+let AVA=null, AVA_POSES=[], AVA_SEL=null;
+async function loadAvatars(){
+  const {data:a}=await sb.from("app_settings").select("value").eq("key","avatars").single();
+  AVA=(a&&a.value)||{enabled:false,list:[]}; if(!Array.isArray(AVA.list))AVA.list=[];
+  const {data:ps}=await sb.from("poses").select("id,name,slug,emoji,image_url,avatar_images").eq("status","published").order("name");
+  AVA_POSES=ps||[];
+  if(!AVA_SEL && AVA.list[0]) AVA_SEL=AVA.list[0].id;
+  renderAvatars();
 }
-function renderPicker(){
-  const q=($("psearch").value||"").toLowerCase();
-  const list=POSES.filter(p=>(catFilter==="__fav__"?FAVS.has(String(p.id)):(!catFilter||p.category===catFilter))&&(!q||(p.name||"").toLowerCase().includes(q)||(p.sanskrit_name||"").toLowerCase().includes(q)));
-  $("plist").innerHTML=list.map(p=>{
-    const cue=arr(p.teaching_cues)[0]||p.short_description||"";
-    const thumb=p.image_url?`<img src="${esc(p.image_url)}">`:(p.emoji||"🧘");
-    const lv=p.difficulty_level?`<span class="lv">${esc(p.difficulty_level.slice(0,3))}</span>`:"";
-    return `<div class="pitem" data-id="${p.id}"><div class="pth">${thumb}</div>
-      <div style="flex:1;min-width:0"><div class="pn">${esc(p.name)}${lv}</div>
-      <div class="ps">${esc(p.sanskrit_name||"")}</div><div class="pc">${esc(cue)}</div></div></div>`;
-  }).join("")||'<div style="color:var(--muted);padding:8px">No poses match.</div>';
-  $("plist").querySelectorAll(".pitem").forEach(el=>{el.onclick=()=>addPose(el.dataset.id);el.setAttribute("draggable","true");el.ondragstart=e=>{DRAG={kind:"new",id:el.dataset.id};e.dataTransfer.setData("text/plain","new");e.dataTransfer.effectAllowed="copy";};el.ondragend=()=>{DRAG=null;};});
-}
-$("psearch").addEventListener("input",renderPicker);
-
-/* CANVAS */
-function addAt(index,id){const p=POSES.find(x=>String(x.id)===String(id));if(!p)return;items.splice(Math.max(0,Math.min(index,items.length)),0,{kind:"pose",pose:p,notes:"",breaths:5});renderCanvas();}
-function addPose(id){addAt(items.length,id);}
-$("b_section").onclick=()=>{items.push({kind:"section",title:"New section"});renderCanvas();};
-const BREATH_PATTERNS=['Natural','Inhale','Exhale','Inhale & Exhale','Hold','Box Breath'];
-const DIFF_SCORE={'Beginner':1,'Beginner-Intermediate':1.5,'Intermediate':2,'Intermediate-Advanced':2.5,'Advanced':3};
-function poseLevelScore(p){return (p&&DIFF_SCORE[p.difficulty_level])||1;}
-function levelColor(v){if(v<=1.25)return '#7fae7f';if(v<1.75)return '#a8ad91';if(v<2.25)return '#e0a23a';if(v<2.75)return '#d98a4a';return '#c46b6b';}
-function renderStats(){
-  const el=$("seqstats"); if(!el)return;
-  const poses=items.filter(it=>it.kind==="pose");
-  if(!poses.length){el.classList.add("hidden");el.innerHTML="";return;}
-  el.classList.remove("hidden");
-  const avg=poses.reduce((a,it)=>a+poseLevelScore(it.pose),0)/poses.length;
-  const score=Math.round((avg*10/3)*10)/10;
-  const breaths=poses.reduce((a,it)=>a+(parseInt(it.breaths)||5),0);
-  const mins=Math.round(breaths*6/60);
-  const segs=poses.map(it=>{const v=poseLevelScore(it.pose);return '<span class="seg" style="background:'+levelColor(v)+'" title="'+esc(it.pose.difficulty_level||"")+'"></span>';}).join("");
-  el.innerHTML='<div class="st-score"><span class="st-num">'+score.toFixed(1)+'</span><span class="st-of">/10</span><span class="st-lbl">difficulty</span></div>'
-    +'<div class="st-bar">'+segs+'</div>'
-    +'<div class="st-right"><span class="st-meta">'+poses.length+' poses \u00b7 ~'+mins+' min</span>'
-    +'<button class="btn ghost st-fit" id="b_autofit" title="Rescale breath holds to match the selected duration">\u27f3 Auto-fit time</button></div>';
-  const fit=$("b_autofit"); if(fit)fit.onclick=autoFitDuration;
-}
-function autoFitDuration(){
-  const poses=items.filter(it=>it.kind==="pose");
-  if(!poses.length)return toast("Add poses first");
-  const target=parseInt($("m_duration").value);
-  if(!target)return toast("Pick a target duration first");
-  const curSecs=poses.reduce((a,it)=>a+(parseInt(it.breaths)||5)*6,0);
-  if(!curSecs)return;
-  const ratio=(target*60)/curSecs;
-  items.forEach(it=>{if(it.kind==="pose")it.breaths=Math.max(1,Math.round((parseInt(it.breaths)||5)*ratio));});
-  renderCanvas();
-  toast("Adjusted to ~"+target+" min");
-}
-function renderCanvas(){
-  const c=$("canvas");
-  if(!items.length){c.innerHTML=`<div class="empty"><div class="fl">🌸</div><h4>Begin Your Sequence</h4><div>Click a pose, or drag one from the list, to build your flow</div></div>`;return;}
-  let pn=0;
-  c.innerHTML=`<div class="seqgrid" id="seqgrid">`+items.map((it,i)=>{
-    if(it.kind==="section")
-      return `<div class="seqcard section" data-i="${i}"><span class="sc-handle" draggable="true">⠿</span>
-        <input value="${esc(it.title)}" oninput="setItem(${i},'title',this.value)"/>
-        <button class="sc-rm" onclick="removeItem(${i})">✕</button></div>`;
-    pn++;const p=it.pose;const thumb=p.image_url?`<img class="${it.mirror?'mir':''}" src="${esc(p.image_url)}">`:(p.emoji||"🧘");
-    return `<div class="seqcard" data-i="${i}" draggable="true">
-      <div class="sc-top">${p.image_url?`<button class="sc-mir ${it.mirror?'on':''}" onclick="toggleMirror(${i})" title="Mirror left / right">\u21c4</button>`:`<span></span>`}<span class="sc-num">${pn}</span><button class="sc-rm" onclick="removeItem(${i})">✕</button></div>
-      <div class="sc-th">${thumb}</div>
-      <div class="sc-name">${esc(p.name)}</div>
-      <div class="sc-san">${esc(p.sanskrit_name||"")}</div>
-      <div class="sc-cue">${esc(it.notes||"")}</div>
-      <div class="sc-br">${[it.breaths?esc(it.breaths)+" breaths":"",(it.breath_pattern&&it.breath_pattern!=="Natural")?esc(it.breath_pattern):""].filter(Boolean).join(" \u00b7 ")||"&nbsp;"}</div>
-      <button class="sc-edit" onclick="editItem(${i})">Edit</button>
+function avThumb(av){ return av.thumb_url?`<img src="${esc(av.thumb_url)}">`:'<span style="font-size:26px">\ud83e\uddd8</span>'; }
+function renderAvatars(){
+  const list=AVA.list||[];
+  const roster=list.map(av=>`<div class="grp" style="margin-bottom:10px">
+     <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+       <div class="imgprev" id="avthumb_${av.id}" style="width:72px;height:72px;flex:0 0 auto">${avThumb(av)}</div>
+       <div style="flex:1;min-width:240px">
+         <div class="row2"><div class="field"><label>Name</label><input id="avname_${av.id}" value="${esc(av.name||"")}"/></div>
+           <div class="field"><label>Avatar ID (fixed)</label><input value="${esc(av.id)}" disabled style="opacity:.55"/></div></div>
+         <div class="field"><label>Description</label><input id="avdesc_${av.id}" value="${esc(av.desc||"")}"/></div>
+         <div class="field"><label>Picker thumbnail</label><input type="file" id="avtf_${av.id}" accept="image/png,image/jpeg,image/webp"/><div class="hint" id="avtm_${av.id}">Shown in the member avatar picker. A clear front-facing illustration works best.</div></div>
+       </div></div></div>`).join("");
+  const chips=list.map(av=>`<button class="btn ${AVA_SEL===av.id?'':'ghost'}" data-avsel="${av.id}" style="padding:6px 12px">${esc(av.name||av.id)}</button>`).join(" ");
+  const sel=list.find(a=>a.id===AVA_SEL);
+  const setCount=AVA_POSES.filter(p=>p.avatar_images&&p.avatar_images[AVA_SEL]).length;
+  const grid=AVA_POSES.map(p=>{
+    const u=(p.avatar_images&&p.avatar_images[AVA_SEL])||"";
+    const prev=u?`<img src="${esc(u)}">`:(p.image_url?`<img src="${esc(p.image_url)}" style="opacity:.35">`:`<span style="font-size:22px">${esc(p.emoji||"\ud83e\uddd8")}</span>`);
+    return `<div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
+      <div class="imgprev" id="apprev_${p.id}" style="width:50px;height:50px;flex:0 0 auto">${prev}</div>
+      <div style="flex:1"><div style="font-weight:500;color:var(--head)">${esc(p.name)}</div>
+        <div style="font-size:11px;color:var(--muted)">${u?'\u2713 Avatar image set':'<span style="opacity:.7">Default photo / emoji</span>'}</div></div>
+      <label class="btn ghost" style="padding:6px 10px;cursor:pointer">Upload<input type="file" id="apf_${p.id}" accept="image/png,image/jpeg,image/webp" style="display:none"/></label>
+      ${u?`<button class="btn ghost" data-aprm="${p.id}" style="padding:6px 10px">Remove</button>`:''}
     </div>`;
-  }).join("")+`</div>`;
-  wireCanvasDnD();
-  renderStats();
-}
-function removeItem(i){items.splice(i,1);renderCanvas();}
-function toggleMirror(i){if(items[i]){items[i].mirror=!items[i].mirror;renderCanvas();}}
-window.toggleMirror=toggleMirror;
-function handleDrop(target){
-  if(!DRAG)return;
-  if(DRAG.kind==="new"){addAt(target,DRAG.id);}
-  else if(DRAG.kind==="move"){const f=DRAG.from;if(f!==target){const[m]=items.splice(f,1);items.splice(target,0,m);renderCanvas();}}
-  DRAG=null;
-}
-function wireCanvasDnD(){
-  document.querySelectorAll("#seqgrid .seqcard").forEach(card=>{
-    const i=+card.dataset.i;const h=card.querySelector(".sc-handle");
-    const startDrag=e=>{DRAG={kind:"move",from:i};card.classList.add("drag");try{e.dataTransfer.setData("text/plain","move");e.dataTransfer.effectAllowed="move";}catch(_){}};
-    const endDrag=()=>{card.classList.remove("drag");};
-    if(h){ h.ondragstart=startDrag; h.ondragend=endDrag; }
-    else { card.ondragstart=e=>{ if(e.target.closest&&e.target.closest("button,input,select,textarea,a")){e.preventDefault();return;} startDrag(e); }; card.ondragend=endDrag; }
-    card.ondragover=e=>{if(DRAG){e.preventDefault();card.classList.add("over");}};
-    card.ondragleave=()=>card.classList.remove("over");
-    card.ondrop=e=>{if(!DRAG)return;e.preventDefault();e.stopPropagation();card.classList.remove("over");handleDrop(i);};
-  });
-}
-function editItem(i){
-  const it=items[i];if(!it||it.kind!=="pose")return;
-  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()">
-    <h3 class="serif">${esc(it.pose.name)}</h3>
-    <div class="field"><label>Cue / note for this pose</label><textarea id="ie_notes" rows="3">${esc(it.notes||"")}</textarea></div>
-    <div class="field"><label>Breaths</label><input id="ie_breaths" type="number" min="1" value="${esc(it.breaths||"")}"/></div>
-    <div class="field"><label>Breath pattern</label><select id="ie_breath" class="ie-select">${BREATH_PATTERNS.map(bp=>`<option value="${bp}"${(it.breath_pattern||'Natural')===bp?' selected':''}>${bp}</option>`).join("")}</select></div>
-    <div class="field"><label>Replace pose</label><select id="ie_replace" class="ie-select" onchange="substitutePose(${i},this.value)"><option value="">Swap this pose for another\u2026</option>${POSES.map(p=>`<option value="${p.id}">${esc(p.name)}${p.sanskrit_name?" \u2014 "+esc(p.sanskrit_name):""}</option>`).join("")}</select><div style="font-size:11px;color:var(--muted);margin-top:4px">Keeps your notes, breaths &amp; breath pattern.</div></div>
-    <div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="ie_mirror" ${it.mirror?"checked":""}/> Mirror image (show the opposite side)</label></div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="btn ghost" style="flex:1" onclick="closeModal()">Cancel</button>
-      <button class="btn" style="flex:1" onclick="saveItem(${i})">Done</button>
-    </div></div></div>`;
-  $("ovl").onclick=closeModal;
-}
-function saveItem(i){items[i].notes=$("ie_notes").value;const b=$("ie_breaths").value;items[i].breaths=b?parseInt(b):"";items[i].breath_pattern=$("ie_breath").value;const mc=$("ie_mirror");if(mc)items[i].mirror=mc.checked;closeModal();renderCanvas();}
-function substitutePose(i,pid){
-  if(!pid)return;
-  const np=POSES.find(x=>String(x.id)===String(pid)); if(!np)return;
-  const cur=items[i]||{};
-  items[i]={kind:"pose",pose:np,notes:cur.notes||"",breaths:cur.breaths||"",breath_pattern:cur.breath_pattern||"Natural",mirror:cur.mirror};
-  closeModal();renderCanvas();toast("Replaced with "+np.name);
-}
-
-/* SAVE / LOAD */
-function tagsArr(){return ($("m_tags").value||"").split(",").map(s=>s.trim()).filter(Boolean);}
-$("b_save").onclick=async()=>{
-  const name=$("m_name").value.trim();
-  if(!name)return toast("Give your sequence a name first.");
-  if(!items.length)return toast("Add at least one pose.");
-  if(currentId){await snapshotExisting(currentId);}
-  const row={name,level:$("m_level").value.trim()||null,style:$("m_style").value.trim()||null,
-    duration_label:$("m_duration").value.trim()||null,description:$("m_description").value.trim()||null,
-    playlist_url:$("m_playlist").value.trim()||null,tags:tagsArr(),
-    visibility:$("m_share").checked?"community":"private",theme:seqTheme,owner_id:SESSION.user.id};
-  if(currentId)row.id=currentId;
-  const{data,error}=await sb.from("sequences").upsert(row).select("id").single();
-  if(error)return toast("Save failed: "+error.message);
-  currentId=data.id;
-  await sb.from("sequence_items").delete().eq("sequence_id",currentId);
-  const rows=items.map((it,i)=>({sequence_id:currentId,position:i,item_type:it.kind,
-    pose_id:it.kind==="pose"?it.pose.id:null,
-    custom_name:it.kind==="section"?it.title:it.pose.name,
-    custom_sanskrit:it.kind==="pose"?it.pose.sanskrit_name:null,
-    notes:it.notes||null,custom_breaths:it.kind==="pose"&&it.breaths?parseInt(it.breaths):null,custom_breath_pattern:it.kind==="pose"?(it.breath_pattern||null):null,
-    emoji:it.kind==="pose"?it.pose.emoji:null,level:it.kind==="pose"?it.pose.difficulty_level:null,mirrored:it.kind==="pose"?!!it.mirror:false}));
-  if(rows.length){const r=await sb.from("sequence_items").insert(rows);if(r.error)return toast("Saved sequence, but poses failed: "+r.error.message);}
-  toast("Saved ✓");
-};
-$("b_new").onclick=()=>{if(items.length&&!confirm("Start a new sequence? Unsaved changes will be lost."))return;reset();};
-$("b_clear").onclick=()=>{if(items.length&&!confirm("Clear all poses from this sequence?"))return;items=[];renderCanvas();};
-function setSel(id,val){var el=$(id);if(!el)return;val=val||"";if(val&&!Array.prototype.some.call(el.options,function(o){return o.value===val;})){var o=document.createElement("option");o.value=val;o.textContent=val;el.appendChild(o);}el.value=val;}
-function reset(){currentId=null;items=[];["m_name","m_description","m_playlist","m_level","m_duration","m_style","m_tags"].forEach(k=>$(k).value="");$("m_share").checked=false;renderCanvas();applyBuilderDefaults();}
-$("b_print").onclick=openPrintReview;
-$("b_share").onclick=shareSequence;
-$("b_email").onclick=openEmailModal;
-function openEmailModal(){
-  if(!IS_ADMIN)return;
-  if(!currentId)return toast("Save your sequence first, then send.");
-  const defSubject="This week's practice: "+($("m_name").value||"New sequence");
-  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()">
-    <h3 class="serif">Send as weekly email</h3>
-    <p style="color:var(--muted);font-size:13px;margin:-4px 0 12px">Emails this sequence to your configured audience. Send a test to yourself first.</p>
-    <div class="field"><label>Subject</label><input id="em_subject" class="ie-select" value="${esc(defSubject)}"/></div>
-    <div id="em_status" style="font-size:12.5px;color:var(--muted);margin:8px 0 14px;min-height:16px"></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn ghost" style="flex:1" id="em_test">Send test to me</button>
-      <button class="btn" style="flex:1" id="em_send">Send to everyone</button>
-    </div>
-    <button class="btn ghost" style="margin-top:8px;width:100%" onclick="closeModal()">Cancel</button>
-  </div></div>`;
-  $("ovl").onclick=closeModal;
-  $("em_test").onclick=function(){sendWeekly(true);};
-  $("em_send").onclick=function(){if(confirm("Send this sequence to your full audience? This cannot be undone."))sendWeekly(false);};
-}
-async function sendWeekly(test){
-  const st=$("em_status"); if(st)st.textContent=test?"Sending test\u2026":"Sending\u2026";
-  const subject=$("em_subject")?$("em_subject").value:"";
-  const{data:{session}}=await sb.auth.getSession();
-  try{
-    const res=await fetch(SUPABASE_URL+"/functions/v1/send-weekly-email",{method:"POST",
-      headers:{"Content-Type":"application/json","apikey":ANON,"Authorization":"Bearer "+(session&&session.access_token)},
-      body:JSON.stringify({sequence_id:currentId,subject:subject,test:test})});
-    const j=await res.json().catch(function(){return {};});
-    if(!res.ok||j.error){ if(st)st.textContent="\u26a0 "+(j.error||("Failed ("+res.status+")")); return; }
-    if(test){ if(st)st.textContent="\u2713 Test sent to your inbox."; toast("Test email sent \u2709"); }
-    else{ closeModal(); toast("Sent to "+(j.sent||0)+" recipient"+((j.sent===1)?"":"s")+" \u2709"); }
-  }catch(e){ if(st)st.textContent="\u26a0 "+String(e&&e.message||e); }
-}
-async function shareSequence(){
-  if(!currentId)return toast("Save your sequence first, then share.");
-  const{data:src,error:e0}=await sb.from("sequences").select("share_token,name").eq("id",currentId).single();
-  if(e0)return toast("Couldn't open share: "+e0.message);
-  let token=src&&src.share_token;
-  if(!token){
-    token=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():(Date.now()+"-"+Math.random().toString(16).slice(2));
-    const{error}=await sb.from("sequences").update({share_token:token}).eq("id",currentId);
-    if(error)return toast("Couldn't create share link: "+error.message);
-  }
-  let base=location.origin;
-  try{const{data:cfg}=await sb.from("app_settings").select("value").eq("key","site").single();if(cfg&&cfg.value&&cfg.value.public_base_url)base=cfg.value.public_base_url;}catch(e){}
-  const url=base.replace(/\/+$/,"")+"/s?t="+token;
-  const qr="https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data="+encodeURIComponent(url);
-  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()">
-    <h3 class="serif">Share with students</h3>
-    <p style="color:var(--muted);font-size:13px;margin:-4px 0 12px">Anyone with this link sees a clean, read-only version of \u201c${esc(src.name||"this sequence")}\u201d \u2014 no account needed.</p>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
-      <input id="sh_url" readonly value="${esc(url)}" style="flex:1;min-width:0;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--field);font-size:13px;color:var(--ink)"/>
-      <button class="btn" id="sh_copy">Copy</button>
-    </div>
-    <div style="text-align:center;margin-bottom:6px"><img src="${qr}" alt="QR code" width="200" height="200" style="border:1px solid var(--line);border-radius:12px;padding:8px;background:#fff"/></div>
-    <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:16px">Students can scan this QR code to open the sequence.</div>
-    <div style="display:flex;gap:8px">
-      <a class="btn ghost" style="flex:1;text-align:center;text-decoration:none" href="${esc(url)}" target="_blank" rel="noopener">Open student view \u2197</a>
-      <button class="btn ghost" style="flex:1" onclick="closeModal()">Done</button>
-    </div></div></div>`;
-  $("ovl").onclick=closeModal;
-  $("sh_copy").onclick=function(){
-    const i=$("sh_url"); i.select(); i.setSelectionRange(0,99999);
-    const done=function(){toast("Link copied 🔗");};
-    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(i.value).then(done).catch(function(){try{document.execCommand("copy");done();}catch(e){}});}
-    else{try{document.execCommand("copy");done();}catch(e){}}
-  };
-}
-
-function openPrintReview(){
-  var poseItems=items.map(function(it,idx){return {it:it,idx:idx};}).filter(function(x){return x.it.kind==="pose";});
-  if(!poseItems.length){ toast("Add a pose first"); return; }
-  var ov=document.createElement("div"); ov.className="ovl"; ov.id="printOvl";
-  var rows=poseItems.map(function(x,n){ var p=x.it.pose;
-    var thumb=p.image_url?('<img src="'+esc(p.image_url)+'">'):(p.emoji||"\ud83e\uddd8");
-    return '<div class="pm-row"><div class="pm-num">'+(n+1)+'</div><div class="pm-img">'+thumb+'</div>'
-      +'<div class="pm-info"><div class="pm-name">'+esc(p.name)+'</div><div class="pm-san">'+esc(p.sanskrit_name||"")+'</div>'
-      +'<textarea class="pm-note" rows="2" data-idx="'+x.idx+'" placeholder="Add instructor notes, cues, or transitions\u2026">'+esc(x.it.notes||"")+'</textarea></div></div>';
   }).join("");
-  ov.innerHTML='<div class="modal printmodal" onclick="event.stopPropagation()">'
-    +'<div class="pm-head"><div class="pm-title">\ud83d\udda8\ufe0f Review &amp; Print</div>'
-    +'<div class="pm-sub">Add or edit your notes for each pose before printing</div>'
-    +'<div class="pm-tabs"><span class="lbl">Layout</span>'
-    +'<button class="pm-tab on" data-l="list">\u2630 List</button>'
-    +'<button class="pm-tab" data-l="cards">\u229e Cards</button>'
-    +'<button class="pm-tab" data-l="notes">\ud83d\udcdd Notes only</button></div></div>'
-    +'<div class="pm-list">'+rows+'</div>'
-    +'<div class="pm-foot"><div class="pm-hint">Notes are saved with your sequence when you print</div>'
-    +'<div style="display:flex;gap:8px"><button class="btn ghost" id="pmCancel">Cancel</button>'
-    +'<button class="btn" id="pmGo">Continue to Print \u2192</button></div></div></div>';
-  ov.addEventListener("click",function(){ ov.remove(); });
-  document.body.appendChild(ov);
-  var layout="list";
-  ov.querySelectorAll(".pm-tab").forEach(function(bt){ bt.onclick=function(){ ov.querySelectorAll(".pm-tab").forEach(function(x){x.classList.remove("on");}); bt.classList.add("on"); layout=bt.getAttribute("data-l"); }; });
-  $("pmCancel").onclick=function(){ ov.remove(); };
-  $("pmGo").onclick=function(){
-    ov.querySelectorAll("textarea[data-idx]").forEach(function(t){ items[+t.getAttribute("data-idx")].notes=t.value; });
-    renderCanvas(); var L=layout; ov.remove(); printDoc(L);
+  $("avatars").innerHTML=`<div id="avErr" class="err hidden"></div>
+    <div class="grp"><div class="gt">Pose avatars</div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="av_enabled" ${AVA.enabled?"checked":""}/> Enable avatars \u2014 let members choose an illustrated character for pose images</label>
+      <div class="hint">When on, members pick an avatar in their profile and pose cards show that avatar's illustration, falling back to the default pose photo, then emoji, anywhere an image isn't uploaded yet.</div></div>
+    <div class="grp"><div class="gt">The 6 avatars</div>${roster}
+      <button class="btn" id="av_save">Save avatars</button>
+      <span id="av_status" style="margin-left:12px;color:var(--muted);font-size:13px"></span></div>
+    <div class="grp"><div class="gt">Upload pose illustrations</div>
+      <div class="hint" style="margin-bottom:10px">Pick an avatar, then upload that avatar's image for each pose. <strong>${esc((sel&&sel.name)||"")}: ${setCount}/${AVA_POSES.length}</strong> uploaded.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">${chips}</div>
+      <div style="max-height:520px;overflow:auto">${grid}</div></div>`;
+  const en=$("av_enabled"); if(en)en.onchange=()=>{AVA.enabled=en.checked;};
+  $("av_save").onclick=saveAvatars;
+  list.forEach(av=>{const nm=$("avname_"+av.id),ds=$("avdesc_"+av.id),tf=$("avtf_"+av.id);
+    if(nm)nm.oninput=()=>{av.name=nm.value;}; if(ds)ds.oninput=()=>{av.desc=ds.value;}; if(tf)tf.onchange=e=>uploadAvatarThumb(e,av);});
+  document.querySelectorAll("[data-avsel]").forEach(b=>b.onclick=()=>{AVA_SEL=b.dataset.avsel;renderAvatars();});
+  AVA_POSES.forEach(p=>{const f=$("apf_"+p.id);if(f)f.onchange=e=>uploadPoseAvatar(e,p);});
+  document.querySelectorAll("[data-aprm]").forEach(b=>b.onclick=()=>removePoseAvatar(b.dataset.aprm));
+}
+async function saveAvatars(){
+  $("av_save").disabled=true;$("av_save").textContent="Saving\u2026";
+  const{error}=await sb.from("app_settings").upsert({key:"avatars",value:AVA});
+  $("av_save").disabled=false;$("av_save").textContent="Save avatars";
+  if(error){const e=$("avErr");e.textContent=error.message;e.classList.remove("hidden");return;}
+  $("av_status").textContent="Saved \u2713";
+}
+async function uploadAvatarThumb(e,av){
+  const f=e.target.files&&e.target.files[0]; if(!f)return;
+  const msg=$("avtm_"+av.id); if(msg)msg.textContent="Uploading\u2026";
+  const ext=(f.name.split(".").pop()||"png").toLowerCase();
+  const path="avatars/"+av.id+"-thumb-"+Date.now().toString(36)+"."+ext;
+  const{error}=await sb.storage.from("pose-images").upload(path,f,{upsert:true,contentType:f.type||undefined});
+  if(error){if(msg)msg.textContent="Upload failed: "+error.message;return;}
+  const{data}=sb.storage.from("pose-images").getPublicUrl(path);
+  av.thumb_url=data.publicUrl;
+  const pv=$("avthumb_"+av.id); if(pv)pv.innerHTML=`<img src="${esc(av.thumb_url)}">`;
+  if(msg)msg.textContent="Uploaded \u2713 \u2014 click Save avatars to keep.";
+}
+async function uploadPoseAvatar(e,p){
+  const f=e.target.files&&e.target.files[0]; if(!f)return;
+  const ext=(f.name.split(".").pop()||"png").toLowerCase();
+  const path="avatars/"+AVA_SEL+"/"+p.id+"-"+Date.now().toString(36)+"."+ext;
+  const{error}=await sb.storage.from("pose-images").upload(path,f,{upsert:true,contentType:f.type||undefined});
+  if(error){const el=$("avErr");el.textContent=error.message;el.classList.remove("hidden");return;}
+  const{data}=sb.storage.from("pose-images").getPublicUrl(path);
+  const imgs=Object.assign({},p.avatar_images||{}); imgs[AVA_SEL]=data.publicUrl;
+  const{error:ue}=await sb.from("poses").update({avatar_images:imgs}).eq("id",p.id);
+  if(ue){const el=$("avErr");el.textContent=ue.message;el.classList.remove("hidden");return;}
+  p.avatar_images=imgs; renderAvatars();
+}
+async function removePoseAvatar(pid){
+  const p=AVA_POSES.find(x=>x.id===pid); if(!p)return;
+  const imgs=Object.assign({},p.avatar_images||{}); delete imgs[AVA_SEL];
+  const{error}=await sb.from("poses").update({avatar_images:imgs}).eq("id",pid);
+  if(error){const el=$("avErr");el.textContent=error.message;el.classList.remove("hidden");return;}
+  p.avatar_images=imgs; renderAvatars();
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
+  $("dash").classList.toggle("hidden", t.dataset.tab!=="dash");
+  $("engage").classList.toggle("hidden", t.dataset.tab!=="engage");
+  $("poses").classList.toggle("hidden", t.dataset.tab!=="poses");
+  $("avatars").classList.toggle("hidden", t.dataset.tab!=="avatars");
+  $("design").classList.toggle("hidden", t.dataset.tab!=="design");
+  $("library").classList.toggle("hidden", t.dataset.tab!=="library");
+  $("builder").classList.toggle("hidden", t.dataset.tab!=="builder");
+  $("emailtab").classList.toggle("hidden", t.dataset.tab!=="email");
+  $("advanced").classList.toggle("hidden", t.dataset.tab!=="advanced");
+  $("legal").classList.toggle("hidden", t.dataset.tab!=="legal");
+  $("site").classList.toggle("hidden", t.dataset.tab!=="site");
+  $("billing").classList.toggle("hidden", t.dataset.tab!=="billing");
+  $("shop").classList.toggle("hidden", t.dataset.tab!=="shop");
+  if(t.dataset.tab==="engage") loadEngagement();
+  if(t.dataset.tab==="avatars") loadAvatars();
+  if(t.dataset.tab==="advanced") loadAdvanced();
+  if(t.dataset.tab==="legal") loadLegal();
+  if(t.dataset.tab==="site") loadSite();
+  if(t.dataset.tab==="billing") loadBilling();
+  if(t.dataset.tab==="shop") loadShop();
+  if(t.dataset.tab==="email") loadEmail();
+});
+
+/* ---------- SHOP ---------- */
+let SHOP=null, SHOP_PRODUCTS=[];
+async function loadShop(){
+  const s=await sb.from("app_settings").select("value").eq("key","shop").single();
+  SHOP=(s.data&&s.data.value)||{enabled:false,heading:"Shop",subheading:""};
+  const p=await sb.from("products").select("*").order("sort_order",{ascending:true}).order("created_at",{ascending:true});
+  SHOP_PRODUCTS=p.data||[];
+  renderShop();
+}
+function shMoney(c){ return (c==null||c==="")?"":((Number(c)||0)/100).toFixed(2); }
+function prodCard(p){
+  p=p||{}; const id=p.id||"";
+  return `<div class="grp" data-pid="${id}">
+    <div class="row2">
+      <div class="field"><label>Title</label><input class="p_title" value="${esc(p.title||"")}"/></div>
+      <div class="field"><label>Status</label><select class="p_status"><option value="draft" ${p.status!=="published"?"selected":""}>Draft</option><option value="published" ${p.status==="published"?"selected":""}>Published</option></select></div>
+    </div>
+    <div class="field"><label>Description</label><textarea class="p_desc" rows="2">${esc(p.description||"")}</textarea></div>
+    <div class="row2">
+      <div class="field"><label>Image</label>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="imgprev p_imgprev" style="width:60px;height:60px">${p.image_url?`<img src="${esc(p.image_url)}">`:'<span style="color:var(--muted);font-size:11px">none</span>'}</div>
+          <div style="flex:1">
+            <input class="p_img" placeholder="https://\u2026 or upload below" value="${esc(p.image_url||"")}"/>
+            <input type="file" class="p_imgfile" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="margin-top:6px;font-size:12px"/>
+            <div class="hint p_imgmsg"></div>
+          </div>
+        </div>
+      </div>
+      <div class="field"><label>Link URL (affiliate / external)</label><input class="p_url" placeholder="https://…" value="${esc(p.url||"")}"/></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Price ($)</label><input class="p_price" value="${shMoney(p.price_cents)}"/></div>
+      <div class="field"><label>Was / regular price ($, optional)</label><input class="p_reg" value="${shMoney(p.regular_cents)}"/></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Categories (comma-separated)</label><input class="p_cats" placeholder="Props, Books" value="${esc((p.categories||[]).join(", "))}"/></div>
+      <div class="field"><label>Rating (0\u20135, optional)</label><input class="p_rating" value="${p.rating!=null?p.rating:""}"/></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Type</label><select class="p_type"><option value="affiliate" ${p.product_type!=="native"?"selected":""}>Affiliate / external link</option><option value="native" ${p.product_type==="native"?"selected":""}>Sold here (Stripe)</option></select></div>
+      <div class="field"><label>Stripe price ID (native only)</label><input class="p_pid" placeholder="price_\u2026" value="${esc(p.stripe_price_id||"")}"/></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Sort order</label><input class="p_sort" value="${p.sort_order!=null?p.sort_order:0}"/></div>
+      <div class="field"><label class="toggle" style="margin-top:26px"><input type="checkbox" class="p_feat" ${p.featured?"checked":""}/> Featured</label></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+      <button class="btn p_save">Save</button>
+      <button class="btn ghost p_del">Delete</button>
+      <span class="p_msg" style="color:var(--muted);font-size:13px"></span>
+    </div>
+  </div>`;
+}
+function renderShop(){
+  const s=SHOP;
+  $("shop").innerHTML=`<div id="shopErr" class="err hidden"></div>
+    <div class="grp"><div class="gt">Shop \u2014 settings</div>
+      <label class="toggle"><input type="checkbox" id="s_enabled" ${s.enabled?"checked":""}/> Shop enabled (show the Shop link in the site header)</label>
+      <div class="row2" style="margin-top:10px">
+        <div class="field"><label>Heading</label><input id="s_heading" value="${esc(s.heading||"Shop")}"/></div>
+        <div class="field"><label>Subheading</label><input id="s_subheading" value="${esc(s.subheading||"")}"/></div>
+      </div>
+      <button class="btn" id="shop_save">Save shop settings</button>
+      <span id="shop_status" style="margin-left:12px;color:var(--muted);font-size:13px"></span>
+      <div class="hint">Affiliate products open an external link. \u201cSold here (Stripe)\u201d is ready in the schema for when you sell natively \u2014 paste a Stripe one-time price ID and we\u2019ll wire its checkout.</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:18px 0 10px">
+      <div class="gt" style="margin:0">Products (${SHOP_PRODUCTS.length})</div>
+      <button class="btn" id="s_add">+ Add product</button>
+    </div>
+    <div id="prodList">${SHOP_PRODUCTS.map(prodCard).join("")||'<div style="color:var(--muted)">No products yet \u2014 click \u201c+ Add product\u201d.</div>'}</div>`;
+  $("shop_save").onclick=saveShopSettings;
+  $("s_add").onclick=addProduct;
+  bindProdCards();
+}
+function wireProdImage(card){
+  const file=card.querySelector(".p_imgfile"), urlEl=card.querySelector(".p_img"), prev=card.querySelector(".p_imgprev"), msg=card.querySelector(".p_imgmsg");
+  function setPrev(u){ if(prev) prev.innerHTML=u?`<img src="${esc(u)}">`:'<span style="color:var(--muted);font-size:11px">none</span>'; }
+  if(urlEl) urlEl.addEventListener("input",()=>setPrev(urlEl.value.trim()));
+  if(file) file.onchange=async e=>{
+    const f=e.target.files&&e.target.files[0]; if(!f) return;
+    if(msg) msg.textContent="Uploading\u2026";
+    const ext=(f.name.split(".").pop()||"png").toLowerCase();
+    const path="products/prod-"+Date.now().toString(36)+"."+ext;
+    const{error}=await sb.storage.from("pose-images").upload(path,f,{upsert:true,contentType:f.type||undefined});
+    if(error){ if(msg) msg.textContent="Upload failed: "+error.message; return; }
+    const{data}=sb.storage.from("pose-images").getPublicUrl(path);
+    if(urlEl) urlEl.value=data.publicUrl; setPrev(data.publicUrl); if(msg) msg.textContent="Uploaded \u2713 \u2014 Save to keep";
   };
 }
-function printDoc(layout){
-  var cs=getComputedStyle(document.documentElement), gv=function(n,f){var v=(cs.getPropertyValue(n)||"").trim();return v||f;};
-  var ROSE=gv("--rose","#C8A0A6"), SAGE=gv("--sage","#a8ad91");
-  var brandEl=document.querySelector(".ppy-brand .wm"), brand=(brandEl&&brandEl.textContent)||"Pure Passion Yoga";
-  var title=($("m_name").value||"My Yoga Sequence"), level=$("m_level").value, dur=$("m_duration").value, style=$("m_style").value;
-  var poseItems=items.filter(function(it){return it.kind==="pose";});
-  var mins=Math.round(poseItems.reduce(function(s,it){return s+((parseInt(it.breaths)||5)*6);},0)/60);
-  function E(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-  function img(p,sz,mir){ return p.image_url?('<img src="'+E(p.image_url)+'" style="width:'+sz+'px;height:'+sz+'px;object-fit:contain'+(mir?';transform:scaleX(-1)':'')+'">'):('<span style="font-size:'+Math.round(sz*0.5)+'px">'+(p.emoji||"\ud83e\uddd8")+'</span>'); }
-  var CSS='*{box-sizing:border-box;margin:0;padding:0}'
-    +'body{font-family:Poppins,system-ui,sans-serif;padding:30px 34px;color:#3a3a3a;background:#fff}'
-    +'.phead{margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid '+ROSE+'}'
-    +'.brand{font-family:\'Playfair Display\',serif;font-size:11px;color:'+ROSE+';letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}'
-    +'h1{font-family:\'Playfair Display\',serif;font-size:26px;color:'+ROSE+';margin-bottom:4px}'
-    +'.meta{font-size:12px;color:#7a7a7a}'
-    +'.styles{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}'
-    +'.styles span{font-size:10px;padding:2px 8px;border-radius:5px;background:#f0ebe8;color:'+SAGE+'}'
-    +'.footer{margin-top:22px;font-size:9px;color:#bbb;text-align:center;border-top:1px solid #e8e0de;padding-top:12px;letter-spacing:.04em}'
-    +'table{width:100%;border-collapse:collapse}'
-    +'th{text-align:left;font-size:10px;font-weight:500;color:'+SAGE+';letter-spacing:.06em;text-transform:uppercase;padding:8px;border-bottom:2px solid '+ROSE+'}'
-    +'td{padding:9px 8px;border-bottom:1px solid #f0ebe8;vertical-align:top;font-size:12px}'
-    +'tr{break-inside:avoid;page-break-inside:avoid}'
-    +'tr:nth-child(even) td{background:#fdf8f7}'
-    +'.num{text-align:center;color:#bbb;font-size:11px;width:24px}.im{text-align:center;width:44px}'
-    +'.san{display:block;color:'+SAGE+';font-style:italic;font-size:11px}'
-    +'.lv{font-size:11px;color:#888}.hold{font-size:11px;white-space:nowrap}.nts{color:#666;font-size:11px}'
-    +'.pn{font-weight:600;color:'+ROSE+';font-size:13px;white-space:nowrap}.nt{font-size:12px;line-height:1.6}'
-    +'.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}'
-    +'.card{border:1.5px solid rgba(0,0,0,.08);border-radius:14px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;position:relative;break-inside:avoid;page-break-inside:avoid}'
-    +'.cn{position:absolute;top:8px;left:11px;font-size:10px;color:#bbb;font-weight:600}'
-    +'.ci{width:130px;height:130px;display:flex;align-items:center;justify-content:center;background:#fdf8f7;border-radius:10px;overflow:hidden}'
-    +'.cnm{font-family:\'Playfair Display\',serif;font-size:14px;font-weight:600;color:'+ROSE+';line-height:1.2}'
-    +'.csn{font-size:10px;color:'+SAGE+';font-style:italic}.cm{font-size:10px;color:#888;margin-top:2px}'
-    +'.cnotes{font-size:10px;color:#666;font-style:italic;border-top:1px solid #f0ebe8;padding-top:6px;margin-top:2px;width:100%;line-height:1.4}';
-  var body;
-  if(layout==="cards"){
-    body='<div class="grid">'+poseItems.map(function(it,i){ var p=it.pose;
-      return '<div class="card"><div class="cn">'+(i+1)+'</div><div class="ci">'+img(p,120,it.mirror)+'</div>'
-        +'<div class="cnm">'+E(p.name)+'</div><div class="csn">'+E(p.sanskrit_name||"")+'</div>'
-        +'<div class="cm">'+E(p.difficulty_level||"")+' &nbsp;\u00b7&nbsp; '+((parseInt(it.breaths)||5))+' breaths</div>'
-        +(it.notes?('<div class="cnotes">'+E(it.notes)+'</div>'):"")+'</div>'; }).join("")+'</div>';
-  } else if(layout==="notes"){
-    var nr=poseItems.filter(function(it){return it.notes;}).map(function(it){ return '<tr><td class="pn">'+E(it.pose.name)+'</td><td class="nt">'+E(it.notes)+'</td></tr>'; }).join("");
-    body='<table><thead><tr><th>Pose</th><th>Notes &amp; cues</th></tr></thead><tbody>'+(nr||'<tr><td colspan="2" style="color:#999">No notes added yet.</td></tr>')+'</tbody></table>';
-  } else {
-    body='<table><thead><tr><th>#</th><th></th><th>Pose</th><th>Level</th><th>Hold</th><th>Notes</th></tr></thead><tbody>'
-      +poseItems.map(function(it,i){ var p=it.pose;
-        return '<tr><td class="num">'+(i+1)+'</td><td class="im">'+img(p,34,it.mirror)+'</td>'
-          +'<td><strong>'+E(p.name)+'</strong><span class="san">'+E(p.sanskrit_name||"")+'</span></td>'
-          +'<td class="lv">'+E(p.difficulty_level||"")+'</td><td class="hold">'+((parseInt(it.breaths)||5))+' breaths</td>'
-          +'<td class="nts">'+E(it.notes||"\u2014")+'</td></tr>'; }).join("")+'</tbody></table>';
-  }
-  var metaLine=[level,dur,poseItems.length+" poses","~"+mins+" min"].filter(Boolean).join(" &nbsp;\u00b7&nbsp; ");
-  var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+E(title)+'</title>'
-    +'<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">'
-    +'<style>'+CSS+'@page{margin:14mm}</style></head><body>'
-    +'<div class="phead"><div class="brand">'+E(brand)+'</div><h1>'+E(title)+'</h1><div class="meta">'+metaLine+'</div>'
-    +(style?('<div class="styles">'+style.split(",").map(function(s){return '<span>'+E(s.trim())+'</span>';}).join("")+'</div>'):"")+'</div>'
-    +body+'<div class="footer">\u00a9 '+E(brand)+' \u00b7 purepassionyoga.com \u00b7 All rights reserved</div>'
-    +'<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},350);}<'+'/scr'+'ipt></body></html>';
-  var w=window.open("","_blank"); if(!w){ toast("Allow pop-ups to print"); return; }
-  w.document.write(html); w.document.close();
-}
-
-
-async function openLoadPanel(){
-  const{data,error}=await sb.from("sequences").select("*").eq("owner_id",SESSION.user.id).eq("is_template",false).order("updated_at",{ascending:false});
-  if(error)return toast(error.message);
-  const rows=(data||[]).map(s=>`<div class="savedrow" data-id="${s.id}">
-    <div style="flex:1;min-width:0;cursor:pointer" data-act="load"><div style="font-weight:500;color:var(--head)">${esc(s.name)}</div>
-    <div style="color:var(--muted);font-size:12px">${esc(s.level||"")} ${esc(s.duration_label||"")} \u00b7 ${s.visibility} \u00b7 ${new Date(s.updated_at).toLocaleDateString()}</div></div>
-    <div class="savedacts">
-      <button class="mini" data-act="hist" title="Version history">🕘</button>
-      <button class="mini" data-act="dup" title="Duplicate">\u29c9</button>
-      <button class="mini" data-act="swap" title="Duplicate & swap a pose">\u21c4</button>
-      <button class="mini danger" data-act="del" title="Delete">\u2715</button>
-    </div></div>`).join("")
-    ||'<div style="color:var(--muted)">No saved sequences yet.</div>';
-  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()">
-    <h3 class="serif">Load a sequence</h3>${rows}
-    <button class="btn ghost" style="margin-top:14px;width:100%" onclick="closeModal()">Cancel</button></div></div>`;
-  $("ovl").onclick=closeModal;
-  $("modalRoot").querySelectorAll(".savedrow").forEach(el=>{
-    const id=el.dataset.id;
-    const L=el.querySelector('[data-act="load"]'); if(L)L.onclick=()=>loadSeq(id);
-    const Hh=el.querySelector('[data-act="hist"]'); if(Hh)Hh.onclick=(e)=>{e.stopPropagation();openVersions(id);};
-    const D=el.querySelector('[data-act="dup"]'); if(D)D.onclick=(e)=>{e.stopPropagation();dupSeq(id);};
-    const W=el.querySelector('[data-act="swap"]'); if(W)W.onclick=(e)=>{e.stopPropagation();openSwapModal(id);};
-    const X=el.querySelector('[data-act="del"]'); if(X)X.onclick=(e)=>{e.stopPropagation();delSeq(id);};
+function bindProdCards(){
+  document.querySelectorAll('#shop [data-pid]').forEach(card=>{
+    card.querySelector(".p_save").onclick=()=>saveProduct(card);
+    wireProdImage(card);
+    const d=card.querySelector(".p_del"); if(d) d.onclick=()=>deleteProduct(card);
   });
 }
-$("b_load").onclick=openLoadPanel;
-async function snapshotExisting(seqId){
+async function saveShopSettings(){
+  const out={enabled:$("s_enabled").checked, heading:$("s_heading").value.trim()||"Shop", subheading:$("s_subheading").value.trim()};
+  $("shop_save").disabled=true;
+  const{error}=await sb.from("app_settings").upsert({key:"shop",value:out});
+  $("shop_save").disabled=false;
+  if(error){$("shopErr").textContent=error.message;$("shopErr").classList.remove("hidden");return;}
+  SHOP=out;$("shop_status").textContent="Saved \u2713";
+}
+function addProduct(){
+  const list=$("prodList"); const wrap=document.createElement("div");
+  wrap.innerHTML=prodCard({status:"draft",product_type:"affiliate",sort_order:SHOP_PRODUCTS.length+1,categories:[]});
+  const card=wrap.firstElementChild; list.insertBefore(card,list.firstChild);
+  card.querySelector(".p_save").onclick=()=>saveProduct(card);
+  card.querySelector(".p_del").onclick=()=>card.remove();
+  wireProdImage(card);
+}
+function shSlug(t){ return (t||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,50); }
+async function saveProduct(card){
+  const g=s=>card.querySelector(s);
+  const cents=v=>{v=(v||"").toString().trim(); return v===""?null:Math.round(parseFloat(v)*100);};
+  const rv=g(".p_rating").value.trim();
+  const rec={
+    title:g(".p_title").value.trim(), description:g(".p_desc").value.trim(),
+    image_url:g(".p_img").value.trim(), url:g(".p_url").value.trim(),
+    price_cents:cents(g(".p_price").value), regular_cents:cents(g(".p_reg").value),
+    categories:g(".p_cats").value.split(",").map(x=>x.trim()).filter(Boolean),
+    rating:rv===""?null:parseFloat(rv),
+    product_type:g(".p_type").value, stripe_price_id:g(".p_pid").value.trim(),
+    status:g(".p_status").value, sort_order:parseInt(g(".p_sort").value)||0,
+    featured:g(".p_feat").checked, updated_at:new Date().toISOString()
+  };
+  const msg=g(".p_msg");
+  if(!rec.title){ msg.textContent="Title required"; return; }
+  msg.textContent="Saving\u2026";
+  const id=card.getAttribute("data-pid"); let res;
+  if(id){ res=await sb.from("products").update(rec).eq("id",id); }
+  else { rec.slug=shSlug(rec.title)+"-"+Math.random().toString(36).slice(2,6); res=await sb.from("products").insert(rec).select("id").single(); }
+  if(res.error){ msg.textContent=res.error.message; return; }
+  if(!id && res.data && res.data.id){ card.setAttribute("data-pid",res.data.id); SHOP_PRODUCTS.push({id:res.data.id}); }
+  msg.textContent="Saved \u2713";
+}
+async function deleteProduct(card){
+  const id=card.getAttribute("data-pid");
+  if(!id){ card.remove(); return; }
+  if(!confirm("Delete this product? This cannot be undone.")) return;
+  const{error}=await sb.from("products").delete().eq("id",id);
+  if(error){ card.querySelector(".p_msg").textContent=error.message; return; }
+  card.remove();
+}
+
+/* ---------- BILLING ---------- */
+let BILLING=null;
+async function loadBilling(){ const{data}=await sb.from("app_settings").select("value").eq("key","billing").single(); BILLING=(data&&data.value)||{plans:[]}; renderBilling(); }
+function renderBilling(){
+  const b=BILLING, plans=Array.isArray(b.plans)?b.plans:[];
+  const feats=["library","builder","classes","challenges"];
+  const fnLabel={library:"Pose library",builder:"Sequence builder",classes:"Classes",challenges:"Challenges"};
+  const money=c=>((Number(c)||0)/100).toFixed(2);
+  const planCard=(p,i)=>`<div class="grp" data-plan="${i}">
+     <div class="gt">${esc(p.name||p.id)} <span style="color:var(--muted);text-transform:none;letter-spacing:0;font-weight:400">(${esc(p.id)})</span></div>
+     <label class="toggle"><input type="checkbox" class="b_active" ${p.active?"checked":""}/> Active — show on the pricing page &amp; allow checkout</label>
+     <div class="row2" style="margin-top:10px">
+       <div class="field"><label>Display name</label><input class="b_name" value="${esc(p.name||"")}"/></div>
+       <div class="field"><label>Tagline</label><input class="b_blurb" value="${esc(p.blurb||"")}"/></div>
+     </div>
+     <div class="field"><label>Unlocks (shown as copy on the pricing page)</label><div>${feats.map(f=>`<label class="toggle" style="display:inline-flex;margin:0 14px 6px 0"><input type="checkbox" class="b_unlock" value="${f}" ${(p.unlocks||[]).includes(f)?"checked":""}/> ${fnLabel[f]}</label>`).join("")}</div></div>
+     <div class="row2">
+       <div class="field"><label>Monthly price ($)</label><input class="b_m_amt" value="${money(p.monthly&&p.monthly.amount)}"/></div>
+       <div class="field"><label>Monthly Stripe price ID</label><input class="b_m_pid" placeholder="price_\u2026" value="${esc((p.monthly&&p.monthly.price_id)||"")}"/></div>
+     </div>
+     <div class="row2">
+       <div class="field"><label>Annual price ($)</label><input class="b_a_amt" value="${money(p.annual&&p.annual.amount)}"/></div>
+       <div class="field"><label>Annual Stripe price ID</label><input class="b_a_pid" placeholder="price_\u2026" value="${esc((p.annual&&p.annual.price_id)||"")}"/></div>
+     </div>
+   </div>`;
+  $("billing").innerHTML=`<div id="billErr" class="err hidden"></div>
+    <div class="grp"><div class="gt">Billing \u2014 global</div>
+      <label class="toggle"><input type="checkbox" id="b_enabled" ${b.enabled!==false?"checked":""}/> Billing enabled (master switch for the pricing page)</label>
+      <div class="row2" style="margin-top:10px">
+        <div class="field"><label>Currency</label><input id="b_currency" value="${esc(b.currency||"usd")}"/></div>
+        <div class="field"><label>Free trial (days, 0 = none)</label><input id="b_trial" value="${Number(b.trial_days)||0}"/></div>
+      </div>
+      <div class="hint">Paste the Stripe <b>Price ID</b> (price_\u2026) for each plan after you create it in Stripe. The dollar amount here is what the pricing page <i>shows</i>; the real charge is whatever that Stripe Price is set to \u2014 keep them in sync. A plan only takes checkout once it has a price ID and is Active.</div>
+    </div>
+    ${plans.map(planCard).join("")}
+    <button class="btn" id="b_save">Save billing settings</button>
+    <span id="bill_status" style="margin-left:12px;color:var(--muted);font-size:13px"></span>`;
+  $("b_save").onclick=saveBilling;
+}
+async function saveBilling(){
+  const cards=[...document.querySelectorAll('#billing [data-plan]')];
+  const cents=v=>Math.round((parseFloat(v)||0)*100);
+  const plans=cards.map(card=>{
+    const g=s=>card.querySelector(s); const base=BILLING.plans[+card.dataset.plan];
+    return { id:base.id, order:base.order,
+      name:g(".b_name").value.trim(), blurb:g(".b_blurb").value.trim(), active:g(".b_active").checked,
+      unlocks:[...card.querySelectorAll(".b_unlock:checked")].map(c=>c.value),
+      monthly:{ amount:cents(g(".b_m_amt").value), price_id:g(".b_m_pid").value.trim() },
+      annual:{ amount:cents(g(".b_a_amt").value), price_id:g(".b_a_pid").value.trim() } };
+  });
+  const out={ enabled:$("b_enabled").checked, currency:($("b_currency").value.trim()||"usd"), trial_days:parseInt($("b_trial").value)||0, plans };
+  $("b_save").disabled=true;$("b_save").textContent="Saving\u2026";
+  const{error}=await sb.from("app_settings").upsert({key:"billing",value:out});
+  $("b_save").disabled=false;$("b_save").textContent="Save billing settings";
+  if(error){const e=$("billErr");e.textContent=error.message;e.classList.remove("hidden");return;}
+  BILLING=out;$("bill_status").textContent="Saved \u2713";
+}
+
+/* ---------- ENGAGEMENT ---------- */
+let ENG=null, engLoaded=false;
+const TIER_C={free:"#8A8090",practitioner:"#A87C83",teacher:"#2E7D6B",ultimate:"#B98A1F",premium:"#7A6B8A",member:"#9A8FA8"};
+const tierPill=t=>{const c=TIER_C[t]||"#8A8090";return `<span class="tierpill" style="background:${c}22;color:${c}">${esc(t||"free")}</span>`;};
+const emptyState=(ic,msg)=>`<div class="empty"><span class="em-ic">${ic}</span>${esc(msg)}</div>`;
+const dt=s=>s?new Date(s).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):"";
+
+async function loadEngagement(force){
+  if(engLoaded && !force) return;
+  $("engage").innerHTML=`<div class="empty">Loading engagement…</div>`;
+  const { data, error } = await sb.rpc("admin_engagement");
+  if(error){ $("engage").innerHTML=emptyState("🔒","Couldn’t load engagement: "+error.message); return; }
+  ENG=data||{}; engLoaded=true; renderEngagement();
+}
+
+function memberRows(list){
+  if(!list.length) return `<div class="empty">No members match.</div>`;
+  return list.map(m=>{
+    const nm=m.display_name||m.email||"Member";
+    const initial=(nm.trim()[0]||"?").toUpperCase();
+    return `<div class="erow">
+      <div class="av">${esc(initial)}</div>
+      <div><div class="mn">${esc(nm)}${m.is_admin?' <span class="note">· admin</span>':''}</div><div class="ms">${esc(m.email||"")}</div></div>
+      <div class="right">${tierPill(m.tier)}<div style="margin-top:3px">🔥 ${m.streak_current} · ${m.practices} ${m.practices===1?"practice":"practices"}</div><div class="note">joined ${esc(dt(m.created_at))}</div></div>
+    </div>`;
+  }).join("");
+}
+
+function renderEngagement(){
+  const o=ENG.overview||{};
+  const cards=[
+    ["Members", o.members_total],
+    ["Paid members", o.members_paid],
+    ["Active · 7 days", o.active_7d],
+    ["Practices logged", o.practices_total],
+    ["Community sequences", o.community_sequences],
+    ["Newsletter list", o.newsletter_total],
+    ["Awaiting claim", o.staged_unclaimed],
+  ];
+  const statCards=cards.map(c=>`<div class="stat"><div class="n">${c[1]??0}</div><div class="l">${c[0]}</div></div>`).join("");
+
+  const tiers=ENG.tiers||[];
+  const maxc=Math.max(1,...tiers.map(t=>t.count));
+  const bars=tiers.length
+    ? tiers.map(t=>{const c=TIER_C[t.tier]||"#8A8090";const w=Math.round(t.count/maxc*100);
+        return `<div class="tbar"><div class="nm">${esc(t.tier)}</div><div class="track"><div class="fill" style="width:${w}%;background:${c}"></div></div><div class="ct">${t.count}</div></div>`;}).join("")
+    : emptyState("👤","No members yet.");
+
+  const leaders=(ENG.streak_leaders||[]);
+  const leadersHtml=leaders.length
+    ? leaders.map(s=>`<div class="erow"><div class="av">🔥</div><div><div class="mn">${esc(s.display_name)}</div><div class="ms">longest ${s.streak_longest} days</div></div><div class="right" style="font-family:'Playfair Display',serif;font-size:22px;color:var(--head)">${s.streak_current}</div></div>`).join("")
+    : emptyState("🔥","No active streaks yet. This fills in as members practice on consecutive days.");
+
+  const rp=(ENG.recent_practice||[]);
+  const rpHtml=rp.length
+    ? rp.map(r=>`<div class="erow"><div><div class="mn">${esc(r.who)}</div><div class="ms">${esc(r.source||"practice")}</div></div><div class="right">${r.minutes||0} min<div class="note">${esc(dt(r.practiced_on))}</div></div></div>`).join("")
+    : emptyState("🧘","No practice logged yet.");
+
+  const ra=(ENG.recent_achievements||[]);
+  const raHtml=ra.length
+    ? ra.map(a=>`<div class="erow"><div class="av">🏅</div><div><div class="mn">${esc(a.who)}</div><div class="ms">${esc(a.message||a.achievement_key||"")}</div></div><div class="right note">${esc(dt(a.created_at))}</div></div>`).join("")
+    : emptyState("🏅","No badges earned yet.");
+
+  const ch=(ENG.challenges||[]);
+  const chHtml=ch.length
+    ? ch.map(c=>`<div class="erow"><div class="av">📅</div><div><div class="mn">${esc(c.name)}</div><div class="ms">${c.days||"?"} days · ${esc(c.level||"all levels")}</div></div><div class="right">${c.enrollments} enrolled<div class="note">${c.completions} completed</div></div></div>`).join("")
+    : emptyState("📅","No community challenges yet.");
+
+  const st=(ENG.staged||[]);
+  const stHtml=st.length
+    ? st.map(s=>`<div class="erow"><div class="av">⏳</div><div><div class="mn">${esc(s.display_name||s.email)}</div><div class="ms">${esc(s.email)}</div></div><div class="right">${tierPill(s.target_tier)}<div class="note">awaiting first login</div></div></div>`).join("")
+    : emptyState("✓","Everyone imported has claimed their account.");
+
+  $("engage").innerHTML=`
+    <div class="erow-top">
+      <div class="note">A live snapshot of members and activity. Most of this fills in as people start practicing.</div>
+      <button id="engRefresh" class="btn ghost" style="padding:7px 14px">↻ Refresh</button>
+    </div>
+    <div class="stats">${statCards}</div>
+
+    <div class="tierbars">
+      <div class="note" style="margin-bottom:6px">Members by tier</div>
+      ${bars}
+    </div>
+
+    <div class="ecols">
+      <div>
+        <div class="panel">
+          <div class="ph">Members <span class="cnt">${(ENG.members||[]).length} shown</span></div>
+          <div class="esearch"><input id="engSearch" placeholder="Search members by name or email…" /></div>
+          <div id="engMembers">${memberRows(ENG.members||[])}</div>
+        </div>
+        <div class="panel">
+          <div class="ph">Community challenges</div>
+          ${chHtml}
+        </div>
+        <div class="panel">
+          <div class="ph">Awaiting account claim <span class="cnt">migration staging</span></div>
+          ${stHtml}
+        </div>
+      </div>
+      <div>
+        <div class="panel"><div class="ph">Streak leaders</div>${leadersHtml}</div>
+        <div class="panel"><div class="ph">Recent practice</div>${rpHtml}</div>
+        <div class="panel"><div class="ph">Recent badges</div>${raHtml}</div>
+      </div>
+    </div>`;
+
+  $("engRefresh").onclick=()=>loadEngagement(true);
+  $("engSearch").addEventListener("input",e=>{
+    const q=e.target.value.trim().toLowerCase();
+    const list=(ENG.members||[]).filter(m=>!q||(m.display_name||"").toLowerCase().includes(q)||(m.email||"").toLowerCase().includes(q));
+    $("engMembers").innerHTML=memberRows(list);
+  });
+}
+
+/* ---------- LEGAL ---------- */
+const LEGAL_URL="/legal";
+let LEGAL=[], legalLoaded=false, legalQuery="";
+function slugifyL(t){ return (t||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
+
+async function loadLegal(force){
+  if(legalLoaded && !force) return;
+  $("legal").innerHTML='<div style="padding:18px;color:var(--muted)">Loading…</div>';
+  const { data, error } = await sb.from("legal_pages").select("*").order("category").order("sort_order");
+  if(error){ $("legal").innerHTML='<div style="padding:18px;color:#A03A22">'+esc(error.message)+'</div>'; return; }
+  LEGAL=data||[]; legalLoaded=true; renderLegal();
+}
+
+function renderLegal(){
+  const vis=LEGAL.filter(p=>p.visible).length;
+  const q=legalQuery.trim().toLowerCase();
+  const list=LEGAL.filter(p=>!q || p.title.toLowerCase().includes(q) || (p.category||"").toLowerCase().includes(q));
+  const cats={}; list.forEach(p=>{(cats[p.category]=cats[p.category]||[]).push(p);});
+  let html=`<div class="erow-top">
+    <div class="note">${vis} of ${LEGAL.length} pages are visible in your public Legal Center. Flip any switch to show or hide it instantly.</div>
+    <div style="display:flex;gap:8px">
+      <a class="btn ghost" style="padding:7px 14px" href="${LEGAL_URL}" target="_blank" rel="noopener">View center ↗</a>
+      <button id="legalNew" class="btn" style="padding:7px 14px">+ New page</button>
+    </div>
+  </div>
+  <div class="toolbar"><input id="legalSearch" placeholder="Search legal pages…" value="${esc(legalQuery)}"/></div>`;
+  Object.keys(cats).forEach(cat=>{
+    html+=`<div class="lcat">${esc(cat)}</div>`;
+    cats[cat].forEach(p=>{
+      html+=`<div class="lrow">
+        <label class="sw"><input type="checkbox" data-vis="${p.id}" ${p.visible?"checked":""}><span class="sl"></span></label>
+        <div><div class="mn">${esc(p.title)} ${p.body?"":'<span class="pill-off">no content</span>'}</div><div class="ms">${esc(p.slug)}</div></div>
+        <div class="lright">
+          <span class="${p.visible?"pill-on":"pill-off"}">${p.visible?"Visible":"Hidden"}</span>
+          ${p.body?`<a href="${LEGAL_URL}?doc=${encodeURIComponent(p.slug)}" target="_blank" rel="noopener" class="btn ghost" style="padding:5px 11px">View</a>`:""}
+          <button class="btn ghost" style="padding:5px 11px" data-edit="${p.id}">Edit</button>
+        </div>
+      </div>`;
+    });
+  });
+  $("legal").innerHTML=html;
+  $("legalNew").onclick=()=>openLegalEditor(null);
+  $("legalSearch").oninput=e=>{ legalQuery=e.target.value; const c=e.target.selectionStart; renderLegal(); const s=$("legalSearch"); if(s){ s.focus(); s.setSelectionRange(c,c); } };
+  $("legal").querySelectorAll("[data-vis]").forEach(c=>c.onchange=()=>toggleVisible(c.dataset.vis,c.checked));
+  $("legal").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openLegalEditor(b.dataset.edit));
+}
+
+async function toggleVisible(id, checked){
+  const p=LEGAL.find(x=>x.id===id); if(p) p.visible=checked;
+  const { error } = await sb.from("legal_pages").update({ visible:checked }).eq("id",id);
+  if(error){ alert("Couldn’t update: "+error.message); if(p) p.visible=!checked; loadLegal(true); return; }
+  renderLegal();
+}
+
+function openLegalEditor(id){
+  const p = id ? LEGAL.find(x=>x.id===id) : { title:"", category:"Legal", slug:"", body:"", visible:false, sort_order:(LEGAL.reduce((m,x)=>Math.max(m,x.sort_order||0),0)+1) };
+  const cats=[...new Set(LEGAL.map(x=>x.category).filter(Boolean))];
+  $("edRoot").innerHTML=`<div class="ovl"><div class="ed">
+    <div class="edtop"><h2>${id?"Edit legal page":"New legal page"}</h2>
+      <button id="legalClose" class="btn ghost" style="margin-left:auto;padding:7px 13px">Close</button></div>
+    <div class="edbody">
+      <div class="grp">
+        <div class="row2">
+          <div class="field"><label>Title</label><input id="lTitle" value="${esc(p.title)}"/></div>
+          <div class="field"><label>Category</label><input id="lCat" list="lCats" value="${esc(p.category||"")}"/>
+            <datalist id="lCats">${cats.map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Slug (URL)</label><input id="lSlug" value="${esc(p.slug)}"/><div class="hint">Link: …/legal.html?doc=<b>slug</b></div></div>
+          <div class="field"><label>Sort order</label><input id="lSort" type="number" value="${p.sort_order||0}"/></div>
+        </div>
+        <label class="toggle"><input id="lVis" type="checkbox" ${p.visible?"checked":""}/> Visible in public Legal Center</label>
+      </div>
+      <div class="grp">
+        <div class="gt">Content (HTML)</div>
+        <div class="field"><textarea id="lBody" style="min-height:300px;font-family:ui-monospace,monospace;font-size:13px">${esc(p.body||"")}</textarea>
+          <div class="hint">Use &lt;h2&gt; for headings, &lt;p&gt; for paragraphs, &lt;ul&gt;&lt;li&gt; for lists. Leave blank to keep it a “coming soon” stub.</div></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button id="lSave" class="btn">Save</button>
+        ${id?`<button id="lDelete" class="btn ghost" style="color:#A03A22;border-color:#E9C9BE">Delete</button>`:""}
+        <span id="lMsg" style="font-size:12px"></span>
+      </div>
+    </div>
+  </div></div>`;
+  $("legalClose").onclick=closeLegalEditor;
+  $("lSave").onclick=()=>saveLegal(id);
+  if(id) $("lDelete").onclick=()=>deleteLegal(id);
+}
+function closeLegalEditor(){ $("edRoot").innerHTML=""; }
+
+async function saveLegal(id){
+  const title=$("lTitle").value.trim();
+  if(!title){ $("lMsg").innerHTML='<span style="color:#A03A22">Title is required.</span>'; return; }
+  const payload={ title, category:$("lCat").value.trim()||"Legal", slug:($("lSlug").value.trim()||slugifyL(title)),
+    sort_order:parseInt($("lSort").value,10)||0, visible:$("lVis").checked, body:$("lBody").value.trim()||null };
+  $("lSave").disabled=true; $("lMsg").innerHTML='<span style="color:var(--muted)">Saving…</span>';
+  let res;
+  if(id) res=await sb.from("legal_pages").update(payload).eq("id",id);
+  else res=await sb.from("legal_pages").insert(payload);
+  $("lSave").disabled=false;
+  if(res.error){ $("lMsg").innerHTML='<span style="color:#A03A22">'+esc(res.error.message)+'</span>'; return; }
+  closeLegalEditor(); loadLegal(true);
+}
+async function deleteLegal(id){
+  const p=LEGAL.find(x=>x.id===id);
+  if(!confirm(`Delete “${p?p.title:"this page"}”? This can’t be undone.`)) return;
+  const { error } = await sb.from("legal_pages").delete().eq("id",id);
+  if(error){ $("lMsg").innerHTML='<span style="color:#A03A22">'+esc(error.message)+'</span>'; return; }
+  closeLegalEditor(); loadLegal(true);
+}
+
+/* ---------- ADVANCED ---------- */
+let ADV=null, advLoaded=false;
+const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
+
+function downloadFile(name, text, type){
+  const blob=new Blob([text],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function toCSV(rows){
+  if(!rows||!rows.length) return "";
+  const cols=[...rows.reduce((s,r)=>{Object.keys(r).forEach(k=>s.add(k));return s;},new Set())];
+  const cell=v=>{ if(v==null) return ""; if(typeof v==="object") v=JSON.stringify(v); v=String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  return cols.join(",")+"\n"+rows.map(r=>cols.map(c=>cell(r[c])).join(",")).join("\n");
+}
+async function exportData(kind, fmt, btn){
+  const old=btn.textContent; btn.disabled=true; btn.textContent="…";
+  const { data, error } = await sb.rpc("admin_export",{ kind });
+  btn.disabled=false; btn.textContent=old;
+  if(error){ alert("Export failed: "+error.message); return; }
+  const rows=data||[], stamp=new Date().toISOString().slice(0,10);
+  if(fmt==="json") downloadFile(`ppyoga-${kind}-${stamp}.json`, JSON.stringify(rows,null,2), "application/json");
+  else downloadFile(`ppyoga-${kind}-${stamp}.csv`, toCSV(rows), "text/csv");
+}
+
+async function testAI(){
+  const btn=$("aiTest"), out=$("aiTestOut");
+  btn.disabled=true; out.innerHTML='<span class="note">Checking…</span>';
   try{
-    const{data:src}=await sb.from("sequences").select("*").eq("id",seqId).single();
-    if(!src)return;
-    const{data:its}=await sb.from("sequence_items").select("*").eq("sequence_id",seqId).order("position");
-    const snapshot={meta:{name:src.name,level:src.level,style:src.style,duration_label:src.duration_label,description:src.description,playlist_url:src.playlist_url,tags:src.tags,visibility:src.visibility,theme:src.theme},
-      items:(its||[]).map(it=>({position:it.position,item_type:it.item_type,pose_id:it.pose_id,custom_name:it.custom_name,custom_sanskrit:it.custom_sanskrit,notes:it.notes,custom_breaths:it.custom_breaths,custom_breath_pattern:it.custom_breath_pattern,emoji:it.emoji,level:it.level,mirrored:it.mirrored}))};
-    const ins=await sb.from("sequence_versions").insert({sequence_id:seqId,owner_id:SESSION.user.id,snapshot});
-    if(ins.error)return;
-    const{data:vs}=await sb.from("sequence_versions").select("id").eq("sequence_id",seqId).order("created_at",{ascending:false});
-    if(vs&&vs.length>10){const extra=vs.slice(10).map(v=>v.id);await sb.from("sequence_versions").delete().in("id",extra);}
-  }catch(e){}
+    const { data:{ session } } = await sb.auth.getSession();
+    const res=await fetch(SUPABASE_URL+"/functions/v1/generate-sequence",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "apikey":ANON, "Authorization":"Bearer "+session.access_token },
+      body: JSON.stringify({ ping:true })
+    });
+    const j=await res.json().catch(()=>({}));
+    if(res.ok && j.configured) out.innerHTML='<span class="okpill">✓ Connected</span>API key is set — AI generation is ready.';
+    else if(res.ok && j.configured===false) out.innerHTML='<span class="badpill">Not configured</span>Add the <b>ANTHROPIC_API_KEY</b> secret in Supabase → Edge Functions → Secrets.';
+    else out.innerHTML='<span class="badpill">Error</span>'+esc(j.error||("HTTP "+res.status));
+  }catch(e){ out.innerHTML='<span class="badpill">Error</span>'+esc(String(e)); }
+  btn.disabled=false;
 }
-async function openVersions(id){
-  const{data:src}=await sb.from("sequences").select("name").eq("id",id).single();
-  const{data:vs}=await sb.from("sequence_versions").select("id,created_at,snapshot").eq("sequence_id",id).order("created_at",{ascending:false});
-  const list=(vs||[]).map((v,i)=>{
-    const cnt=(v.snapshot&&v.snapshot.items)?v.snapshot.items.filter(x=>x.item_type!=="section").length:0;
-    return `<div class="savedrow"><div style="flex:1"><div style="font-weight:500;color:var(--head)">Version ${vs.length-i} <span style="color:var(--muted);font-weight:400;font-size:12px">\u00b7 ${new Date(v.created_at).toLocaleString()}</span></div>
-      <div style="color:var(--muted);font-size:12px">${cnt} poses</div></div>
-      <button class="mini" data-vid="${v.id}" data-act="restore" title="Restore this version">Restore</button></div>`;
-  }).join("")||'<div style="color:var(--muted)">No earlier versions yet. A version is saved automatically each time you update this sequence.</div>';
-  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()">
-    <h3 class="serif">Version history</h3>
-    <p style="color:var(--muted);font-size:13px;margin:-4px 0 12px">${esc((src&&src.name)||"Sequence")} \u2014 last 10 saved versions.</p>
-    ${list}
-    <button class="btn ghost" style="margin-top:14px;width:100%" onclick="closeModal()">Close</button></div></div>`;
-  $("ovl").onclick=closeModal;
-  $("modalRoot").querySelectorAll('[data-act="restore"]').forEach(btn=>btn.onclick=()=>restoreVersion(id,btn.dataset.vid));
-}
-async function restoreVersion(seqId,vid){
-  const{data:v}=await sb.from("sequence_versions").select("snapshot").eq("id",vid).single();
-  if(!v||!v.snapshot)return toast("Couldn't load that version.");
-  const snap=v.snapshot,m=snap.meta||{};
-  currentId=seqId;
-  $("m_name").value=m.name||"";$("m_description").value=m.description||"";$("m_playlist").value=m.playlist_url||"";
-  setSel("m_level",m.level);setSel("m_duration",m.duration_label);setSel("m_style",m.style);
-  $("m_tags").value=arr(m.tags).join(", ");$("m_share").checked=m.visibility==="community";applyTheme(m.theme||"classic");
-  items=(snap.items||[]).map(it=>{
-    if(it.item_type==="section")return{kind:"section",title:it.custom_name||"Section"};
-    const p=POSES.find(x=>String(x.id)===String(it.pose_id))||{id:it.pose_id,name:it.custom_name,sanskrit_name:it.custom_sanskrit,emoji:it.emoji};
-    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored};
-  });
-  closeModal();renderCanvas();toast("Restored \u2014 review and Save to keep it.");
-}
-function copyItemRows(its,newId){return (its||[]).map(it=>({sequence_id:newId,position:it.position,item_type:it.item_type,pose_id:it.pose_id,custom_name:it.custom_name,custom_sanskrit:it.custom_sanskrit,notes:it.notes,custom_breaths:it.custom_breaths,custom_breath_pattern:it.custom_breath_pattern,emoji:it.emoji,level:it.level,mirrored:it.mirrored}));}
-async function dupSeq(id){
-  const{data:src}=await sb.from("sequences").select("*").eq("id",id).single();
-  const{data:its}=await sb.from("sequence_items").select("*").eq("sequence_id",id).order("position");
-  if(!src)return;
-  const row={name:(src.name||"Untitled")+" (copy)",level:src.level,style:src.style,duration_label:src.duration_label,description:src.description,playlist_url:src.playlist_url,tags:src.tags,visibility:"private",theme:src.theme,owner_id:SESSION.user.id};
-  const{data:ns,error}=await sb.from("sequences").insert(row).select("id").single();
-  if(error)return toast("Duplicate failed: "+error.message);
-  const ni=copyItemRows(its,ns.id);
-  if(ni.length){const r=await sb.from("sequence_items").insert(ni);if(r.error)return toast("Copied, but items failed: "+r.error.message);}
-  toast("Duplicated \u2192 "+row.name);openLoadPanel();
-}
-async function delSeq(id){
-  if(!confirm("Delete this sequence permanently?"))return;
-  await sb.from("sequence_items").delete().eq("sequence_id",id);
-  const{error}=await sb.from("sequences").delete().eq("id",id);
-  if(error)return toast("Delete failed: "+error.message);
-  if(currentId===id)currentId=null;
-  toast("Deleted");openLoadPanel();
-}
-async function openSwapModal(id){
-  const{data:src}=await sb.from("sequences").select("*").eq("id",id).single();
-  const{data:its}=await sb.from("sequence_items").select("*").eq("sequence_id",id).order("position");
-  if(!src)return;
-  const poseItems=(its||[]).filter(it=>it.item_type!=="section"&&it.pose_id);
-  if(!poseItems.length)return toast("This sequence has no poses to swap.");
-  const seen={},fromOpts=[];
-  poseItems.forEach(it=>{const k=String(it.pose_id);if(!seen[k]){seen[k]=1;const p=POSES.find(x=>String(x.id)===k);fromOpts.push([it.pose_id,(p&&p.name)||it.custom_name||"Pose"]);}});
-  const fromSel='<select id="sw_from" class="ie-select">'+fromOpts.map(o=>`<option value="${o[0]}">${esc(o[1])}</option>`).join("")+'</select>';
-  const toSel='<select id="sw_to" class="ie-select">'+POSES.map(p=>`<option value="${p.id}">${esc(p.name)}${p.sanskrit_name?" \u2014 "+esc(p.sanskrit_name):""}</option>`).join("")+'</select>';
-  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()">
-    <h3 class="serif">Duplicate &amp; swap</h3>
-    <p style="color:var(--muted);font-size:13px;margin:-4px 0 12px">Make a copy of \u201c${esc(src.name)}\u201d, replacing every instance of one pose with another.</p>
-    <div class="field"><label>Replace all instances of</label>${fromSel}</div>
-    <div class="field"><label>With</label>${toSel}</div>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn ghost" style="flex:1" onclick="closeModal()">Cancel</button>
-      <button class="btn" style="flex:1" id="sw_go">Create copy</button></div></div></div>`;
-  $("ovl").onclick=closeModal;
-  $("sw_go").onclick=()=>doSwap(src,its);
-}
-async function doSwap(src,its){
-  const fromId=$("sw_from").value,toId=$("sw_to").value;
-  const toPose=POSES.find(x=>String(x.id)===String(toId));if(!toPose)return;
-  let n=0;
-  const ni=(its||[]).map(it=>{const b={position:it.position,item_type:it.item_type,pose_id:it.pose_id,custom_name:it.custom_name,custom_sanskrit:it.custom_sanskrit,notes:it.notes,custom_breaths:it.custom_breaths,custom_breath_pattern:it.custom_breath_pattern,emoji:it.emoji,level:it.level};
-    if(it.item_type!=="section"&&String(it.pose_id)===String(fromId)){n++;b.pose_id=toPose.id;b.custom_name=toPose.name;b.custom_sanskrit=toPose.sanskrit_name||null;b.emoji=toPose.emoji||null;b.level=toPose.difficulty_level||null;}
-    return b;});
-  if(!n)return toast("That pose isn't in this sequence.");
-  const row={name:(src.name||"Untitled")+" ("+toPose.name+")",level:src.level,style:src.style,duration_label:src.duration_label,description:src.description,playlist_url:src.playlist_url,tags:src.tags,visibility:"private",theme:src.theme,owner_id:SESSION.user.id};
-  const{data:ns,error}=await sb.from("sequences").insert(row).select("id").single();
-  if(error)return toast("Swap failed: "+error.message);
-  ni.forEach(r=>r.sequence_id=ns.id);
-  if(ni.length){const r=await sb.from("sequence_items").insert(ni);if(r.error)return toast("Created, but items failed: "+r.error.message);}
-  closeModal();toast("Created \u201c"+row.name+"\u201d");openLoadPanel();
-}
-function closeModal(){$("modalRoot").innerHTML="";}
-async function loadSeq(id){
-  const{data:s}=await sb.from("sequences").select("*").eq("id",id).single();
-  const{data:its}=await sb.from("sequence_items").select("*").eq("sequence_id",id).order("position");
-  currentId=id;
-  $("m_name").value=s.name||"";$("m_description").value=s.description||"";$("m_playlist").value=s.playlist_url||"";
-  setSel("m_level",s.level);setSel("m_duration",s.duration_label);setSel("m_style",s.style);
-  $("m_tags").value=arr(s.tags).join(", ");$("m_share").checked=s.visibility==="community";applyTheme(s.theme||"classic");
-  items=(its||[]).map(it=>{
-    if(it.item_type==="section")return{kind:"section",title:it.custom_name||"Section"};
-    const p=POSES.find(x=>String(x.id)===String(it.pose_id))||{id:it.pose_id,name:it.custom_name,sanskrit_name:it.custom_sanskrit,emoji:it.emoji};
-    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored};
-  });
-  closeModal();renderCanvas();toast("Loaded “"+(s.name||"")+"”");
+async function saveAI(){
+  const v={ enabled:$("aiEnabled").checked, period:$("aiPeriod").value, limit:Math.max(1,parseInt($("aiLimit").value,10)||10) };
+  const btn=$("aiSave"), out=$("aiSaveOut"); const old=btn.textContent; btn.disabled=true; btn.textContent="Saving…";
+  const { error } = await sb.from("app_settings").upsert({ key:"ai", value:v });
+  btn.disabled=false; btn.textContent=old;
+  if(error){ out.innerHTML='<span class="badpill">Error</span>'+esc(error.message); }
+  else { out.innerHTML='<span class="okpill">Saved</span>'; if(ADV&&ADV.ai) ADV.ai.settings=v; setTimeout(()=>{out.innerHTML="";},2500); }
 }
 
-/* misc */
-document.querySelectorAll(".btn.soon").forEach(b=>b.onclick=()=>toast(b.dataset.soon+" — coming in the next update."));
-let tt;function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),2400);}
-window.setItem=(i,f,v)=>{items[i][f]=v;};window.removeItem=removeItem;window.closeModal=closeModal;window.editItem=editItem;window.saveItem=saveItem;window.substitutePose=substitutePose;
-$("canvas").addEventListener("dragover",e=>{if(DRAG)e.preventDefault();});
-$("canvas").addEventListener("drop",e=>{if(!DRAG)return;e.preventDefault();handleDrop(items.length);});
-function darken(hex,f){const m=hex.replace('#','');const n=m.length===3?m.split('').map(c=>c+c).join(''):m;const r=Math.round(parseInt(n.slice(0,2),16)*f),g=Math.round(parseInt(n.slice(2,4),16)*f),b=Math.round(parseInt(n.slice(4,6),16)*f);return '#'+[r,g,b].map(x=>Math.min(255,x).toString(16).padStart(2,'0')).join('');}
-function applyDesign(d){
-  if(!d)return;const r=document.documentElement.style;
-  if(d.color_primary){const pr=d.color_primary,dk=pr;r.setProperty('--rose',pr);r.setProperty('--head',pr);r.setProperty('--clayDk',dk);r.setProperty('--aub',dk);}
-  if(d.color_secondary)r.setProperty('--sage',d.color_secondary);
-  if(d.color_page_bg)r.setProperty('--bg',d.color_page_bg);
-  if(d.color_surface){r.setProperty('--card',d.color_surface);}
-  if(d.color_body_text)r.setProperty('--ink',d.color_body_text);
-  if(d.color_secondary_text)r.setProperty('--muted',d.color_secondary_text);
-  const head=d.font_heading||'Playfair Display',body=d.font_body||'Poppins';
-  r.setProperty('--font-head',"'"+head+"',Georgia,serif");r.setProperty('--font-body',"'"+body+"',system-ui,sans-serif");
-  const fam=n=>n.trim().replace(/\s+/g,'+');const l=document.createElement('link');l.rel='stylesheet';
-  l.href='https://fonts.googleapis.com/css2?family='+fam(head)+':ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family='+fam(body)+':wght@300;400;500;600&display=swap';document.head.appendChild(l);
-  if(d.app_name){document.querySelectorAll('.brand').forEach(e=>e.textContent=d.app_name);document.title=d.app_name+' \u00b7 Sequence Builder';}
+async function loadAdvanced(){
+  if(advLoaded) return;
+  $("advanced").innerHTML=`<div class="empty">Loading…</div>`;
+  const { data, error } = await sb.rpc("admin_analytics");
+  if(error){ $("advanced").innerHTML=emptyState("🔒","Couldn’t load: "+error.message); return; }
+  ADV=data||{}; advLoaded=true; renderAdvanced();
 }
-async function loadDesign(){try{const{data}=await sb.from('app_settings').select('value').eq('key','design').single();applyDesign(data&&data.value);}catch(e){}}
-sb.auth.onAuthStateChange((_e,s)=>{if(!s){$("app").classList.add("hidden");$("login").classList.remove("hidden");}});
-/* ---------- BUILDER DEFAULTS + FLOW ---------- */
+
+function renderAdvanced(){
+  const ai=(ADV.ai&&ADV.ai.settings)||{enabled:true,period:"day",limit:10};
+  const c=ADV.content||{}, usage=(ADV.ai&&ADV.ai.usage)||[], cats=ADV.pose_categories||[], settings=ADV.settings||[];
+  const totalCalls=(ADV.ai&&ADV.ai.total_calls)||0;
+
+  const periods=["day","month"]; if(!periods.includes(ai.period)) periods.unshift(ai.period);
+  const periodOpts=periods.map(p=>`<option value="${esc(p)}"${p===ai.period?" selected":""}>${esc(cap(p))}</option>`).join("");
+
+  const health=[
+    ["Poses (published)", (c.poses_published||0)+" / "+(c.poses_total||0)],
+    ["Poses with image", c.poses_with_image||0],
+    ["Instructors", c.instructors||0],
+    ["Online classes", c.online_classes||0],
+    ["Video challenges", c.video_challenges||0],
+    ["Community challenges", c.community_challenges||0],
+    ["Sequences", c.sequences_total||0],
+    ["Community sequences", c.sequences_community||0],
+    ["Templates", c.sequences_templates||0],
+    ["Practice logs", c.practice_logs||0],
+    ["Favorites", c.favorites||0],
+  ].map(x=>`<div class="stat"><div class="n">${x[1]}</div><div class="l">${x[0]}</div></div>`).join("");
+
+  const maxc=Math.max(1,...cats.map(x=>x.count));
+  const catBars=cats.length
+    ? cats.map(x=>{const w=Math.round(x.count/maxc*100);return `<div class="tbar"><div class="nm" style="width:150px">${esc(x.category)}</div><div class="track"><div class="fill" style="width:${w}%;background:var(--clay)"></div></div><div class="ct">${x.count}</div></div>`;}).join("")
+    : emptyState("🧘","No poses yet.");
+
+  const usageHtml=usage.length
+    ? usage.map(u=>`<div class="erow"><div class="av">✨</div><div><div class="mn">${esc(u.who)}</div><div class="ms">${esc(u.feature||"")} · ${esc(u.period||"")}</div></div><div class="right">${u.count} ${u.count===1?"call":"calls"}</div></div>`).join("")
+    : emptyState("✨","No AI generations yet.");
+
+  const exports=[
+    ["poses","Poses", c.poses_total],
+    ["sequences","Sequences", c.sequences_total],
+    ["members","Members (profiles)", null],
+    ["newsletter","Newsletter subscribers", null],
+    ["staged","Staged members (migration)", null],
+  ];
+  const exHtml=exports.map(e=>`<div class="erow"><div><div class="mn">${esc(e[1])}</div>${e[2]!=null?`<div class="ms">${e[2]} rows</div>`:""}</div><div class="exbtns"><button class="btn ghost" data-ex="${e[0]}" data-fmt="csv">CSV</button><button class="btn ghost" data-ex="${e[0]}" data-fmt="json">JSON</button></div></div>`).join("");
+
+  const settingsHtml=settings.length
+    ? settings.map(s=>`<div class="erow" style="display:block"><div class="mn" style="margin-bottom:6px">${esc(s.key)}</div><pre class="jsonbox">${esc(JSON.stringify(s.value,null,2))}</pre></div>`).join("")
+    : emptyState("⚙️","No saved settings yet.");
+
+  $("advanced").innerHTML=`
+    <h2 class="sec">AI sequence generation</h2>
+    <div class="panel"><div class="abody">
+      <div class="row2">
+        <div class="field"><label>Per-teacher limit</label><input id="aiLimit" type="number" min="1" value="${esc(String(ai.limit||10))}" /><div class="hint">Max AI generations each ${esc(ai.period||"day")}, per signed-in teacher.</div></div>
+        <div class="field"><label>Reset window</label><select id="aiPeriod">${periodOpts}</select><div class="hint">When each teacher’s count resets.</div></div>
+      </div>
+      <label class="toggle"><input id="aiEnabled" type="checkbox" ${ai.enabled!==false?"checked":""}/> AI generation enabled</label>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap">
+        <button id="aiSave" class="btn">Save AI settings</button>
+        <button id="aiTest" class="btn ghost">Test connection</button>
+        <span id="aiSaveOut"></span>
+      </div>
+      <div id="aiTestOut" class="note" style="margin-top:10px"></div>
+      <div class="note" style="margin-top:10px">Total AI generations all-time: <b>${totalCalls}</b>. The API key lives only on the server (never in the browser).</div>
+    </div></div>
+
+    <div class="panel"><div class="ph">Recent AI usage</div>${usageHtml}</div>
+
+    <h2 class="sec">Data health</h2>
+    <div class="stats">${health}</div>
+    <div class="tierbars"><div class="note" style="margin-bottom:6px">Poses by category</div>${catBars}</div>
+
+    <h2 class="sec">Export data</h2>
+    <div class="panel">${exHtml}</div>
+    <div class="note" style="margin-top:8px">Downloads run in your browser. CSV opens in Excel/Sheets; JSON is a full backup of every field.</div>
+
+    <h2 class="sec">Stored settings</h2>
+    <div class="panel">${settingsHtml}</div>`;
+
+  $("aiSave").onclick=saveAI;
+  $("aiTest").onclick=testAI;
+  $("advanced").querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>exportData(b.dataset.ex, b.dataset.fmt, b));
+}
+
+/* ---------- DATA ---------- */
+async function loadPoses(){
+  const { data, error } = await sb.from("poses").select("*").order("canonical_pose_id",{nullsFirst:false});
+  if(error){ $("plist").innerHTML='<div style="padding:18px;color:#A03A22">'+esc(error.message)+'</div>'; return; }
+  POSES=data||[]; buildSuggestions(); renderStats(); renderPoses();
+}
+function renderStats(){
+  const total=POSES.length;
+  const pub=POSES.filter(p=>p.status==="published").length;
+  const withImg=POSES.filter(p=>p.image_url).length;
+  const beg=POSES.filter(p=>/Beginner/.test(p.difficulty_level||"")).length;
+  const adv=POSES.filter(p=>/Advanced/.test(p.difficulty_level||"")).length;
+  const cards=[["Total poses",total],["Published",pub],["Drafts",total-pub],["With illustration",withImg],["Beginner",beg],["Advanced",adv]];
+  $("stats").innerHTML=cards.map(c=>`<div class="stat"><div class="n">${c[1]}</div><div class="l">${c[0]}</div></div>`).join("");
+}
+function badgeColor(d){return /Advanced/.test(d)&&!/Intermediate–/.test(d)?["#FBE6DF","#C44E37"]:/Intermediate/.test(d)?["#F7EFD9","#B98A1F"]:["#E5F0EC","#2E7D6B"];}
+function renderPoses(){
+  const q=($("search").value||"").toLowerCase();
+  const list=POSES.filter(p=>!q||(p.name||"").toLowerCase().includes(q)||(p.sanskrit_name||"").toLowerCase().includes(q));
+  $("plist").innerHTML=list.map(p=>{
+    const [bg,fg]=badgeColor(p.difficulty_level||"");
+    const thumb=p.image_url?`<img src="${esc(p.image_url)}">`:(p.emoji||"🧘");
+    return `<div class="prow" data-id="${p.id}">
+      <div class="pthumb">${thumb}</div>
+      <div><div class="pname">${esc(p.name)}</div><div class="psan">${esc(p.sanskrit_name||"")}</div></div>
+      <div class="pmeta">
+        <span style="color:var(--muted);font-size:12px">${esc(p.category||"")}</span>
+        ${p.difficulty_level?`<span class="badge" style="background:${bg};color:${fg}">${esc(p.difficulty_level)}</span>`:""}
+        <span class="dot ${p.status==="published"?"pub":"dr"}">${p.status==="published"?"Live":"Draft"}</span>
+      </div></div>`;
+  }).join("") || '<div style="padding:18px;color:var(--muted)">No poses match.</div>';
+  document.querySelectorAll(".prow").forEach(el=>el.onclick=()=>openEditor(el.dataset.id));
+}
+$("search").addEventListener("input",renderPoses);
+$("newPose").onclick=()=>openEditor(null);
+
+/* ---------- DESIGN ---------- */
+let DESIGN={};
+const D_TEXT=[["app_name","App name"],["tagline","Tagline"],["website_url","Website URL"]];
+const D_COLORS=[["color_primary","Primary (Dusty Rose) \u2014 headings, names, buttons"],["color_secondary","Secondary (Sage) \u2014 Sanskrit, accents"],["color_page_bg","Page background"],["color_surface","Card / surface"],["color_body_text","Body text"],["color_secondary_text","Secondary text"]];
+const D_DARK=[["dark_color_primary","Accent (Dusty Rose)"],["dark_color_secondary","Sage"],["dark_color_page_bg","Page background"],["dark_color_surface","Card / surface"],["dark_color_body_text","Body text"],["dark_color_secondary_text","Secondary text"]];
+const DARK_DEFAULTS={dark_color_primary:"#C8A0A6",dark_color_secondary:"#a8ad91",dark_color_page_bg:"#191317",dark_color_surface:"#241c21",dark_color_body_text:"#E8DEE3",dark_color_secondary_text:"#B49EA8"};
+const D_FONTS=["Playfair Display","Poppins","Lora","Cormorant Garamond","EB Garamond","Merriweather","Montserrat","Lato","Raleway","Nunito","Work Sans","Quicksand"];
+async function loadDesign(){const{data}=await sb.from("app_settings").select("value").eq("key","design").single();DESIGN=(data&&data.value)||{};renderDesign();}
+function renderDesign(){
+  const d=DESIGN;
+  const txt=D_TEXT.map(([k,l])=>`<div class="field"><label>${l}</label><input id="d_${k}" value="${esc(d[k]||"")}"/></div>`).join("");
+  const colRow=(k,l,val)=>`<div class="field"><label>${l}</label><div style="display:flex;gap:8px;align-items:center">
+     <input type="color" id="d_${k}" value="${esc(val||"#cccccc")}" style="width:46px;height:34px;padding:2px;border:1px solid var(--lineDk);border-radius:8px"/>
+     <input type="text" id="dt_${k}" value="${esc(val||"")}" style="flex:1"/></div></div>`;
+  const lightCols=D_COLORS.map(([k,l])=>colRow(k,l,d[k])).join("");
+  const darkCols=D_DARK.map(([k,l])=>colRow(k,l,d[k]||DARK_DEFAULTS[k])).join("");
+  const fonts=`<datalist id="fontlist">${D_FONTS.map(f=>`<option value="${f}">`).join("")}</datalist>
+   <div class="row2"><div class="field"><label>Heading font</label><input id="d_font_heading" list="fontlist" value="${esc(d.font_heading||"Playfair Display")}"/></div>
+   <div class="field"><label>Body font</label><input id="d_font_body" list="fontlist" value="${esc(d.font_body||"Poppins")}"/></div></div>`;
+  const logoImg=d.logo_url?`<img src="${esc(d.logo_url)}" style="max-width:100%;max-height:100%;object-fit:contain"/>`:'<span style="color:var(--muted);font-size:12px">No logo</span>';
+  $("design").innerHTML=`<div id="designErr" class="err hidden"></div>
+    <div class="grp"><div class="gt">Branding</div>${txt}</div>
+    <div class="grp"><div class="gt">Logo</div>
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <div id="logoPrev" style="width:140px;height:64px;border:1px solid var(--lineDk);border-radius:10px;background:var(--field);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto">${logoImg}</div>
+        <div style="flex:1;min-width:220px">
+          <input type="file" id="logoFile" accept="image/png,image/svg+xml,image/jpeg,image/webp"/>
+          <div class="hint" id="logoStatus">PNG or SVG with a transparent background works best. Replaces the lotus mark in the site header across all pages.</div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px"><label>Logo URL</label><input id="d_logo_url" value="${esc(d.logo_url||"")}" placeholder="https://\u2026"/><div class="hint">Uploading fills this in automatically. Clear it and Save to remove the logo.</div></div>
+      <button class="btn ghost" id="logoClear" style="padding:6px 12px">Remove logo</button>
+    </div>
+    <div class="grp"><div class="gt">Colors</div>
+      <div class="row2" style="align-items:start">
+        <div><div style="font-size:12px;font-weight:600;color:var(--clayDk);margin-bottom:10px">\u2600 Light mode</div>${lightCols}</div>
+        <div><div style="font-size:12px;font-weight:600;color:var(--clayDk);margin-bottom:10px">\u263e Dark mode</div>${darkCols}</div>
+      </div>
+      <div class="hint">Light is the default; Dark applies when a visitor switches to dark mode. Leave a dark value at its default to keep the built-in palette.</div>
+    </div>
+    <div class="grp"><div class="gt">Typography</div>${fonts}</div>
+    <button class="btn" id="d_save">Save design</button>
+    <span id="d_status" style="margin-left:12px;color:var(--muted);font-size:13px"></span>`;
+  $("d_save").onclick=saveDesign;
+  (function(){
+    const fileEl=$("logoFile"), urlEl=$("d_logo_url"), prev=$("logoPrev"), st=$("logoStatus"), clr=$("logoClear");
+    function updateLogoPrev(){ const u=(urlEl.value||"").trim(); prev.innerHTML=u?`<img src="${esc(u)}" style="max-width:100%;max-height:100%;object-fit:contain"/>`:'<span style="color:var(--muted);font-size:12px">No logo</span>'; }
+    if(urlEl) urlEl.oninput=updateLogoPrev;
+    if(clr) clr.onclick=()=>{ urlEl.value=""; updateLogoPrev(); st.textContent="Logo cleared \u2014 click Save design to apply."; };
+    if(fileEl) fileEl.onchange=async e=>{
+      const file=e.target.files&&e.target.files[0]; if(!file) return;
+      st.textContent="Uploading\u2026";
+      const ext=(file.name.split(".").pop()||"png").toLowerCase();
+      const path="branding/logo-"+Date.now().toString(36)+"."+ext;
+      const{error}=await sb.storage.from("pose-images").upload(path,file,{upsert:true,contentType:file.type||undefined});
+      if(error){ st.textContent="Upload failed: "+error.message; return; }
+      const{data}=sb.storage.from("pose-images").getPublicUrl(path);
+      urlEl.value=data.publicUrl; updateLogoPrev(); st.textContent="Uploaded \u2713 \u2014 click Save design to apply.";
+    };
+  })();
+  D_COLORS.concat(D_DARK).forEach(([k])=>{const c=$("d_"+k),t=$("dt_"+k);if(!c||!t)return;c.oninput=()=>{t.value=c.value;};t.oninput=()=>{if(/^#?[0-9a-fA-F]{6}$/.test(t.value))c.value=t.value.startsWith("#")?t.value:"#"+t.value;};});
+}
+async function saveDesign(){
+  const d=Object.assign({},DESIGN);D_TEXT.forEach(([k])=>d[k]=$("d_"+k).value.trim());
+  D_COLORS.forEach(([k])=>{const t=$("dt_"+k).value.trim();d[k]=t?(t.startsWith("#")?t:"#"+t):$("d_"+k).value;});
+  D_DARK.forEach(([k])=>{const t=$("dt_"+k).value.trim();d[k]=t?(t.startsWith("#")?t:"#"+t):$("d_"+k).value;});
+  d.font_heading=$("d_font_heading").value.trim()||"Playfair Display";d.font_body=$("d_font_body").value.trim()||"Poppins";
+  d.logo_url=$("d_logo_url").value.trim();
+  $("d_save").disabled=true;$("d_save").textContent="Saving\u2026";
+  const{error}=await sb.from("app_settings").upsert({key:"design",value:d});
+  $("d_save").disabled=false;$("d_save").textContent="Save design";
+  if(error){const e=$("designErr");e.textContent=error.message;e.classList.remove("hidden");return;}
+  DESIGN=d;if(window.ppyRefreshPalette)window.ppyRefreshPalette();$("d_status").textContent="Saved \u2713 \u2014 changes apply live; refresh other open pages to see them.";
+}
+
+/* ---------- LIBRARY SETTINGS ---------- */
+let LIB={};
+async function loadLibrary(){const{data}=await sb.from("app_settings").select("value").eq("key","library").single();LIB=(data&&data.value)||{};renderLibrary();}
+function renderLibrary(){
+  const d=LIB,total=POSES.length,free=POSES.filter(p=>p.is_free).length,prem=total-free,view=d.default_view||"grid";
+  $("library").innerHTML=`<div id="libErr" class="err hidden"></div>
+   <div class="grp"><div class="gt">Pose Library display</div>
+     <div class="field"><label>Detail button text</label><input id="l_detail_button_text" value="${esc(d.detail_button_text||"Learn More About This Pose")}"/></div>
+     <div class="row2">
+       <div class="field"><label>Default view</label><select id="l_default_view"><option value="grid"${view==="grid"?" selected":""}>grid</option><option value="list"${view==="list"?" selected":""}>list</option></select></div>
+       <div class="field"><label>Poses per page (0 = all)</label><input id="l_poses_per_page" type="number" min="0" value="${esc(d.poses_per_page!=null?d.poses_per_page:0)}"/></div>
+     </div>
+     <div class="field"><label>Free-tier pose limit</label><input id="l_free_pose_limit" type="number" min="0" value="${esc(d.free_pose_limit!=null?d.free_pose_limit:8)}"/><div class="hint">Applies once member tiers exist on the public site.</div></div>
+   </div>
+   <div class="grp"><div class="gt">Pose of the Day</div>
+     <label class="toggle"><input type="checkbox" id="l_potd_enabled" ${d.potd_enabled!==false?"checked":""}/> Show the Pose of the Day banner</label>
+     <div class="field" style="margin-top:10px"><label>Pinned pose (blank = auto-rotate daily)</label><input id="l_potd_slug" list="slugs" value="${esc(d.potd_slug||"")}"/>
+       <datalist id="slugs">${POSES.map(x=>`<option value="${esc(x.slug)}">${esc(x.name)}</option>`).join("")}</datalist></div>
+   </div>
+   <div class="grp"><div class="gt">Library stats</div>
+     <div class="stats"><div class="stat"><div class="n">${total}</div><div class="l">Total poses</div></div>
+       <div class="stat"><div class="n">${free}</div><div class="l">Free poses</div></div>
+       <div class="stat"><div class="n">${prem}</div><div class="l">Premium poses</div></div></div>
+   </div>
+   <button class="btn" id="l_save">Save library settings</button>
+   <span id="l_status" style="margin-left:12px;color:var(--muted);font-size:13px"></span>`;
+  $("l_save").onclick=saveLibrary;
+}
+async function saveLibrary(){
+  const d={detail_button_text:$("l_detail_button_text").value.trim(),default_view:$("l_default_view").value,
+    poses_per_page:parseInt($("l_poses_per_page").value)||0,free_pose_limit:parseInt($("l_free_pose_limit").value)||0,
+    potd_enabled:$("l_potd_enabled").checked,potd_slug:$("l_potd_slug").value.trim()};
+  $("l_save").disabled=true;$("l_save").textContent="Saving\u2026";
+  const{error}=await sb.from("app_settings").upsert({key:"library",value:d});
+  $("l_save").disabled=false;$("l_save").textContent="Save library settings";
+  if(error){const e=$("libErr");e.textContent=error.message;e.classList.remove("hidden");return;}
+  LIB=d;$("l_status").textContent="Saved \u2713 \u2014 refresh the public library to see it.";
+}
+
+
+/* ---------- SITE SETTINGS ---------- */
+let SITE={};
+async function loadSite(){const{data}=await sb.from("app_settings").select("value").eq("key","site").single();SITE=(data&&data.value)||{};renderSite();}
+function renderSite(){
+  const d=SITE, tiers=["free","member","practitioner","teacher","premium","ultimate"];
+  const opt=sel=>tiers.map(t=>`<option value="${t}"${(sel||"free")===t?" selected":""}>${t}</option>`).join("");
+  const full=Array.isArray(d.library_full_tiers)?d.library_full_tiers:["teacher","ultimate"];
+  const nl=d.newsletter||{}, so=d.social||{};
+  const tierChecks=tiers.map(t=>`<label class="toggle" style="display:inline-flex;margin:0 14px 8px 0"><input type="checkbox" class="s_fulltier" value="${t}" ${full.includes(t)?"checked":""}/> ${t}</label>`).join("");
+  $("site").innerHTML=`<div id="siteErr" class="err hidden"></div>
+   <div class="grp"><div class="gt">Features</div>
+     <label class="toggle"><input type="checkbox" id="s_classes" ${d.classes_enabled?"checked":""}/> Classes — show in the site header nav</label>
+     <label class="toggle" style="margin-top:8px"><input type="checkbox" id="s_challenges" ${d.challenges_enabled?"checked":""}/> Challenges — show in the site header nav</label>
+     <div class="hint">Toggles the Classes / Challenges links in the shared header.</div>
+   </div>
+   <div class="grp"><div class="gt">Pose library access</div>
+     <div class="hint" style="margin-bottom:8px">Tiers that can open <b>all</b> poses. Everyone else — including signed-out visitors — can browse the library but only open free poses.</div>
+     <div>${tierChecks}</div>
+   </div>
+   <div class="grp"><div class="gt">Access by tier · Classes / Challenges</div>
+     <div class="row2">
+       <div class="field"><label>Classes unlock at tier</label><select id="s_classes_tier">${opt(d.classes_min_tier)}</select></div>
+       <div class="field"><label>Challenges unlock at tier</label><select id="s_challenges_tier">${opt(d.challenges_min_tier)}</select></div>
+     </div>
+   </div>
+   <div class="grp"><div class="gt">Sign-in providers</div>
+     <label class="toggle"><input type="checkbox" id="s_google" ${d.auth_google!==false?"checked":""}/> Google sign-in</label>
+     <label class="toggle" style="margin-top:8px"><input type="checkbox" id="s_facebook" ${d.auth_facebook?"checked":""}/> Facebook sign-in</label>
+     <div class="hint">Also enable the matching provider in Supabase Auth.</div>
+   </div>
+   <div class="grp"><div class="gt">Footer · Newsletter</div>
+     <label class="toggle"><input type="checkbox" id="s_nl_enabled" ${nl.enabled!==false?"checked":""}/> Show the newsletter sign-up in the footer</label>
+     <div class="field" style="margin-top:10px"><label>Heading</label><input id="s_nl_head" value="${esc(nl.heading||"Stay in the flow")}"/></div>
+     <div class="field"><label>Subtext</label><input id="s_nl_sub" value="${esc(nl.sub||"Sequences, classes & studio news — straight to your inbox.")}"/></div>
+     <div class="field"><label>Button text</label><input id="s_nl_btn" value="${esc(nl.button||"Subscribe")}"/></div>
+     <div class="hint">Sign-ups are saved to your newsletter_subscribers list with source &ldquo;site_footer&rdquo;.</div>
+   </div>
+   <div class="grp"><div class="gt">Footer · Social links</div>
+     <div class="field"><label>Instagram URL</label><input id="s_so_instagram" value="${esc(so.instagram||"")}"/></div>
+     <div class="field"><label>Facebook URL</label><input id="s_so_facebook" value="${esc(so.facebook||"")}"/></div>
+     <div class="field"><label>YouTube URL</label><input id="s_so_youtube" value="${esc(so.youtube||"")}"/></div>
+     <div class="field"><label>Pinterest URL</label><input id="s_so_pinterest" value="${esc(so.pinterest||"")}"/></div>
+     <div class="field"><label>TikTok URL</label><input id="s_so_tiktok" value="${esc(so.tiktok||"")}"/></div>
+     <div class="field"><label>Bluesky URL</label><input id="s_so_bluesky" value="${esc(so.bluesky||"")}"/></div>
+     <div class="field"><label>Threads URL</label><input id="s_so_threads" value="${esc(so.threads||"")}"/></div>
+     <div class="field"><label>LinkedIn URL</label><input id="s_so_linkedin" value="${esc(so.linkedin||"")}"/></div>
+     <div class="hint">Only platforms with a URL appear in the footer.</div>
+   </div>
+   <button class="btn" id="s_save">Save site settings</button>
+   <span id="s_status" style="margin-left:12px;color:var(--muted);font-size:13px"></span>`;
+  $("s_save").onclick=saveSite;
+}
+async function saveSite(){
+  const fulltiers=[...document.querySelectorAll(".s_fulltier:checked")].map(c=>c.value);
+  const social={instagram:$("s_so_instagram").value.trim(),facebook:$("s_so_facebook").value.trim(),youtube:$("s_so_youtube").value.trim(),pinterest:$("s_so_pinterest").value.trim(),tiktok:$("s_so_tiktok").value.trim(),bluesky:$("s_so_bluesky").value.trim(),threads:$("s_so_threads").value.trim(),linkedin:$("s_so_linkedin").value.trim()};
+  const d={classes_enabled:$("s_classes").checked,challenges_enabled:$("s_challenges").checked,
+    classes_min_tier:$("s_classes_tier").value,challenges_min_tier:$("s_challenges_tier").value,
+    auth_google:$("s_google").checked,auth_facebook:$("s_facebook").checked,
+    library_full_tiers:fulltiers,
+    newsletter:{enabled:$("s_nl_enabled").checked,heading:$("s_nl_head").value.trim(),sub:$("s_nl_sub").value.trim(),button:$("s_nl_btn").value.trim()},
+    social:social};
+  $("s_save").disabled=true;$("s_save").textContent="Saving\u2026";
+  const{error}=await sb.from("app_settings").upsert({key:"site",value:d});
+  $("s_save").disabled=false;$("s_save").textContent="Save site settings";
+  if(error){const e=$("siteErr");e.textContent=error.message;e.classList.remove("hidden");return;}
+  SITE=d;$("s_status").textContent="Saved \u2713 \u2014 refresh the apps to see changes.";
+}
+
+/* ---------- BUILDER SETTINGS ---------- */
 let BSET={};
-async function loadBuilderSettings(){try{const{data}=await sb.from("app_settings").select("value").eq("key","builder").single();BSET=(data&&data.value)||{};applyBuilderDefaults();}catch(e){}}
-function applyBuilderDefaults(){
-  if(!$("m_name").value&&BSET.default_title)$("m_name").value=BSET.default_title;
-  if(!$("m_level").value&&BSET.default_level)setSel("m_level",BSET.default_level);
-  if(!$("m_duration").value&&BSET.default_duration)setSel("m_duration",BSET.default_duration);
-  const pf=$("printFooter");if(pf)pf.textContent=BSET.print_footer||"";
+async function loadBuilderSettings(){const{data}=await sb.from("app_settings").select("value").eq("key","builder").single();BSET=(data&&data.value)||{};renderBuilderSettings();}
+function renderBuilderSettings(){
+  const d=BSET,lvl=d.default_level||"Beginner",dur=d.default_duration||"30 min",br=d.flow_breath||5;
+  const durs=["5 min","10 min","15 min","20 min","25 min","30 min","45 min","60 min","75 min","90 min"];
+  $("builder").innerHTML=`<div id="bldErr" class="err hidden"></div>
+   <div class="grp"><div class="gt">Sequence Builder defaults</div>
+     <div class="field"><label>Default sequence title</label><input id="b_default_title" value="${esc(d.default_title||"My Yoga Sequence")}"/></div>
+     <div class="row2">
+       <div class="field"><label>Default level</label><select id="b_default_level">${["Beginner","Intermediate","Advanced"].map(x=>`<option ${x===lvl?"selected":""}>${x}</option>`).join("")}</select></div>
+       <div class="field"><label>Default duration</label><select id="b_default_duration">${durs.map(x=>`<option ${x===dur?"selected":""}>${x}</option>`).join("")}</select></div>
+     </div>
+   </div>
+   <div class="grp"><div class="gt">Print &amp; export</div>
+     <div class="field"><label>Print footer text</label><input id="b_print_footer" value="${esc(d.print_footer||"Created with PurePassionYoga.com")}"/></div>
+   </div>
+   <div class="grp"><div class="gt">Flow mode</div>
+     <div class="field"><label>Default breath length (seconds)</label><select id="b_flow_breath">${[3,4,5,6,7,8,10].map(x=>`<option ${x==br?"selected":""}>${x}</option>`).join("")}</select></div>
+     <label class="toggle"><input type="checkbox" id="b_flow_chime" ${d.flow_chime?"checked":""}/> Chime between poses by default</label>
+     <label class="toggle" style="margin-top:8px"><input type="checkbox" id="b_flow_voice" ${d.flow_voice?"checked":""}/> Read pose names aloud by default</label>
+   </div>
+   <button class="btn" id="b_save_set">Save builder settings</button>
+   <span id="b_status" style="margin-left:12px;color:var(--muted);font-size:13px"></span>`;
+  $("b_save_set").onclick=saveBuilderSettings;
 }
-let flowIdx=0,flowRemain=0,flowTimer=null,flowPaused=false,flowChime=false,flowVoice=false,flowVoiceName="",flowBreathSec=5;
-function startFlow(){
-  if(!items.length)return toast("Add poses to your flow first.");
-  flowBreathSec=parseInt(BSET.flow_breath)||5;flowChime=!!BSET.flow_chime;flowVoice=!!BSET.flow_voice;flowIdx=0;flowPaused=true;
-  try{var _sc=localStorage.getItem("ppy-flow-chime");if(_sc!==null)flowChime=_sc==="1";var _sv=localStorage.getItem("ppy-flow-voice-on");if(_sv!==null)flowVoice=_sv==="1";flowVoiceName=localStorage.getItem("ppy-flow-voice")||"";}catch(e){}
-  document.getElementById("flowRoot").innerHTML=`<div class="flow"><div class="flow-prog" id="flowProg"></div>
-    <button class="flow-exit" onclick="endFlow()">✕</button><div id="flowMain"></div>
-    <div class="flow-ctrls"><button onclick="flowPrev()">◀ Prev</button>
-      <button class="primary" id="flowPause" onclick="flowToggle()">▶ Play</button>
-      <button onclick="flowNext()">Next ▶</button>
-      <button onclick="flowMirror()" title="Mirror left / right">\u21c4 Mirror</button></div>
-    <div class="flow-toggles"><label><input type="checkbox" id="flowChimeT" ${flowChime?"checked":""}> Chime</label>
-      <label><input type="checkbox" id="flowVoiceT" ${flowVoice?"checked":""}> Voice</label></div>
-    <div class="flow-voicepick"><span>Voice</span><select id="flowVoiceSel"></select><button type="button" id="flowVoiceTest">\ud83d\udd0a Test</button></div></div>`;
-  document.body.style.overflow="hidden";
-  document.getElementById("flowChimeT").onchange=e=>{flowChime=e.target.checked;try{localStorage.setItem("ppy-flow-chime",flowChime?"1":"0");}catch(_){}};
-  document.getElementById("flowVoiceT").onchange=e=>{flowVoice=e.target.checked;try{localStorage.setItem("ppy-flow-voice-on",flowVoice?"1":"0");}catch(_){}if(!flowVoice&&window.speechSynthesis)speechSynthesis.cancel();};
-  initFlowVoices();
-  flowStep();
+async function saveBuilderSettings(){
+  const d={default_title:$("b_default_title").value.trim(),default_level:$("b_default_level").value,default_duration:$("b_default_duration").value,
+    print_footer:$("b_print_footer").value.trim(),flow_breath:parseInt($("b_flow_breath").value)||5,
+    flow_chime:$("b_flow_chime").checked,flow_voice:$("b_flow_voice").checked};
+  $("b_save_set").disabled=true;$("b_save_set").textContent="Saving\u2026";
+  const{error}=await sb.from("app_settings").upsert({key:"builder",value:d});
+  $("b_save_set").disabled=false;$("b_save_set").textContent="Save builder settings";
+  if(error){const e=$("bldErr");e.textContent=error.message;e.classList.remove("hidden");return;}
+  BSET=d;$("b_status").textContent="Saved \u2713 \u2014 the Sequence Builder picks these up on next load.";
 }
-function flowStep(){
-  clearInterval(flowTimer);
-  if(flowIdx>=items.length){flowDone();return;}
-  const it=items[flowIdx];document.getElementById("flowProg").textContent=(flowIdx+1)+" / "+items.length;
-  if(it.kind==="section"){
-    document.getElementById("flowMain").innerHTML=`<div class="flow-k">Section</div><div class="flow-name">${esc(it.title)}</div><div class="flow-count" id="flowCount"></div>`;
-    if(!flowPaused)speakFlow(flowCueText(it));flowRemain=4;tickStart();return;
-  }
-  const pp=it.pose,thumb=pp.image_url?`<img class="${it.mirror?'mir':''}" src="${esc(pp.image_url)}">`:(pp.emoji||"🧘"),breaths=parseInt(it.breaths)||5;
-  flowRemain=breaths*flowBreathSec;
-  document.getElementById("flowMain").innerHTML=`<div class="flow-th">${thumb}</div>
-    <div class="flow-name">${esc(pp.name)}</div><div class="flow-san">${esc(pp.sanskrit_name||"")}</div>
-    ${it.notes?`<div class="flow-cue">${esc(it.notes)}</div>`:""}
-    <div class="flow-count" id="flowCount"></div><div class="flow-sub">${breaths} breaths</div>`;
-  if(!flowPaused)speakFlow(flowCueText(it));tickStart();
-}
-function tickStart(){updateFlowCount();flowTimer=setInterval(()=>{if(flowPaused)return;flowRemain--;if(flowRemain<=0){clearInterval(flowTimer);if(flowChime)chimeFlow();flowIdx++;flowStep();return;}updateFlowCount();},1000);}
-function updateFlowCount(){const c=document.getElementById("flowCount");if(c)c.textContent=flowRemain;}
-function flowCueText(it){ if(!it)return""; if(it.kind==="section")return it.title||""; const p=it.pose||{}; return (p.name||"")+(it.notes?". "+it.notes:""); }
-function flowToggle(){
-  flowPaused=!flowPaused;
-  const b=document.getElementById("flowPause");if(b)b.textContent=flowPaused?"▶ Play":"❚❚ Pause";
-  if(flowPaused){ if(window.speechSynthesis)speechSynthesis.cancel(); }
-  else { const it=items[flowIdx]; if(it)speakFlow(flowCueText(it)); }
-}
-function flowNext(){clearInterval(flowTimer);flowIdx++;flowStep();}
-function flowPrev(){clearInterval(flowTimer);flowIdx=Math.max(0,flowIdx-1);flowStep();}
-function flowDone(){clearInterval(flowTimer);document.getElementById("flowMain").innerHTML=`<div class="flow-th">🌸</div><div class="flow-name">Complete</div><div class="flow-sub">Beautiful practice.</div>`;const c=document.querySelector(".flow-ctrls");if(c)c.style.display="none";}
-function endFlow(){clearInterval(flowTimer);if(window.speechSynthesis)speechSynthesis.cancel();document.getElementById("flowRoot").innerHTML="";document.body.style.overflow="";}
-function flowVoiceObj(){try{return (speechSynthesis.getVoices()||[]).find(x=>x.name===flowVoiceName)||null;}catch(e){return null;}}
-function populateFlowVoices(){
-  const sel=document.getElementById("flowVoiceSel"); if(!sel||!("speechSynthesis"in window))return;
-  const vs=speechSynthesis.getVoices()||[];
-  sel.innerHTML='<option value="">Default voice</option>'+vs.map(v=>`<option value="${esc(v.name)}">${esc(v.name)} \u2014 ${esc(v.lang)}${v.default?" (device default)":""}</option>`).join("");
-  sel.value=flowVoiceName||"";
-}
-function initFlowVoices(){
-  const sel=document.getElementById("flowVoiceSel"); if(!sel)return;
-  const test=document.getElementById("flowVoiceTest");
-  if(!("speechSynthesis"in window)){ sel.innerHTML='<option>Speech not supported on this browser</option>'; sel.disabled=true; if(test)test.disabled=true; return; }
-  populateFlowVoices();
-  if((speechSynthesis.getVoices()||[]).length===0){ try{speechSynthesis.onvoiceschanged=populateFlowVoices;}catch(e){} setTimeout(populateFlowVoices,300); }
-  sel.onchange=e=>{ flowVoiceName=e.target.value; try{localStorage.setItem("ppy-flow-voice",flowVoiceName);}catch(_){}
-    if(flowVoiceName){ flowVoice=true; const cb=document.getElementById("flowVoiceT"); if(cb)cb.checked=true; try{localStorage.setItem("ppy-flow-voice-on","1");}catch(_){} } };
-  if(test) test.onclick=()=>{ try{ const u=new SpeechSynthesisUtterance("Mountain pose. Tadasana. Breathe in."); u.rate=0.9; const v=flowVoiceObj(); if(v){u.voice=v;u.lang=v.lang;} speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(_){} };
-}
-function speakFlow(t){try{if(flowVoice&&"speechSynthesis"in window){const u=new SpeechSynthesisUtterance(t);u.rate=0.9;const v=flowVoiceObj();if(v){u.voice=v;u.lang=v.lang;}speechSynthesis.cancel();speechSynthesis.speak(u);}}catch(e){}}
-function chimeFlow(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type="sine";o.frequency.value=528;g.gain.setValueAtTime(0.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.25,ctx.currentTime+0.05);g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+1.1);o.start();o.stop(ctx.currentTime+1.15);}catch(e){}}
-$("b_flow").onclick=startFlow;
-function flowMirror(){const it=items[flowIdx];if(!it||it.kind!=="pose")return;it.mirror=!it.mirror;const img=document.querySelector("#flowMain .flow-th img");if(img)img.classList.toggle("mir",!!it.mirror);}
-window.endFlow=endFlow;window.flowPrev=flowPrev;window.flowNext=flowNext;window.flowToggle=flowToggle;window.flowMirror=flowMirror;
-/* ---------- AI GENERATE ---------- */
-const FN_URL=SUPABASE_URL+"/functions/v1/generate-sequence";
-$("b_ai").onclick=openAI;
-function openAI(){
-  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()">
-    <h3 class="serif">Generate with AI</h3>
-    <div class="field"><label>Describe the class you want</label><textarea id="ai_prompt" rows="3" placeholder="e.g. 45-minute energizing vinyasa focused on hip openers, peaking with pigeon"></textarea></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="field"><label>Level</label><select id="ai_level" style="width:100%">
-        <option value="">Any level</option>
-        ${["Beginner","Beginner-Intermediate","Intermediate","Intermediate-Advanced","Advanced"].map(v=>`<option value="${v}"${$("m_level").value===v?" selected":""}>${v}</option>`).join("")}
-      </select></div>
-      <div class="field"><label>Duration</label><select id="ai_duration" style="width:100%">
-        <option value="">Any length</option>
-        ${["15 min","20 min","30 min","45 min","60 min","75 min","90 min"].map(v=>`<option value="${v}"${$("m_duration").value===v?" selected":""}>${v}</option>`).join("")}
-      </select></div></div>
-    <div id="ai_err" class="err hidden"></div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="btn ghost" style="flex:1" onclick="closeModal()">Cancel</button>
-      <button class="btn" style="flex:1" id="ai_go">Generate</button></div>
-    <div id="ai_status" style="color:var(--muted);font-size:13px;margin-top:8px"></div></div></div>`;
-  $("ovl").onclick=closeModal;$("ai_go").onclick=runAI;
-}
-async function runAI(){
-  $("ai_err").classList.add("hidden");
-  $("ai_go").disabled=true;$("ai_go").textContent="Generating\u2026";$("ai_status").innerHTML='<span class="ai-spin">\ud83c\udf38</span> Designing your sequence\u2026 this can take a few seconds.';
+
+/* ---------- EMAIL SETTINGS ---------- */
+let EMAIL={}, EMAIL_STATS=null, EMAIL_SENDS=[];
+async function loadEmail(){
+  try{const{data}=await sb.from("app_settings").select("value").eq("key","email").single();EMAIL=(data&&data.value)||EMAIL||{};}
+  catch(e){EMAIL=EMAIL||{};}
+  try{renderEmail();}catch(e){$("emailtab").innerHTML='<div class="err">Email panel failed to render: '+esc(String(e&&e.message||e))+'</div>';return;}
   try{
-    const{data:{session}}=await sb.auth.getSession();
-    const res=await fetch(FN_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":ANON,"Authorization":"Bearer "+(session&&session.access_token)},
-      body:JSON.stringify({prompt:$("ai_prompt").value.trim(),level:$("ai_level").value.trim(),duration:$("ai_duration").value.trim(),poses:POSES.map(p=>p.name)})});
-    const out=await res.json();
-    if(!res.ok||out.error)throw new Error(out.error||("Request failed ("+res.status+")"));
-    const built=[];let missed=0;
-    (out.items||[]).forEach(it=>{const p=POSES.find(x=>(x.name||"").toLowerCase()===String(it.pose||"").toLowerCase());
-      if(p)built.push({kind:"pose",pose:p,notes:it.cue||"",breaths:parseInt(it.breaths)||5});else missed++;});
-    if(!built.length)throw new Error("No matching poses came back \u2014 try rephrasing.");
-    items=built;if(out.title&&!$("m_name").value.trim())$("m_name").value=out.title;
-    if(out.style&&$("m_style")&&!$("m_style").value)setSel("m_style",out.style);
-    if(out.description&&$("m_description")&&!$("m_description").value.trim())$("m_description").value=out.description;
-    if($("ai_level").value)setSel("m_level",$("ai_level").value);if($("ai_duration").value)setSel("m_duration",$("ai_duration").value);
-    closeModal();renderCanvas();toast("Generated "+built.length+" poses"+(missed?" ("+missed+" skipped)":"")+" \u2713");
-  }catch(e){const el=$("ai_err");el.textContent=e.message;el.classList.remove("hidden");$("ai_status").textContent="";}
-  $("ai_go").disabled=false;$("ai_go").textContent="Generate";
+    const ns=await sb.from("newsletter_subscribers").select("unsubscribed");
+    const subs=ns.data||[]; const total=subs.length, unsub=subs.filter(x=>x.unsubscribed).length;
+    const mem=await sb.from("profiles").select("tier,email");
+    EMAIL_STATS={active:total-unsub,unsub:unsub,members:(mem.data||[]).filter(m=>m.email).length};
+  }catch(e){EMAIL_STATS=null;}
+  try{const es=await sb.from("email_sends").select("*").order("created_at",{ascending:false}).limit(10);EMAIL_SENDS=es.data||[];}catch(e){EMAIL_SENDS=[];}
+  const sEl=$("emStats"); if(sEl) sEl.innerHTML=emailStatsHTML();
+  const hEl=$("emSends"); if(hEl) hEl.innerHTML=emailSendsHTML();
+}
+function emailStatsHTML(){
+  if(!EMAIL_STATS)return '<span style="color:var(--muted)">loading\u2026</span>';
+  const s=EMAIL_STATS;
+  return `<b>${s.active}</b> active newsletter subscriber${s.active===1?"":"s"} <span style="color:var(--muted)">(${s.unsub} unsubscribed)</span> \u00b7 <b>${s.members}</b> member${s.members===1?"":"s"} with email`;
+}
+function emailSendsHTML(){
+  if(!EMAIL_SENDS.length)return '<div style="color:var(--muted);font-size:13px">No emails sent yet.</div>';
+  return EMAIL_SENDS.map(r=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)">
+    <div><div class="mn">${esc(r.subject||"(no subject)")}</div><div class="ms" style="color:var(--muted);font-size:12px">${new Date(r.created_at).toLocaleString()} \u00b7 ${esc(r.audience||"")}</div></div>
+    <div style="text-align:right;font-size:12px;white-space:nowrap"><span style="color:#3a7a4a">${r.sent_count||0} sent</span>${r.failed_count?` \u00b7 <span style="color:#b3261e">${r.failed_count} failed</span>`:""}</div></div>`).join("");
+}
+function renderEmail(){
+  const d=EMAIL;
+  const tiers=["free","member","premium","practitioner","teacher","ultimate"];
+  const aud=d.audience||"newsletter";
+  $("emailtab").innerHTML=`<div id="emErr" class="err hidden"></div>
+   <div class="grp"><div class="gt">Weekly email</div>
+     <div class="note" style="margin-bottom:10px;display:block">Sends the sequence you pick in <b>Sequence Builder \u2192 \u2709 Weekly email</b>. The email body is generated automatically from that sequence (poses, notes, breaths, playlist). These settings control who receives it and how it's branded.</div>
+     <div style="font-size:13px">Audience right now: <span id="emStats">${emailStatsHTML()}</span></div>
+   </div>
+   <div class="grp"><div class="gt">Delivery (via Resend)</div>
+     <div class="row2"><div class="field"><label>From name</label><input id="e_from_name" value="${esc(d.from_name||"Pure Passion Yoga")}"/></div>
+       <div class="field"><label>From email</label><input id="e_from_email" value="${esc(d.from_email||"")}" placeholder="hello@mail.purepassionyoga.com"/><div class="hint">Must be on your Resend-verified domain.</div></div></div>
+     <div class="field"><label>Reply-to (optional)</label><input id="e_reply_to" value="${esc(d.reply_to||"")}" placeholder="you@purepassionyoga.com"/><div class="hint">Where replies land \u2014 e.g. your Outlook address.</div></div>
+   </div>
+   <div class="grp"><div class="gt">Audience</div>
+     <div class="row2"><div class="field"><label>Send to</label><select id="e_audience">
+        <option value="newsletter"${aud==="newsletter"?" selected":""}>Newsletter subscribers</option>
+        <option value="members"${aud==="members"?" selected":""}>Members (by tier)</option>
+        <option value="both"${aud==="both"?" selected":""}>Both</option></select></div>
+       <div class="field"><label>Minimum member tier</label><select id="e_min_tier">${tiers.map(t=>`<option value="${t}"${(d.member_min_tier||"member")===t?" selected":""}>${t.charAt(0).toUpperCase()+t.slice(1)}</option>`).join("")}</select><div class="hint">Used when sending to members.</div></div></div>
+   </div>
+   <div class="grp"><div class="gt">Branding</div>
+     <div class="field"><label>Subject prefix</label><input id="e_subject_prefix" value="${esc(d.weekly_subject_prefix||"This week's practice: ")}"/><div class="hint">Prepended to the sequence name to form the default subject.</div></div>
+     <div class="field"><label>Footer text</label><textarea id="e_footer">${esc(d.footer_text||"You're receiving this because you subscribed to Pure Passion Yoga.")}</textarea></div>
+   </div>
+   <div class="grp"><div class="gt">Recent sends</div><div id="emSends">${emailSendsHTML()}</div></div>
+   <button class="btn" id="e_save">Save email settings</button>
+   <span id="e_status" style="margin-left:12px;color:var(--muted);font-size:13px"></span>`;
+  $("e_save").onclick=saveEmail;
+}
+async function saveEmail(){
+  const d=Object.assign({},EMAIL,{
+    provider:"resend",
+    from_name:$("e_from_name").value.trim(),
+    from_email:$("e_from_email").value.trim(),
+    reply_to:$("e_reply_to").value.trim(),
+    audience:$("e_audience").value,
+    member_min_tier:$("e_min_tier").value,
+    weekly_subject_prefix:$("e_subject_prefix").value,
+    footer_text:$("e_footer").value.trim()
+  });
+  $("e_save").disabled=true;$("e_save").textContent="Saving\u2026";
+  const{error}=await sb.from("app_settings").upsert({key:"email",value:d});
+  $("e_save").disabled=false;$("e_save").textContent="Save email settings";
+  if(error){const e=$("emErr");e.textContent=error.message;e.classList.remove("hidden");return;}
+  EMAIL=d;$("e_status").textContent="Saved \u2713";
 }
 
-/* ---------- COMMUNITY BROWSE ---------- */
-$("b_community").onclick=openCommunity;
-async function openCommunity(){
-  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()">
-    <h3 class="serif">Community sequences</h3><div id="comList" style="color:var(--muted)">Loading\u2026</div>
-    <button class="btn ghost" style="margin-top:14px;width:100%" onclick="closeModal()">Close</button></div></div>`;
-  $("ovl").onclick=closeModal;
-  let r=await sb.from("sequences").select("*, owner:profiles(display_name)").eq("visibility","community").order("likes_count",{ascending:false}).limit(50);
-  if(r.error)r=await sb.from("sequences").select("*").eq("visibility","community").order("likes_count",{ascending:false}).limit(50);
-  const rows=(r.data||[]).map(s=>`<div class="savedrow" data-id="${s.id}">
-    <div style="flex:1"><div style="font-weight:500;color:var(--head)">${esc(s.name)}</div>
-    <div style="color:var(--muted);font-size:12px">${esc((s.owner&&s.owner.display_name)||"PPY teacher")} \u00b7 ${esc(s.level||"")} ${esc(s.duration_label||"")}</div></div>
-    <span style="color:var(--muted);font-size:11px">\u2665 ${s.likes_count||0}</span></div>`).join("")||'<div style="color:var(--muted)">No community sequences yet.</div>';
-  $("comList").innerHTML=rows;
-  $("comList").querySelectorAll(".savedrow").forEach(el=>el.onclick=()=>loadCommunity(el.dataset.id));
+/* ---------- EDITOR ---------- */
+function dl(field){return `<datalist id="dl_${field}">${(SUG[field]||[]).map(v=>`<option value="${esc(v)}">`).join("")}</datalist>`;}
+function field(label,id,val,opts={}){
+  const list=opts.sug?` list="dl_${opts.sug}"`:"";
+  return `<div class="field"><label>${label}</label><input id="f_${id}" value="${esc(val)}"${list} />${opts.sug?dl(opts.sug):""}${opts.hint?`<div class="hint">${opts.hint}</div>`:""}</div>`;
 }
-async function loadCommunity(id){
-  const{data:s}=await sb.from("sequences").select("*").eq("id",id).single();
-  const{data:its}=await sb.from("sequence_items").select("*").eq("sequence_id",id).order("position");
-  currentId=null;
-  $("m_name").value=(s.name||"")+" (copy)";$("m_description").value=s.description||"";$("m_playlist").value=s.playlist_url||"";
-  setSel("m_level",s.level);setSel("m_duration",s.duration_label);setSel("m_style",s.style);
-  $("m_tags").value=arr(s.tags).join(", ");$("m_share").checked=false;
-  items=(its||[]).map(it=>{if(it.item_type==="section")return{kind:"section",title:it.custom_name||"Section"};
-    const p=POSES.find(x=>String(x.id)===String(it.pose_id))||{id:it.pose_id,name:it.custom_name,sanskrit_name:it.custom_sanskrit,emoji:it.emoji};
-    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored};});
-  closeModal();renderCanvas();toast("Loaded a copy \u2014 tweak and Save to make it yours");
+function area(label,id,val,hint){return `<div class="field"><label>${label}</label><textarea id="f_${id}">${esc(val)}</textarea>${hint?`<div class="hint">${hint}</div>`:""}</div>`;}
+function tagField(label,key){
+  return `<div class="field"><label>${label}</label>
+    <div class="chips" id="chips_${key}"></div>
+    <input id="tag_${key}" placeholder="Type and press Enter…" list="dl_${key}" />${dl(key)}
+    <div class="hint">Press Enter or comma to add. Click ✕ on a chip to remove.</div></div>`;
 }
-window.openAI=openAI;window.runAI=runAI;window.openCommunity=openCommunity;window.loadCommunity=loadCommunity;
-/* ---------- TEMPLATES ---------- */
-$("b_templates").onclick=openTemplates;
-async function openTemplates(){
-  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()">
-    <h3 class="serif">Templates</h3>
-    <button class="btn" id="tpl_save" style="width:100%;margin-bottom:12px">+ Save current sequence as template</button>
-    <div id="tplList" style="color:var(--muted)">Loading\u2026</div>
-    <button class="btn ghost" style="margin-top:14px;width:100%" onclick="closeModal()">Close</button></div></div>`;
-  $("ovl").onclick=closeModal;$("tpl_save").onclick=saveAsTemplate;
-  const{data}=await sb.from("sequences").select("*").eq("owner_id",SESSION.user.id).eq("is_template",true).order("updated_at",{ascending:false});
-  $("tplList").innerHTML=(data||[]).map(s=>`<div class="savedrow" data-id="${s.id}"><div style="flex:1"><div style="font-weight:500;color:var(--head)">${esc(s.name)}</div><div style="color:var(--muted);font-size:12px">${esc(s.level||"")} ${esc(s.duration_label||"")}</div></div></div>`).join("")||'<div style="color:var(--muted)">No templates yet. Build a sequence, then save it as a template.</div>';
-  $("tplList").querySelectorAll(".savedrow").forEach(el=>el.onclick=()=>loadTemplate(el.dataset.id));
+function openEditor(id){
+  const p = id ? POSES.find(x=>String(x.id)===String(id)) : {};
+  editing = id ? p.id : null;
+  tagState={}; TAG_FIELDS.forEach(f=>tagState[f]=arr(p[f]).slice());
+  const lv=k=>p[k]==null?"":p[k];
+  const listVal=k=>arr(p[k]).join("\n");
+  const root=$("edRoot");
+  root.innerHTML=`<div class="ovl" id="ovl"><div class="ed" onclick="event.stopPropagation()">
+    <div class="edtop">
+      <h2>${id?"Edit pose":"New pose"}</h2>
+      <button class="btn ghost" style="margin-left:auto;padding:7px 14px" onclick="closeEd()">Cancel</button>
+      <button class="btn" id="saveBtn">Save</button>
+    </div>
+    <div class="edbody">
+      <div id="edErr" class="err hidden"></div>
+
+      <div class="grp"><div class="gt">Identity</div>
+        <div class="row2">${field("Name","name",lv("name"))}${field("Sanskrit name","sanskrit_name",lv("sanskrit_name"))}</div>
+        <div class="row2">${field("Pronunciation","pronunciation",lv("pronunciation"))}${field("Emoji","emoji",lv("emoji"))}</div>
+        <div class="row2">${field("Slug","slug",lv("slug"),{hint:"lowercase-with-dashes; must be unique"})}${field("Canonical ID","canonical_pose_id",lv("canonical_pose_id"),{hint:"e.g. PPY-POSE-0051"})}</div>
+        ${tagField("Alternate names","alternate_names")}
+      </div>
+
+      <div class="grp"><div class="gt">Classification</div>
+        <div class="row2">${field("Category","category",lv("category"),{sug:"category"})}${field("Difficulty","difficulty_level",lv("difficulty_level"),{sug:"difficulty_level"})}</div>
+        ${field("Primary movement","primary_movement",lv("primary_movement"),{sug:"primary_movement"})}
+        ${tagField("Yoga styles","yoga_styles")}
+        ${tagField("Pose phases","pose_phases")}
+        ${tagField("Chakras","chakras")}
+      </div>
+
+      <div class="grp"><div class="gt">Body</div>
+        ${tagField("Body areas (focus)","body_focus")}
+        ${tagField("Muscle groups","muscle_groups")}
+        ${tagField("Movement actions","movement_actions")}
+        ${tagField("Required props","required_props")}
+      </div>
+
+      <div class="grp"><div class="gt">Content</div>
+        ${area("Short description","short_description",lv("short_description"))}
+        ${area("Anatomy breakdown","anatomy_breakdown",lv("anatomy_breakdown"),"Paragraphs; leave a blank line between them")}
+        ${area("Alignment / instructions","instructions",listVal("instructions"),"One step per line")}
+        ${area("Benefits","benefits",lv("benefits"))}
+        ${area("Teaching cues","teaching_cues",listVal("teaching_cues"),"One per line")}
+        ${area("Breath cues","breath_cues",listVal("breath_cues"),"One per line")}
+        ${area("Contraindications","contraindications",lv("contraindications"),"One per line")}
+        ${area("Modifications","modifications",listVal("modifications"),"One per line")}
+        ${area("Advanced variations","advanced_variations",listVal("advanced_variations"),"One per line")}
+        ${tagField("Focus & benefit tags","benefit_tags")}
+        ${tagField("Contraindication tags","contraindication_tags")}
+        ${field("Affirmation","affirmation",lv("affirmation"))}
+      </div>
+
+      <div class="grp"><div class="gt">Illustration</div>
+        <div class="imgrow">
+          <div class="imgprev" id="imgPrev">${p.image_url?`<img src="${esc(p.image_url)}">`:"🧘"}</div>
+          <div style="flex:1">
+            ${field("Image URL","image_url",lv("image_url"),{hint:"Paste a URL, or upload a file below"})}
+            <input type="file" id="imgFile" accept="image/*" />
+            <div class="hint" id="upStatus"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grp"><div class="gt">Publishing</div>
+        <div class="row2">
+          <label class="toggle"><input type="checkbox" id="f_published" ${p.status!=="draft"?"checked":""}/> Published to website</label>
+          <label class="toggle"><input type="checkbox" id="f_is_free" ${p.is_free?"checked":""}/> Free (non-members)</label>
+        </div>
+        <div class="row2">${field("SEO title","seo_title",lv("seo_title"))}${field("SEO description","seo_description",lv("seo_description"))}</div>
+        ${tagField("Keywords","keywords")}
+      </div>
+    </div></div></div>`;
+  $("ovl").onclick=closeEd;
+  document.body.style.overflow="hidden";
+  TAG_FIELDS.forEach(setupTag);
+  $("imgFile").onchange=onUpload;
+  $("saveBtn").onclick=save;
 }
-async function saveAsTemplate(){
-  if(!items.length)return toast("Add poses first.");
-  const row={name:($("m_name").value.trim()||"Untitled")+" (template)",level:$("m_level").value.trim()||null,style:$("m_style").value.trim()||null,
-    duration_label:$("m_duration").value.trim()||null,description:$("m_description").value.trim()||null,playlist_url:$("m_playlist").value.trim()||null,
-    tags:tagsArr(),visibility:"private",is_template:true,theme:seqTheme,owner_id:SESSION.user.id};
-  const{data,error}=await sb.from("sequences").insert(row).select("id").single();
-  if(error)return toast("Failed: "+error.message);
-  const rows=items.map((it,i)=>({sequence_id:data.id,position:i,item_type:it.kind,pose_id:it.kind==="pose"?it.pose.id:null,
-    custom_name:it.kind==="section"?it.title:it.pose.name,custom_sanskrit:it.kind==="pose"?it.pose.sanskrit_name:null,
-    notes:it.notes||null,custom_breaths:it.kind==="pose"&&it.breaths?parseInt(it.breaths):null,custom_breath_pattern:it.kind==="pose"?(it.breath_pattern||null):null,
-    emoji:it.kind==="pose"?it.pose.emoji:null,level:it.kind==="pose"?it.pose.difficulty_level:null,mirrored:it.kind==="pose"?!!it.mirror:false}));
-  if(rows.length)await sb.from("sequence_items").insert(rows);
-  toast("Saved as template \u2713");openTemplates();
+function closeEd(){ $("edRoot").innerHTML=""; document.body.style.overflow=""; }
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("edRoot").innerHTML)closeEd();});
+
+function renderChips(key){
+  $("chips_"+key).innerHTML=tagState[key].map((v,i)=>`<span class="chip">${esc(v)}<b data-k="${key}" data-i="${i}">✕</b></span>`).join("");
+  $("chips_"+key).querySelectorAll("b").forEach(b=>b.onclick=()=>{tagState[key].splice(+b.dataset.i,1);renderChips(key);});
 }
-async function loadTemplate(id){
-  const{data:s}=await sb.from("sequences").select("*").eq("id",id).single();
-  const{data:its}=await sb.from("sequence_items").select("*").eq("sequence_id",id).order("position");
-  currentId=null;
-  $("m_name").value=(s.name||"").replace(/ \(template\)$/,"");$("m_description").value=s.description||"";$("m_playlist").value=s.playlist_url||"";
-  setSel("m_level",s.level);setSel("m_duration",s.duration_label);setSel("m_style",s.style);$("m_tags").value=arr(s.tags).join(", ");$("m_share").checked=false;applyTheme(s.theme||"classic");
-  items=(its||[]).map(it=>{if(it.item_type==="section")return{kind:"section",title:it.custom_name||"Section"};
-    const p=POSES.find(x=>String(x.id)===String(it.pose_id))||{id:it.pose_id,name:it.custom_name,sanskrit_name:it.custom_sanskrit,emoji:it.emoji};
-    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored};});
-  closeModal();renderCanvas();toast("Template loaded");
+function setupTag(key){
+  renderChips(key);
+  const inp=$("tag_"+key);
+  inp.addEventListener("keydown",e=>{
+    if(e.key==="Enter"||e.key===","){e.preventDefault();const v=inp.value.trim().replace(/,$/,"");if(v&&!tagState[key].includes(v)){tagState[key].push(v);renderChips(key);}inp.value="";}
+  });
+  inp.addEventListener("change",()=>{const v=inp.value.trim();if(v&&!tagState[key].includes(v)){tagState[key].push(v);renderChips(key);}inp.value="";});
 }
 
-/* ---------- THEME ---------- */
-$("b_theme").onclick=openTheme;
-function openTheme(){
-  const opts=[["classic","Classic","Serif headings, rose accent"],["minimal","Minimal","Clean monochrome"],["botanical","Botanical","Sage accent"]];
-  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()">
-    <h3 class="serif">Print theme</h3>
-    ${opts.map(o=>`<div class="savedrow" data-t="${o[0]}"><div style="flex:1"><div style="font-weight:500;color:var(--head)">${o[1]}${seqTheme===o[0]?" \u2713":""}</div><div style="color:var(--muted);font-size:12px">${o[2]}</div></div></div>`).join("")}
-    <div style="color:var(--muted);font-size:12px;margin-top:6px">Themes style the printed handout. Save the sequence to keep your choice.</div>
-    <button class="btn ghost" style="margin-top:12px;width:100%" onclick="closeModal()">Close</button></div></div>`;
-  $("ovl").onclick=closeModal;
-  $("modalRoot").querySelectorAll(".savedrow").forEach(el=>el.onclick=()=>{applyTheme(el.dataset.t);closeModal();toast("Theme: "+el.dataset.t);});
+async function onUpload(e){
+  const file=e.target.files[0]; if(!file) return;
+  $("upStatus").textContent="Uploading…";
+  const ext=(file.name.split(".").pop()||"png").toLowerCase();
+  const path=(($("f_slug").value||"pose").toLowerCase().replace(/[^a-z0-9]+/g,"-"))+"-"+Date.now().toString(36)+"."+ext;
+  const { error } = await sb.storage.from("pose-images").upload(path, file, { upsert:true, contentType:file.type });
+  if(error){ $("upStatus").textContent="Upload failed: "+error.message; return; }
+  const { data } = sb.storage.from("pose-images").getPublicUrl(path);
+  $("f_image_url").value=data.publicUrl;
+  $("imgPrev").innerHTML=`<img src="${esc(data.publicUrl)}">`;
+  $("upStatus").textContent="Uploaded ✓";
 }
-function applyTheme(t){seqTheme=t||"classic";document.body.classList.remove("theme-classic","theme-minimal","theme-botanical");document.body.classList.add("theme-"+seqTheme);}
-function updatePrintHead(){const el=$("printHead");if(!el)return;const meta=[$("m_level").value,$("m_duration").value,$("m_style").value].filter(Boolean).join(" \u00b7 ");el.innerHTML=`<h1>${esc($("m_name").value||"My Yoga Sequence")}</h1><div class="meta">${esc(meta)}</div>`+($("m_description").value?`<div class="meta" style="margin-top:6px">${esc($("m_description").value)}</div>`:"");}
-window.openTemplates=openTemplates;window.saveAsTemplate=saveAsTemplate;window.loadTemplate=loadTemplate;window.openTheme=openTheme;
-loadDesign();init();
+
+function val(id){const el=$("f_"+id);return el?el.value.trim():"";}
+function listToArr(id){return val(id).split(/\n+/).map(s=>s.trim()).filter(Boolean);}
+async function save(){
+  $("edErr").classList.add("hidden");
+  const diff=val("difficulty_level");
+  const payload={
+    name:val("name"), sanskrit_name:val("sanskrit_name")||null, pronunciation:val("pronunciation")||null,
+    slug:val("slug")||null, canonical_pose_id:val("canonical_pose_id")||null, emoji:val("emoji")||null,
+    category:val("category")||null, difficulty_level:diff||null,
+    level:["Beginner","Intermediate","Advanced"].includes(diff)?diff:null,
+    primary_movement:val("primary_movement")||null,
+    short_description:val("short_description")||null, anatomy_breakdown:val("anatomy_breakdown")||null,
+    benefits:val("benefits")||null, contraindications:val("contraindications")||null,
+    affirmation:val("affirmation")||null, seo_title:val("seo_title")||null, seo_description:val("seo_description")||null,
+    image_url:val("image_url")||null,
+    is_free:$("f_is_free").checked, published_to_website:$("f_published").checked,
+    status:$("f_published").checked?"published":"draft",
+  };
+  TAG_FIELDS.forEach(f=>payload[f]=tagState[f]);
+  LIST_FIELDS.forEach(f=>payload[f]=listToArr(f));
+  if(!payload.name){ return showEdErr("Name is required."); }
+  if(!payload.slug){ payload.slug=payload.name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
+  $("saveBtn").disabled=true; $("saveBtn").textContent="Saving…";
+  let res;
+  if(editing) res=await sb.from("poses").update(payload).eq("id",editing).select("id").single();
+  else res=await sb.from("poses").insert(payload).select("id").single();
+  $("saveBtn").disabled=false; $("saveBtn").textContent="Save";
+  if(res.error){ return showEdErr(res.error.message); }
+  closeEd(); await loadPoses();
+}
+function showEdErr(m){ const e=$("edErr"); e.textContent=m; e.classList.remove("hidden"); e.scrollIntoView({behavior:"smooth",block:"center"}); }
+
+sb.auth.onAuthStateChange((_e,session)=>{ if(!session) showLogin(); });
+init();
 </script>
 
 <script>
@@ -1166,7 +1594,7 @@ loadDesign();init();
         f('--ppy-sage',S); f('--sage',S);
         f('--ppy-ink',d.color_body_text); f('--ink',d.color_body_text);
         f('--ppy-bg',d.color_page_bg); f('--bg',d.color_page_bg);
-        f('--ppy-surface',d.color_surface); f('--card',d.color_surface);
+        f('--ppy-surface',d.color_surface); f('--card',d.color_surface); f('--field',d.color_surface);
         f('--ppy-muted',d.color_secondary_text); f('--muted',d.color_secondary_text);
       })();
       if(d.app_name){ document.querySelectorAll(".ppy-brand .wm").forEach(function(e){e.textContent=d.app_name;}); }
