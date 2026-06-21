@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script>(function(){try{var t=localStorage.getItem("ppy-theme");var m=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches;var dark=t?t==="dark":m;document.documentElement.setAttribute("data-theme",dark?"dark":"light");}catch(e){}})();</script>
+<title>Teaching Dashboard · Pure Passion Yoga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="gf-head" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap">
+<link id="gf-body" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
+<style>
+  :root{
+    --bg:#F3F3F3; --card:#FFFFFF; --ink:#6C7682; --head:#3A2E48; --aub:#4A3A5A;
+    --clay:#C8A0A6; --clayDk:#A87C83; --sage:#a8ad91; --jade:#2E7D6B; --amber:#B98A1F;
+    --muted:#9C9AA6; --line:#ECE7EC; --lineDk:#DED5DE; --field:#FAF8FA;
+    --fontHead:'Playfair Display',Georgia,serif; --fontBody:'Poppins',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--fontBody);-webkit-font-smoothing:antialiased;font-size:14px}
+  .serif{font-family:var(--fontHead)}
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit;font-size:14px}
+  .hidden{display:none!important}
+  a{color:var(--clayDk)}
+  .btn{background:var(--clayDk);color:#fff;border:none;padding:10px 18px;border-radius:11px;font-weight:500;font-size:14px}
+  .btn:hover{filter:brightness(.95)}
+  .btn.ghost{background:var(--card);color:var(--aub);border:1px solid var(--lineDk)}
+  .btn.ghost:hover{border-color:var(--clay)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.sm{padding:7px 13px;font-size:13px;border-radius:9px}
+
+  /* auth */
+  #auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .acard{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:40px 34px;width:100%;max-width:400px;box-shadow:0 20px 56px rgba(74,58,90,.10)}
+  .acard h1{font-family:var(--fontHead);color:var(--clayDk);font-size:27px;margin:0 0 4px;text-align:center}
+  .acard .sub{color:var(--muted);text-align:center;margin:0 0 22px;font-size:13px}
+  .seg{display:flex;background:var(--field);border:1px solid var(--line);border-radius:11px;padding:3px;margin-bottom:18px}
+  .seg button{flex:1;border:none;background:none;padding:8px;border-radius:8px;color:var(--muted);font-size:13px}
+  .seg button.on{background:var(--card);color:var(--head);font-weight:600;box-shadow:0 1px 3px rgba(74,58,90,.10)}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%;padding:11px 13px;border:1px solid var(--lineDk);border-radius:11px;background:var(--field);color:var(--head);outline:none}
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--clay)}
+  .err{background:#FBE6DF;color:#A03A22;border-radius:11px;padding:10px 13px;font-size:13px;margin-bottom:12px}
+  .ok{background:#E5F0EC;color:#1F6B58;border-radius:11px;padding:10px 13px;font-size:13px;margin-bottom:12px}
+  .linkbtn{background:none;border:none;color:var(--clayDk);font-size:13px;padding:8px;width:100%;text-decoration:underline}
+  .divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:14px 0}
+  .divider::before,.divider::after{content:"";height:1px;background:var(--line);flex:1}
+  .oauth{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--card);color:var(--head);border:1px solid var(--lineDk);font-weight:500;margin-bottom:10px}
+  .oauth:hover{border-color:var(--clay);background:var(--card);filter:none}
+  .oauth svg{width:18px;height:18px;flex:0 0 auto}
+
+  /* shell */
+  .top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  .topin{max-width:920px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:12px}
+  .brand{font-family:var(--fontHead);font-weight:700;color:var(--clayDk);font-size:19px}
+  .topnav{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 22px 64px}
+
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+  .ava{width:84px;height:84px;border-radius:24px;background:linear-gradient(135deg,var(--clay),var(--sage));display:flex;align-items:center;justify-content:center;font-size:38px;color:#fff;overflow:hidden;flex:0 0 auto;box-shadow:0 8px 22px rgba(168,128,134,.30)}
+  .ava img{width:100%;height:100%;object-fit:cover}
+  .heroinfo{flex:1;min-width:200px}
+  .heroinfo h1{font-family:var(--fontHead);color:var(--head);font-size:26px;margin:0 0 4px}
+  .heroinfo .meta{color:var(--muted);font-size:13px}
+  .tierpill{display:inline-block;font-size:11px;padding:3px 11px;border-radius:999px;text-transform:capitalize;font-weight:600;vertical-align:middle;margin-left:8px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  @media (max-width:720px){.grid2{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  .card .ch{padding:15px 18px;border-bottom:1px solid var(--line);font-family:var(--fontHead);color:var(--head);font-size:17px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .card .ch .mini{font-family:var(--fontBody);font-size:12px;color:var(--muted);font-weight:400}
+  .card .cb{padding:16px 18px}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line)}
+  .stat{background:var(--card);padding:16px;text-align:center}
+  .stat .n{font-family:var(--fontHead);font-size:26px;color:var(--head)}
+  .stat .l{color:var(--muted);font-size:11px;margin-top:2px}
+
+  .heat{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px}
+  .heatcol{display:flex;flex-direction:column;gap:4px}
+  .heatcell{width:15px;height:15px;border-radius:4px;background:var(--field);border:1px solid var(--line)}
+  .heatcell.l1{background:#E7D4D8;border-color:#E7D4D8}
+  .heatcell.l2{background:var(--clay);border-color:var(--clay)}
+  .heatcell.l3{background:var(--clayDk);border-color:var(--clayDk)}
+
+  .row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:none}
+  .row .ic{width:38px;height:38px;border-radius:11px;background:var(--field);display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto;color:var(--clayDk)}
+  .row .mn{font-weight:500;color:var(--head)}
+  .row .ms{color:var(--muted);font-size:12px}
+  .row .right{margin-left:auto;text-align:right;font-size:12px;color:var(--muted)}
+  .xbtn{background:none;border:none;color:var(--muted);font-size:15px;padding:4px 6px;border-radius:6px}
+  .xbtn:hover{color:#A03A22;background:#FBE6DF}
+
+  .favgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+  .fav{border:1px solid var(--line);border-radius:13px;padding:12px;text-align:center;position:relative}
+  .fav .em{height:64px;display:flex;align-items:center;justify-content:center;font-size:34px}
+  .fav .em img{max-height:64px;max-width:100%;object-fit:contain}
+  .fav .nm{font-weight:500;color:var(--head);font-size:13px;margin-top:5px;line-height:1.25}
+  .fav .sn{color:var(--muted);font-size:11px;font-style:italic}
+  .fav .x{position:absolute;top:5px;right:5px}
+
+  .badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px}
+  .badge{text-align:center}
+  .badge .bd{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--amber),#E8C77A);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 6px;color:#fff;overflow:hidden}
+  .badge .bd img{width:100%;height:100%;object-fit:cover}
+  .badge .bt{font-size:12px;color:var(--head);font-weight:500;line-height:1.2}
+
+  .empty{padding:26px 8px;text-align:center;color:var(--muted);font-size:13px}
+  .empty .ei{font-size:24px;display:block;margin-bottom:6px;opacity:.65}
+  .empty a{font-weight:500}
+
+  .emojipick{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .emojipick button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--field);font-size:19px}
+  .emojipick button.on{border-color:var(--clayDk);background:var(--card);box-shadow:0 0 0 2px rgba(168,124,131,.25)}
+  .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .toggle:last-child{border-bottom:none}
+  .toggle .tl{color:var(--head);font-weight:500}
+  .toggle .td{color:var(--muted);font-size:12px}
+  .sw{position:relative;width:44px;height:26px;flex:0 0 auto}
+  .sw input{opacity:0;width:0;height:0}
+  .sw .sl{position:absolute;inset:0;background:var(--lineDk);border-radius:999px;transition:.2s}
+  .sw .sl::before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:var(--card);border-radius:50%;transition:.2s}
+  .sw input:checked + .sl{background:var(--sage)}
+  .sw input:checked + .sl::before{transform:translateX(18px)}
+  .inlinemsg{font-size:12px;margin-top:8px}
+  .miniava{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+  .miniava .ava{width:60px;height:60px;border-radius:18px;font-size:26px}
+
+  .avapick{display:flex;gap:10px;flex-wrap:wrap}
+  .avaopt{display:flex;flex-direction:column;align-items:center;gap:6px;width:86px;padding:8px;border:1px solid var(--line,#eee);border-radius:12px;background:var(--card,#fff);cursor:pointer}
+  .avaopt.on{border-color:var(--rose,#C8A0A6);box-shadow:0 0 0 2px var(--rose,#C8A0A6) inset}
+  .avaopt-img{width:54px;height:54px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--field,#f3f3f3);font-size:24px}
+  .avaopt-img img{width:100%;height:100%;object-fit:cover}
+  .avaopt-nm{font-size:12px;color:var(--ink,#333);text-align:center;line-height:1.2}
+  /* ===== Dark mode palette ===== */
+  :root[data-theme="dark"]{
+    --paper:#241c21 !important; --stage:#191317 !important;
+    --body:#E8DEE3 !important; --taupe:#B49EA8 !important;
+    --line:#352b32 !important; --lineDk:#41343c !important;
+    --chipBg:#33262d !important; --chipFg:#E2C2C9 !important;
+    --sageBg:#2a2f23 !important; --sageFg:#AEB593 !important;
+    --roseDeep:#D9AAB1 !important;
+    --ppy-bg:#191317 !important; --ppy-surface:#241c21 !important;
+    --ppy-ink:#E8DEE3 !important; --ppy-muted:#B49EA8 !important;
+    --ppy-line:#352b32 !important; --ppy-lineDk:#41343c !important;
+    --ppy-chip:#33262d !important; --ppy-accentDk:#D9AAB1 !important;
+    --bg:#191317 !important; --card:#241c21 !important; --field:#2c2229 !important;
+    --ink:#E8DEE3 !important; --muted:#B49EA8 !important;
+  }
+  :root[data-theme="dark"] .ppy-header{background:rgba(25,19,23,.92) !important}
+  :root[data-theme="dark"] .ppy-mobile{background:var(--ppy-surface) !important}
+  :root[data-theme="dark"] .ppy-btn.ghost,:root[data-theme="dark"] .ppy-btn.admin{background:var(--ppy-surface) !important}
+  .ppy-theme{padding:0 !important;width:38px;height:38px;justify-content:center}
+  .ppy-theme svg{width:18px;height:18px}
+  /* ===== PPY site header ===== */
+.ppy-header{position:sticky;top:0;z-index:30;background:var(--card);backdrop-filter:saturate(180%) blur(10px);border-bottom:1px solid var(--ppy-line,#EFE6E8)}
+.ppy-header [hidden]{display:none !important}
+.ppy-bar{max-width:1200px;margin:0 auto;padding:11px 22px;display:flex;align-items:center;gap:16px}
+.ppy-brand{display:flex;align-items:center;gap:9px;text-decoration:none;flex:0 0 auto}
+.ppy-brand .mark{width:34px;height:34px;flex:0 0 auto}
+.ppy-brand .wm{font-family:var(--ppy-fhead,'Playfair Display',Georgia,serif);font-weight:700;color:var(--ppy-accentDk,#A87C83);font-size:20px;line-height:1}
+.ppy-brand img.lg{height:42px;width:auto;display:block}
+.ppy-nav{display:flex;align-items:center;gap:2px;margin-left:6px}
+.ppy-nav a{display:inline-flex;align-items:center;color:var(--ppy-ink,#6C7682);text-decoration:none;font-size:14px;font-weight:500;font-family:var(--ppy-fbody,'Poppins',system-ui,sans-serif);padding:8px 12px;border-radius:10px;white-space:nowrap}
+.ppy-nav a:hover{background:var(--ppy-chip,#F6ECEF);color:var(--ppy-accentDk,#A87C83)}
+.ppy-nav a.active{color:var(--ppy-accent,#C8A0A6);font-weight:600}
+.ppy-nav a.locked{color:#A79FAC}
+.ppy-nav a .lk{margin-left:5px;opacity:.7}
+.ppy-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.ppy-tier{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ppy-accentDk,#A87C83);background:var(--ppy-chip,#F6ECEF);border-radius:999px;padding:4px 9px;font-weight:600;font-family:var(--ppy-fbody,'Poppins',sans-serif)}
+.ppy-btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:500;font-size:13.5px;font-family:var(--ppy-fbody,'Poppins',sans-serif);padding:8px 15px;border-radius:11px;white-space:nowrap;cursor:pointer;border:none}
+.ppy-btn.primary{background:var(--ppy-accentDk,#A87C83);color:#fff}
+.ppy-btn.ghost{background:var(--card);color:var(--ppy-accentDk,#A87C83);border:1px solid var(--ppy-lineDk,#E2D7D9)}
+.ppy-btn.up{background:var(--ppy-accent,#C8A0A6);color:#fff}
+.ppy-btn.admin{background:var(--card);color:var(--ppy-accentDk,#A87C83);border:1px solid var(--ppy-accent,#C8A0A6)}
+.ppy-burger{display:none;background:none;border:1px solid var(--ppy-lineDk,#E2D7D9);border-radius:10px;width:42px;height:38px;cursor:pointer;align-items:center;justify-content:center;color:var(--ppy-ink,#6C7682)}
+.ppy-burger svg{width:22px;height:22px}
+.ppy-mobile{display:none;border-top:1px solid var(--ppy-line,#EFE6E8);background:var(--card)}
+.ppy-mobile a{display:flex;align-items:center;padding:13px 22px;color:var(--ppy-ink,#6C7682);text-decoration:none;font-weight:500;font-family:var(--ppy-fbody,'Poppins',sans-serif);border-bottom:1px solid var(--ppy-line,#EFE6E8)}
+.ppy-mobile a .lk{margin-left:auto;opacity:.6}
+.ppy-mobile a.up{color:#fff;background:var(--ppy-accent,#C8A0A6)}
+.ppy-mobile a.admin{color:var(--ppy-accentDk,#A87C83)}
+@media (max-width:820px){.ppy-nav{display:none}.ppy-right .hide-sm{display:none}.ppy-burger{display:inline-flex}.ppy-mobile.open{display:block}}
+/* ===== end header ===== */
+.ppy-header{position:static}
+</style>
+</head>
+<body>
+<style id="ppyLoaderCSS">
+#ppyLoader{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#FBF7F6;opacity:1;transition:opacity .45s ease}
+#ppyLoader.hide{opacity:0;pointer-events:none}
+#ppyLoader .ppyl-mark{font-size:52px;line-height:1;animation:ppySpin 1s linear infinite;transform-origin:50% 50%}
+#ppyLoader .ppyl-word{font-family:'Playfair Display',Georgia,serif;color:#A87C83;font-size:14px;letter-spacing:.06em;opacity:.75}
+@keyframes ppySpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){#ppyLoader .ppyl-mark{animation:none}}
+</style>
+<div id="ppyLoader" aria-hidden="true">
+  <div class="ppyl-mark">🌸</div>
+  <div class="ppyl-word">Pure Passion Yoga</div>
+</div>
+<script>
+(function(){var el=document.getElementById('ppyLoader');if(!el)return;var done=false;function hide(){if(done)return;done=true;el.classList.add('hide');setTimeout(function(){if(el)el.style.display='none';},520);}window.ppyHideLoader=hide;if(document.readyState==='complete'){setTimeout(hide,180);}else{window.addEventListener('load',function(){setTimeout(hide,180);});}setTimeout(hide,6000);})();
+</script>
+<header class="ppy-header" id="ppyHeader">
+  <div class="ppy-bar">
+    <a class="ppy-brand" id="ppyBrand" href="/">
+      <svg class="mark" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 7c2.6 3.2 4 6.7 4 10.2 0 3.8-1.6 7.2-4 9.8-2.4-2.6-4-6-4-9.8C20 13.7 21.4 10.2 24 7Z" fill="#C8A0A6"/>
+        <path d="M13 14c3.7 1 6.6 2.9 8.6 5.3 2.2 2.6 3.2 5.8 3.1 9-3.4-.6-6.6-2.2-8.8-4.8-2-2.4-3-5.6-2.9-9.5Z" fill="#a8ad91"/>
+        <path d="M35 14c-3.7 1-6.6 2.9-8.6 5.3-2.2 2.6-3.2 5.8-3.1 9 3.4-.6 6.6-2.2 8.8-4.8 2-2.4 3-5.6 2.9-9.5Z" fill="#a8ad91"/>
+        <path d="M8 22c3.6-.2 6.8.6 9.4 2.3 2.7 1.8 4.5 4.4 5.4 7.4-3.4.5-6.8-.1-9.6-1.9C10.7 28.2 9 25.4 8 22Z" fill="#A87C83"/>
+        <path d="M40 22c-3.6-.2-6.8.6-9.4 2.3-2.7 1.8-4.5 4.4-5.4 7.4 3.4.5 6.8-.1 9.6-1.9 2.5-1.6 4.2-4.4 5.2-7.8Z" fill="#A87C83"/>
+        <path d="M12 31c4 0 12 1.6 12 8 0-6.4 8-8 12-8-1.5 5-6.5 9-12 9s-10.5-4-12-9Z" fill="#C8A0A6"/>
+      </svg>
+      <span class="wm brand">Pure Passion Yoga</span>
+    </a>
+    <nav class="ppy-nav" id="ppyNav">
+      <a href="/library">Pose Library</a>
+      <a href="/builder">Sequence Builder</a>
+      <a data-nav="teacher" hidden href="/teacher">Teacher</a>
+      <a data-nav="classes" hidden href="/classes">Classes</a>
+      <a data-nav="challenges" hidden href="/challenges">Challenges</a>
+      <a data-nav="shop" hidden href="/shop">Shop</a>
+      <a href="https://purepassionyoga.com/about">About</a>
+    </nav>
+    <div class="ppy-right" id="ppyRight">
+      <button class="ppy-btn ghost ppy-theme" id="ppyTheme" type="button" aria-label="Toggle dark mode" title="Dark mode"></button>
+      <span class="ppy-tier" id="ppyTier" hidden></span>
+      <a class="ppy-btn admin" id="ppyAdmin" hidden href="/admin">Admin</a>
+      <a class="ppy-btn primary" id="ppyAuth" href="/profile">Sign in</a>
+      <a class="ppy-btn ghost" id="ppySignout" hidden href="#">Sign out</a>
+    </div>
+    <button class="ppy-burger" id="ppyBurger" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="ppy-mobile" id="ppyMobile">
+    <a href="#" id="ppyThemeM" role="button">Dark mode</a>
+    <a href="/library">Pose Library</a>
+    <a href="/builder">Sequence Builder</a>
+    <a data-nav="teacher" hidden href="/teacher">Teacher</a>
+    <a data-nav="classes" hidden href="/classes">Classes</a>
+    <a data-nav="challenges" hidden href="/challenges">Challenges</a>
+    <a data-nav="shop" hidden href="/shop">Shop</a>
+    <a href="https://purepassionyoga.com/about">About</a>
+    <a class="admin" id="ppyAdminM" hidden href="/admin">Admin</a>
+    <a class="up" id="ppyAuthM" href="/profile">Sign in</a>
+    <a class="admin" id="ppySignoutM" hidden href="#">Sign out</a>
+  </div>
+</header>
+<script>
+(function(){
+  function paint(t){ var dark=t==="dark";
+    var moon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>';
+    var sun='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.2 17.2 18.6 18.6M18.6 5.4 17.2 6.8M6.8 17.2 5.4 18.6"/></svg>';
+    var b=document.getElementById("ppyTheme"); if(b){ b.innerHTML=dark?sun:moon; b.setAttribute("aria-label",dark?"Switch to light mode":"Switch to dark mode"); b.title=dark?"Light mode":"Dark mode"; }
+    var m=document.getElementById("ppyThemeM"); if(m){ m.textContent=dark?"Light mode":"Dark mode"; }
+  }
+  function cur(){ return document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light"; }
+  function setT(t){ try{localStorage.setItem("ppy-theme",t);}catch(e){} document.documentElement.setAttribute("data-theme",t); paint(t); }
+  function toggle(e){ if(e)e.preventDefault(); setT(cur()==="dark"?"light":"dark"); }
+  var b=document.getElementById("ppyTheme"); if(b) b.addEventListener("click",toggle);
+  var m=document.getElementById("ppyThemeM"); if(m) m.addEventListener("click",toggle);
+  paint(cur());
+  try{ var mq=window.matchMedia("(prefers-color-scheme:dark)"); if(mq.addEventListener) mq.addEventListener("change",function(ev){ try{if(!localStorage.getItem("ppy-theme")){ document.documentElement.setAttribute("data-theme",ev.matches?"dark":"light"); paint(cur()); }}catch(e){} }); }catch(e){}
+})();
+</script>
+
+<style>
+  .hidden{display:none!important}
+  #tWrap{max-width:1000px;margin:0 auto;padding:26px 18px 70px}
+  .thead h1{font-family:var(--ppy-fhead,'Playfair Display',Georgia,serif);color:var(--head,#A87C83);font-size:26px;margin:0 0 4px}
+  .thead p{color:var(--muted);margin:0 0 18px;font-size:14px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+  .kpi{background:var(--card,#fff);border:1px solid var(--line,#eee);border-radius:14px;padding:14px 16px}
+  .kpi .n{font-family:var(--ppy-fhead,'Playfair Display',Georgia,serif);font-size:26px;color:var(--head,#A87C83);line-height:1}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:4px}
+  .tcard{background:var(--card,#fff);border:1px solid var(--line,#eee);border-radius:16px;padding:16px 18px;margin-bottom:16px}
+  .tcard h2{font-family:var(--ppy-fhead,'Playfair Display',Georgia,serif);font-size:17px;color:var(--head,#A87C83);margin:0 0 12px}
+  .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:680px){.tgrid{grid-template-columns:1fr}}
+  .bar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px}
+  .bar .bl{flex:0 0 130px;color:var(--ink,#333);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar .bt{flex:1;background:var(--field,#f3f3f3);border-radius:6px;height:14px;overflow:hidden}
+  .bar .bf{height:100%;background:var(--rose,#C8A0A6);border-radius:6px}
+  .bar .bn{flex:0 0 auto;color:var(--muted);font-size:12px;width:28px;text-align:right}
+  .seqrow{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line,#eee);flex-wrap:wrap}
+  .seqrow:last-child{border-bottom:none}
+  .seqrow .sn{font-weight:600;color:var(--head,#A87C83)}
+  .seqrow .sm{font-size:12px;color:var(--muted)}
+  .vbadge{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--field,#f3f3f3);color:var(--muted)}
+  .vbadge.community{background:#E5F0EC;color:#2E7D6B}
+  .tlink{color:var(--roseDeep,#A87C83);font-size:12px;text-decoration:none;border:1px solid var(--line,#eee);padding:5px 10px;border-radius:18px;white-space:nowrap}
+  .tempty{color:var(--muted);font-size:14px;padding:8px 0}
+</style>
+<div id="tWrap">
+  <div id="tgate"></div>
+  <div id="tbody" class="hidden">
+    <div class="thead"><h1>Teaching Dashboard</h1><p id="tsub">Your sequences and teaching activity at a glance.</p></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="tcard"><h2>Recent sequences</h2><div id="recap"></div></div>
+    <div class="tgrid">
+      <div class="tcard"><h2>By level</h2><div id="byLevel"></div></div>
+      <div class="tcard"><h2>By style</h2><div id="byStyle"></div></div>
+    </div>
+    <div class="tcard"><h2>Most-used poses</h2><div id="topPoses"></div></div>
+    <div class="tcard"><h2>Your practice</h2><div id="practice"></div></div>
+  </div>
+</div>
+<script>
+const SUPABASE_URL="https://nxjbpgnpblqepathojzr.supabase.co";
+const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
+const sb=supabase.createClient(SUPABASE_URL,ANON);
+const $=id=>document.getElementById(id);
+const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let UID=null;
+function gate(html){ $("tgate").innerHTML=html; $("tbody").classList.add("hidden"); }
+function bars(map){
+  const entries=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length) return '<div class="tempty">No data yet.</div>';
+  const max=Math.max.apply(null,entries.map(e=>e[1]))||1;
+  return entries.map(([k,v])=>`<div class="bar"><div class="bl">${esc(k||"\u2014")}</div><div class="bt"><div class="bf" style="width:${Math.round(v/max*100)}%"></div></div><div class="bn">${v}</div></div>`).join("");
+}
+function vbadge(v){ return v==="community"?'<span class="vbadge community">Community</span>':(v==="unlisted"?'<span class="vbadge">Unlisted</span>':'<span class="vbadge">Private</span>'); }
+async function boot(){
+  let session=null;
+  try{ const r=await sb.auth.getSession(); session=r.data.session; }catch(e){}
+  if(!session){ gate('<div class="tcard"><h2>Teacher area</h2><p class="tempty">Please <a class="tlink" href="/profile">sign in</a> to view your teaching dashboard.</p></div>'); return; }
+  UID=session.user.id;
+  let tier="free", isAdmin=false;
+  try{ const {data:pr}=await sb.from("profiles").select("tier,is_admin").eq("id",UID).single(); if(pr){ tier=pr.tier||"free"; isAdmin=!!pr.is_admin; } }catch(e){}
+  if(!(isAdmin||tier==="teacher"||tier==="ultimate")){ gate('<div class="tcard"><h2>Teacher area</h2><p class="tempty">The teaching dashboard is available on the Teacher and Ultimate plans. <a class="tlink" href="/pricing">See plans</a></p></div>'); return; }
+  $("tgate").innerHTML=""; $("tbody").classList.remove("hidden");
+  loadTeacher();
+}
+async function loadTeacher(){
+  const { data:seqs } = await sb.from("sequences")
+    .select("id,name,level,style,duration_label,visibility,likes_count,created_at,updated_at,is_template,share_token")
+    .eq("owner_id",UID).order("updated_at",{ascending:false});
+  const S=seqs||[];
+  const ids=S.map(s=>s.id);
+  let items=[];
+  if(ids.length){ const { data:its } = await sb.from("sequence_items").select("sequence_id,pose_id,item_type").in("sequence_id",ids); items=its||[]; }
+  const poseIds=[...new Set(items.filter(i=>i.item_type!=="section"&&i.pose_id).map(i=>i.pose_id))];
+  let nameOf={};
+  if(poseIds.length){ const { data:ps } = await sb.from("poses").select("id,name").in("id",poseIds); (ps||[]).forEach(p=>{nameOf[p.id]=p.name;}); }
+  const posePerSeq={}; items.forEach(i=>{ if(i.item_type!=="section"){ posePerSeq[i.sequence_id]=(posePerSeq[i.sequence_id]||0)+1; } });
+  let practice=[]; try{ const { data:pl } = await sb.from("practice_log").select("practiced_on,minutes").eq("user_id",UID); practice=pl||[]; }catch(e){}
+  renderKPIs(S,posePerSeq);
+  renderRecap(S,posePerSeq);
+  $("byLevel").innerHTML=bars(countBy(S,s=>s.level||"Unspecified"));
+  $("byStyle").innerHTML=bars(countStyles(S));
+  renderTopPoses(items,nameOf);
+  renderPractice(practice);
+}
+function countBy(arr,fn){ const m={}; arr.forEach(x=>{ const k=fn(x); m[k]=(m[k]||0)+1; }); return m; }
+function countStyles(S){ const m={}; S.forEach(s=>{ if(!s.style){ m["Unspecified"]=(m["Unspecified"]||0)+1; return; } String(s.style).split(",").forEach(x=>{ const k=x.trim(); if(k) m[k]=(m[k]||0)+1; }); }); return m; }
+function renderKPIs(S,posePerSeq){
+  const total=S.length, templates=S.filter(s=>s.is_template).length, community=S.filter(s=>s.visibility==="community").length;
+  const likes=S.reduce((a,s)=>a+(s.likes_count||0),0);
+  const poseTotal=Object.values(posePerSeq).reduce((a,b)=>a+b,0);
+  const avg=total?Math.round(poseTotal/total):0;
+  const now=Date.now(), wk=7*864e5;
+  const recent=S.filter(s=>now-new Date(s.updated_at).getTime()<=4*wk).length;
+  const tiles=[[total,"Sequences"],[avg,"Avg poses / sequence"],[community,"Shared to community"],[likes,"Likes received"],[templates,"Templates"],[recent,"Updated last 4 weeks"]];
+  $("kpis").innerHTML=tiles.map(t=>`<div class="kpi"><div class="n">${t[0]}</div><div class="l">${esc(t[1])}</div></div>`).join("");
+}
+function renderRecap(S,posePerSeq){
+  if(!S.length){ $("recap").innerHTML='<div class="tempty">No sequences yet. Build one in the Sequence Builder.</div>'; return; }
+  $("recap").innerHTML=S.slice(0,12).map(s=>{
+    const meta=[s.level,s.style,s.duration_label,(posePerSeq[s.id]||0)+" poses"].filter(Boolean).join(" \u00b7 ");
+    const when=s.updated_at?new Date(s.updated_at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):"";
+    const share=s.share_token?`<a class="tlink" href="/s?t=${esc(s.share_token)}" target="_blank" rel="noopener">Share link</a>`:"";
+    const likes=s.likes_count?`<span class="sm">\u2665 ${s.likes_count}</span>`:"";
+    return `<div class="seqrow"><div style="flex:1;min-width:180px"><div class="sn">${esc(s.name||"Untitled")}</div><div class="sm">${esc(meta)} \u00b7 updated ${esc(when)}</div></div>${vbadge(s.visibility)}${likes}${share}</div>`;
+  }).join("");
+}
+function renderTopPoses(items,nameOf){
+  const m={}; items.forEach(i=>{ if(i.item_type!=="section"&&i.pose_id){ const n=nameOf[i.pose_id]||"Unknown"; m[n]=(m[n]||0)+1; } });
+  const entries=Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  if(!entries.length){ $("topPoses").innerHTML='<div class="tempty">Add poses to your sequences to see your most-used poses.</div>'; return; }
+  const top={}; entries.forEach(([k,v])=>{top[k]=v;}); $("topPoses").innerHTML=bars(top);
+}
+function renderPractice(p){
+  if(!p.length){ $("practice").innerHTML='<div class="tempty">No practice logged yet. Sessions you log will summarize here.</div>'; return; }
+  const days=new Set(p.map(x=>x.practiced_on)); const mins=p.reduce((a,x)=>a+(x.minutes||0),0);
+  $("practice").innerHTML=`<div class="kpis"><div class="kpi"><div class="n">${p.length}</div><div class="l">Sessions</div></div><div class="kpi"><div class="n">${days.size}</div><div class="l">Days practiced</div></div><div class="kpi"><div class="n">${mins}</div><div class="l">Total minutes</div></div></div>`;
+}
+boot();
+try{ sb.auth.onAuthStateChange((_e,s)=>{ if(s&&$("tbody").classList.contains("hidden")) boot(); }); }catch(e){}
+</script>
+<script>
+/* ===== PPY adaptive header controller =====
+   Self-contained, no external deps. Cross-origin safe.
+   Logged-out / cross-origin -> shows the public shell.
+   Same-origin session -> tier pill, Account, Admin (if is_admin), Sign out. */
+(function(){
+  var SB="https://nxjbpgnpblqepathojzr.supabase.co", KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik", REF="nxjbpgnpblqepathojzr";
+  var $=function(id){return document.getElementById(id);};
+
+  var burger=$("ppyBurger"), mob=$("ppyMobile");
+  if(burger&&mob) burger.addEventListener("click",function(){mob.classList.toggle("open");});
+
+  try{
+    var norm=function(h,p){return h+(p||"/").replace(/\/index\.html$/,"/").replace(/\/+$/,"/");};
+    var here=norm(location.host, location.pathname);
+    document.querySelectorAll("#ppyNav a").forEach(function(a){
+      try{var u=new URL(a.href); if(norm(u.host,u.pathname)===here) a.classList.add("active");}catch(e){}
+    });
+  }catch(e){}
+
+  fetch(SB+"/rest/v1/app_settings?select=key,value&key=in.(design,site)",
+        {headers:{apikey:KEY,Authorization:"Bearer "+KEY}})
+    .then(function(r){return r.ok?r.json():[];})
+    .then(function(rows){
+      var map={}; (rows||[]).forEach(function(x){map[x.key]=x.value||{};});
+      var d=map.design||{}, site=map.site||{};
+      (function(){ var R=document.documentElement.style, P=d.color_primary, S=d.color_secondary, f=function(k,v){ if(v) R.setProperty(k,v); };
+        if(P){ ['--ppy-accent','--ppy-accentDk','--rose','--roseDeep','--roseTitle','--clay','--clayDk','--head','--aub'].forEach(function(k){ R.setProperty(k,P); }); }
+        f('--ppy-sage',S); f('--sage',S);
+        f('--ppy-ink',d.color_body_text); f('--ink',d.color_body_text);
+        f('--ppy-bg',d.color_page_bg); f('--bg',d.color_page_bg);
+        f('--ppy-surface',d.color_surface); f('--card',d.color_surface); f('--field',d.color_surface);
+        f('--ppy-muted',d.color_secondary_text); f('--muted',d.color_secondary_text);
+      })();
+      if(d.app_name){ document.querySelectorAll(".ppy-brand .wm").forEach(function(e){e.textContent=d.app_name;}); }
+      if(d.logo_url){
+        document.querySelectorAll(".ppy-brand").forEach(function(b){
+          var mark=b.querySelector(".mark");
+          var img=document.createElement("img"); img.className="lg"; img.src=d.logo_url; img.alt=(d.app_name||"Pure Passion Yoga");
+          if(mark) b.replaceChild(img,mark);
+          var wm=b.querySelector(".wm"); if(wm) wm.style.display="none";
+        });
+      }
+      if(site.classes_enabled)    document.querySelectorAll("[data-nav='classes']").forEach(function(e){e.hidden=false;});
+      if(site.challenges_enabled) document.querySelectorAll("[data-nav='challenges']").forEach(function(e){e.hidden=false;});
+      fetch(SB+"/rest/v1/app_settings?select=value&key=eq.shop",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}}).then(function(r){return r.ok?r.json():[];}).then(function(rows){if(rows&&rows[0]&&rows[0].value&&rows[0].value.enabled){document.querySelectorAll("[data-nav='shop']").forEach(function(e){e.hidden=false;});}}).catch(function(){});
+    }).catch(function(){});
+
+  function readSession(){
+    try{
+      var raw=localStorage.getItem("sb-"+REF+"-auth-token");
+      if(!raw) return null;
+      if(raw.indexOf("base64-")===0){ raw=decodeURIComponent(escape(atob(raw.slice(7)))); }
+      var s=JSON.parse(raw);
+      if(s && s.access_token && s.user && s.user.id) return s;
+    }catch(e){}
+    return null;
+  }
+  var sess=readSession();
+  if(!sess) return;
+
+  function signOut(e){
+    if(e) e.preventDefault();
+    try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf("sb-"+REF+"-auth-token")===0) localStorage.removeItem(k); }); }catch(_){}
+    location.reload();
+  }
+  var auth=$("ppyAuth"), authM=$("ppyAuthM"), so=$("ppySignout"), som=$("ppySignoutM");
+  if(auth) auth.textContent="Account";
+  if(authM) authM.textContent="Account";
+  if(so){ so.hidden=false; so.addEventListener("click",signOut); }
+  if(som){ som.hidden=false; som.addEventListener("click",signOut); }
+
+  fetch(SB+"/rest/v1/profiles?select=tier,is_admin&id=eq."+encodeURIComponent(sess.user.id),
+        {headers:{apikey:KEY,Authorization:"Bearer "+sess.access_token}})
+    .then(function(r){return r.ok?r.json():[];})
+    .then(function(rows){
+      var p=(rows&&rows[0])||{};
+      if(p.tier){ var t=$("ppyTier"); if(t){ t.textContent=p.tier; t.hidden=false; } }
+      if(p.is_admin){ var a=$("ppyAdmin"); if(a) a.hidden=false; var am=$("ppyAdminM"); if(am) am.hidden=false; }
+      if(p.is_admin||p.tier==="teacher"||p.tier==="ultimate"){ document.querySelectorAll("[data-nav='teacher']").forEach(function(e){e.hidden=false;}); }
+    }).catch(function(){});
+})();
+</script>
+
+<script>
+/* OAuth provider visibility — Facebook hidden until site.auth_facebook is on */
+(function(){
+  var SB="https://nxjbpgnpblqepathojzr.supabase.co", KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
+  fetch(SB+"/rest/v1/app_settings?select=value&key=eq.site",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}})
+    .then(function(r){return r.ok?r.json():[];}).then(function(rows){
+      var s=(rows&&rows[0]&&rows[0].value)||{};
+      var fb=document.getElementById("oauthFacebook"), gg=document.getElementById("oauthGoogle");
+      if(fb && s.auth_facebook===true) fb.hidden=false;
+      if(gg && s.auth_google===false)  gg.hidden=true;
+    }).catch(function(){});
+})();
+</script>
+<script>
+/* ===== PPY theme palette applier (light + dark, admin-driven) ===== */
+(function(){
+  var SB="https://nxjbpgnpblqepathojzr.supabase.co", KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
+  var R=document.documentElement.style, DESIGN=null;
+  var BG=['--bg','--ppy-bg','--stage'], SF=['--card','--ppy-surface','--paper'],
+      TX=['--ink','--ppy-ink','--body'], MU=['--muted','--ppy-muted','--taupe'],
+      AC=['--ppy-accent','--ppy-accentDk','--rose','--roseDeep','--roseTitle','--clay','--clayDk','--head','--aub'],
+      SG=['--sage','--ppy-sage'];
+  function imp(keys,v){ if(!v) return; for(var i=0;i<keys.length;i++) R.setProperty(keys[i],v,"important"); }
+  function clr(keys){ for(var i=0;i<keys.length;i++) R.removeProperty(keys[i]); }
+  function apply(){
+    if(!DESIGN) return; var d=DESIGN, dark=document.documentElement.getAttribute("data-theme")==="dark";
+    clr(BG.concat(SF,TX,MU,AC,SG));
+    if(dark){
+      imp(BG,d.dark_color_page_bg); imp(SF,d.dark_color_surface); imp(TX,d.dark_color_body_text);
+      imp(MU,d.dark_color_secondary_text); imp(AC,d.dark_color_primary||d.color_primary); imp(SG,d.dark_color_secondary||d.color_secondary);
+    } else {
+      imp(BG,d.color_page_bg); imp(SF,d.color_surface); imp(TX,d.color_body_text);
+      imp(MU,d.color_secondary_text); imp(AC,d.color_primary); imp(SG,d.color_secondary);
+    }
+  }
+  function load(){ fetch(SB+"/rest/v1/app_settings?select=value&key=eq.design",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}})
+    .then(function(r){return r.ok?r.json():[];}).then(function(rows){ DESIGN=(rows&&rows[0]&&rows[0].value)||{}; apply(); }).catch(function(){}); }
+  window.ppyApplyPalette=apply; window.ppyRefreshPalette=load;
+  load();
+  document.addEventListener("click",function(e){ var t=e.target; if(t&&t.closest&&(t.closest("#ppyTheme")||t.closest("#ppyThemeM"))) setTimeout(apply,20); });
+})();
+</script>
+</body>
+</html>
