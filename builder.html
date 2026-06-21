@@ -267,6 +267,14 @@
 .cueref label{display:block;margin-bottom:6px}
 .cuechip{display:inline-block;text-align:left;font:inherit;font-size:12px;line-height:1.35;background:var(--field,#f6efe9);color:var(--ink,#4a4047);border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:5px 9px;margin:0 5px 5px 0;cursor:pointer;max-width:100%}
 .cuechip:hover{border-color:var(--rose,#C8A0A6)}
+.sc-var{margin-top:5px;font-size:11px;background:var(--field,#f6efe9);color:var(--aub,#A87C83);border:1px solid var(--lineDk,#e7dcdf);border-radius:8px;padding:3px 9px;cursor:pointer;font-family:inherit}
+.sc-var.on{background:var(--rose,#C8A0A6);color:#fff;border-color:var(--rose,#C8A0A6)}
+.vtiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.vtile{background:var(--card,#fff);border:2px solid var(--lineDk,#e7dcdf);border-radius:12px;padding:8px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;gap:6px;align-items:center}
+.vtile.on{border-color:var(--rose,#C8A0A6)}
+.vtile-th{width:100%;aspect-ratio:1;background:var(--field,#faf6f4);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:30px}
+.vtile-th img{width:100%;height:100%;object-fit:contain}
+.vtile-l{font-size:11px;color:var(--ink,#4a4047);text-align:center;line-height:1.25;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -431,6 +439,7 @@ const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;
 const arr=v=>Array.isArray(v)?v:[];
 
 let SESSION=null, POSES=[], catFilter="", items=[], currentId=null, DRAG=null, seqTheme="classic", IS_ADMIN=false, FAVS=new Set(), AVATARS_ON=false, AVATAR_ID=null, CUE_DEPTH="off";
+var VARS={};
 
 /* AUTH */
 async function init(){const{data:{session}}=await sb.auth.getSession();if(session)showApp(session);else $("login").classList.remove("hidden");}
@@ -455,10 +464,30 @@ async function loadAvatarPref(){
 function poseImgUrl(p){ if(AVATARS_ON&&AVATAR_ID&&p&&p.avatar_images&&p.avatar_images[AVATAR_ID])return p.avatar_images[AVATAR_ID]; return (p&&p.image_url)||null; }
 function cueList(p,depth){ if(!p||!depth||depth==="off")return []; const cv=p.cue_variations||{}; const v=cv[depth]; return Array.isArray(v)?v:[]; }
 function cueRefHTML(p){ const cv=(p&&p.cue_variations)||{}; const sets=[["short","Short"],["medium","Medium"],["long","Long"]].map(d=>[d[1],Array.isArray(cv[d[0]])?cv[d[0]]:[]]).filter(x=>x[1].length); if(!sets.length)return ""; return '<label>Cue library \u2014 tap a cue to add it to your note</label>'+sets.map(s=>'<div style="margin-bottom:7px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--sage,#a8ad91);margin-bottom:4px">'+s[0]+'</div>'+s[1].map(c=>'<button type="button" class="cuechip" onclick="addCueToNote(this)">'+esc(c)+'</button>').join("")+'</div>').join(""); }
+function poseVars(p){ return (p&&VARS[p.id])||[]; }
+function curVar(it){ if(!it||!it.variation_id)return null; const l=poseVars(it.pose); return l.find(v=>String(v.id)===String(it.variation_id))||null; }
+function varImg(it){ const v=curVar(it); if(v&&v.image_url)return v.image_url; return poseImgUrl(it.pose); }
+function varName(it){ const v=curVar(it); return (v&&v.name)||(it.pose&&it.pose.name)||""; }
+function varSan(it){ const v=curVar(it); return (v&&v.sanskrit_name)||(it.pose&&it.pose.sanskrit_name)||""; }
+function varCueList(it,depth){ const v=curVar(it); if(v&&v.cue_variations&&Array.isArray(v.cue_variations[depth])&&v.cue_variations[depth].length)return v.cue_variations[depth]; return cueList(it.pose,depth); }
+function openVarPicker(i){
+  const it=items[i]; if(!it||it.kind!=="pose")return;
+  const list=poseVars(it.pose);
+  const tile=(active,im,label,vid)=>'<button class="vtile'+(active?' on':'')+'" onclick="pickVar('+i+",'"+vid+"'"+')"><div class="vtile-th">'+(im?'<img src="'+esc(im)+'">':(it.pose.emoji||"\ud83e\uddd8"))+'</div><div class="vtile-l">'+esc(label)+'</div></button>';
+  let h='<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()"><h3 class="serif">Image for '+esc(it.pose.name)+'</h3><p style="font-size:13px;color:var(--muted);margin:-4px 0 12px">Pick which image &amp; cues show for this pose in this sequence.</p><div class="vtiles">';
+  h+=tile(!it.variation_id, poseImgUrl(it.pose), "Original", "");
+  list.forEach(v=>{ h+=tile(String(it.variation_id)===String(v.id), v.image_url||poseImgUrl(it.pose), v.name||it.pose.name, v.id); });
+  h+='</div><button class="btn ghost" style="width:100%;margin-top:14px" onclick="closeModal()">Close</button></div></div>';
+  $("modalRoot").innerHTML=h; $("ovl").onclick=closeModal;
+}
+function pickVar(i,vid){ const it=items[i]; if(!it)return; it.variation_id=vid||null; const v=curVar(it); if(v&&v.default_breaths&&!it.breaths)it.breaths=v.default_breaths; closeModal(); renderCanvas(); }
+window.openVarPicker=openVarPicker; window.pickVar=pickVar;
+
 function addCueToNote(btn){ const t=$("ie_notes"); if(!t)return; const c=btn.textContent; t.value=(t.value.trim()?t.value.trim()+" ":"")+c; t.focus(); }
 window.addCueToNote=addCueToNote;
 async function loadPoses(){
   const{data,error}=await sb.from("poses").select("id,name,sanskrit_name,emoji,image_url,avatar_images,category,difficulty_level,teaching_cues,short_description,cue_variations").order("canonical_pose_id");
+  try{ const {data:vrs}=await sb.from("pose_variations").select("id,pose_id,name,sanskrit_name,image_url,emoji,cue_variations,default_breaths,notes,position").order("position"); VARS={}; (vrs||[]).forEach(v=>{ (VARS[v.pose_id]=VARS[v.pose_id]||[]).push(v); }); }catch(e){ VARS={}; }
   if(error){$("plist").innerHTML='<div style="color:#A03A22;padding:8px">'+esc(error.message)+'</div>';return;}
   POSES=data||[];
   try{ if(SESSION){ const f=await sb.from("favorites").select("pose_id").eq("user_id",SESSION.user.id); FAVS=new Set((f.data||[]).map(r=>String(r.pose_id))); } }catch(e){}
@@ -528,14 +557,15 @@ function renderCanvas(){
       return `<div class="seqcard section" data-i="${i}"><span class="sc-handle" draggable="true">⠿</span>
         <input value="${esc(it.title)}" oninput="setItem(${i},'title',this.value)"/>
         <button class="sc-rm" onclick="removeItem(${i})">✕</button></div>`;
-    pn++;const p=it.pose;const _iu=poseImgUrl(p);const thumb=_iu?`<img class="${it.mirror?'mir':''}" src="${esc(_iu)}">`:(p.emoji||"🧘");
+    pn++;const p=it.pose;const _iu=varImg(it);const thumb=_iu?`<img class="${it.mirror?'mir':''}" src="${esc(_iu)}">`:(p.emoji||"🧘");
     return `<div class="seqcard" data-i="${i}" draggable="true">
       <div class="sc-top">${_iu?`<button class="sc-mir ${it.mirror?'on':''}" onclick="toggleMirror(${i})" title="Mirror left / right">\u21c4</button>`:`<span></span>`}<span class="sc-num">${pn}</span><button class="sc-rm" onclick="removeItem(${i})">✕</button></div>
       <div class="sc-th">${thumb}</div>
-      <div class="sc-name">${esc(p.name)}</div>
-      <div class="sc-san">${esc(p.sanskrit_name||"")}</div>
+      <div class="sc-name">${esc(varName(it))}</div>
+      <div class="sc-san">${esc(varSan(it))}</div>
+      ${poseVars(p).length?`<button class="sc-var${it.variation_id?' on':''}" onclick="openVarPicker(${i})" title="Choose image / variation">\u29c9 ${it.variation_id?"Variation":"Variations ("+poseVars(p).length+")"}</button>`:""}
       <div class="sc-cue">${esc(it.notes||"")}</div>
-      ${(()=>{const cl=cueList(p,CUE_DEPTH);return cl.length?`<div class="sc-cuevar">${cl.map(c=>`<div>${esc(c)}</div>`).join("")}</div>`:"";})()}
+      ${(()=>{const cl=varCueList(it,CUE_DEPTH);return cl.length?`<div class="sc-cuevar">${cl.map(c=>`<div>${esc(c)}</div>`).join("")}</div>`:"";})()}
       <div class="sc-br">${[it.breaths?esc(it.breaths)+" breaths":"",(it.breath_pattern&&it.breath_pattern!=="Natural")?esc(it.breath_pattern):""].filter(Boolean).join(" \u00b7 ")||"&nbsp;"}</div>
       <button class="sc-edit" onclick="editItem(${i})">Edit</button>
     </div>`;
@@ -608,10 +638,10 @@ $("b_save").onclick=async()=>{
   await sb.from("sequence_items").delete().eq("sequence_id",currentId);
   const rows=items.map((it,i)=>({sequence_id:currentId,position:i,item_type:it.kind,
     pose_id:it.kind==="pose"?it.pose.id:null,
-    custom_name:it.kind==="section"?it.title:it.pose.name,
-    custom_sanskrit:it.kind==="pose"?it.pose.sanskrit_name:null,
+    custom_name:it.kind==="section"?it.title:varName(it),
+    custom_sanskrit:it.kind==="pose"?varSan(it):null,
     notes:it.notes||null,custom_breaths:it.kind==="pose"&&it.breaths?parseInt(it.breaths):null,custom_breath_pattern:it.kind==="pose"?(it.breath_pattern||null):null,
-    emoji:it.kind==="pose"?it.pose.emoji:null,level:it.kind==="pose"?it.pose.difficulty_level:null,mirrored:it.kind==="pose"?!!it.mirror:false}));
+    emoji:it.kind==="pose"?it.pose.emoji:null,level:it.kind==="pose"?it.pose.difficulty_level:null,mirrored:it.kind==="pose"?!!it.mirror:false,variation_id:it.kind==="pose"?(it.variation_id||null):null}));
   if(rows.length){const r=await sb.from("sequence_items").insert(rows);if(r.error)return toast("Saved sequence, but poses failed: "+r.error.message);}
   toast("Saved ✓");
 };
@@ -732,6 +762,8 @@ function printDoc(layout){
   function E(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
   function img(p,sz,mir){ var _u=poseImgUrl(p); return _u?('<img src="'+E(_u)+'" style="width:'+sz+'px;height:'+sz+'px;object-fit:contain'+(mir?';transform:scaleX(-1)':'')+'">'):('<span style="font-size:'+Math.round(sz*0.5)+'px">'+(p.emoji||"\ud83e\uddd8")+'</span>'); }
   function cuesHTML(p){ var cl=cueList(p,CUE_DEPTH); if(!cl.length)return""; return '<div class="pcues">'+cl.map(function(c){return '<div>'+E(c)+'</div>';}).join("")+'</div>'; }
+  function imgIt(it,sz,mir){ var _u=varImg(it); return _u?('<img src="'+E(_u)+'" style="width:'+sz+'px;height:'+sz+'px;object-fit:contain'+(mir?';transform:scaleX(-1)':'')+'">'):('<span style="font-size:'+Math.round(sz*0.5)+'px">'+((it.pose&&it.pose.emoji)||"\ud83e\uddd8")+'</span>'); }
+  function cuesIt(it){ var cl=varCueList(it,CUE_DEPTH); if(!cl.length)return""; return '<div class="pcues">'+cl.map(function(c){return '<div>'+E(c)+'</div>';}).join("")+'</div>'; }
   var CSS='*{box-sizing:border-box;margin:0;padding:0}'
     +'body{font-family:Poppins,system-ui,sans-serif;padding:30px 34px;color:#3a3a3a;background:#fff}'
     +'.phead{margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid '+ROSE+'}'
@@ -760,20 +792,20 @@ function printDoc(layout){
   var body;
   if(layout==="cards"){
     body='<div class="grid">'+poseItems.map(function(it,i){ var p=it.pose;
-      return '<div class="card"><div class="cn">'+(i+1)+'</div><div class="ci">'+img(p,120,it.mirror)+'</div>'
-        +'<div class="cnm">'+E(p.name)+'</div><div class="csn">'+E(p.sanskrit_name||"")+'</div>'
+      return '<div class="card"><div class="cn">'+(i+1)+'</div><div class="ci">'+imgIt(it,120,it.mirror)+'</div>'
+        +'<div class="cnm">'+E(varName(it))+'</div><div class="csn">'+E(varSan(it))+'</div>'
         +'<div class="cm">'+E(p.difficulty_level||"")+' &nbsp;\u00b7&nbsp; '+((parseInt(it.breaths)||5))+' breaths</div>'
-        +(it.notes?('<div class="cnotes">'+E(it.notes)+'</div>'):"")+cuesHTML(p)+'</div>'; }).join("")+'</div>';
+        +(it.notes?('<div class="cnotes">'+E(it.notes)+'</div>'):"")+cuesIt(it)+'</div>'; }).join("")+'</div>';
   } else if(layout==="notes"){
-    var nr=poseItems.filter(function(it){return it.notes;}).map(function(it){ return '<tr><td class="pn">'+E(it.pose.name)+'</td><td class="nt">'+E(it.notes)+'</td></tr>'; }).join("");
+    var nr=poseItems.filter(function(it){return it.notes;}).map(function(it){ return '<tr><td class="pn">'+E(varName(it))+'</td><td class="nt">'+E(it.notes)+'</td></tr>'; }).join("");
     body='<table><thead><tr><th>Pose</th><th>Notes &amp; cues</th></tr></thead><tbody>'+(nr||'<tr><td colspan="2" style="color:#999">No notes added yet.</td></tr>')+'</tbody></table>';
   } else {
     body='<table><thead><tr><th>#</th><th></th><th>Pose</th><th>Level</th><th>Hold</th><th>Notes</th></tr></thead><tbody>'
       +poseItems.map(function(it,i){ var p=it.pose;
-        return '<tr><td class="num">'+(i+1)+'</td><td class="im">'+img(p,34,it.mirror)+'</td>'
-          +'<td><strong>'+E(p.name)+'</strong><span class="san">'+E(p.sanskrit_name||"")+'</span></td>'
+        return '<tr><td class="num">'+(i+1)+'</td><td class="im">'+imgIt(it,34,it.mirror)+'</td>'
+          +'<td><strong>'+E(varName(it))+'</strong><span class="san">'+E(varSan(it))+'</span></td>'
           +'<td class="lv">'+E(p.difficulty_level||"")+'</td><td class="hold">'+((parseInt(it.breaths)||5))+' breaths</td>'
-          +'<td class="nts">'+E(it.notes||"\u2014")+cuesHTML(p)+'</td></tr>'; }).join("")+'</tbody></table>';
+          +'<td class="nts">'+E(it.notes||"\u2014")+cuesIt(it)+'</td></tr>'; }).join("")+'</tbody></table>';
   }
   var metaLine=[level,dur,poseItems.length+" poses","~"+mins+" min"].filter(Boolean).join(" &nbsp;\u00b7&nbsp; ");
   var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+E(title)+'</title>'
@@ -821,7 +853,7 @@ async function snapshotExisting(seqId){
     if(!src)return;
     const{data:its}=await sb.from("sequence_items").select("*").eq("sequence_id",seqId).order("position");
     const snapshot={meta:{name:src.name,level:src.level,style:src.style,duration_label:src.duration_label,description:src.description,playlist_url:src.playlist_url,tags:src.tags,visibility:src.visibility,theme:src.theme},
-      items:(its||[]).map(it=>({position:it.position,item_type:it.item_type,pose_id:it.pose_id,custom_name:it.custom_name,custom_sanskrit:it.custom_sanskrit,notes:it.notes,custom_breaths:it.custom_breaths,custom_breath_pattern:it.custom_breath_pattern,emoji:it.emoji,level:it.level,mirrored:it.mirrored}))};
+      items:(its||[]).map(it=>({position:it.position,item_type:it.item_type,pose_id:it.pose_id,custom_name:it.custom_name,custom_sanskrit:it.custom_sanskrit,notes:it.notes,custom_breaths:it.custom_breaths,custom_breath_pattern:it.custom_breath_pattern,emoji:it.emoji,level:it.level,mirrored:it.mirrored,variation_id:it.variation_id}))};
     const ins=await sb.from("sequence_versions").insert({sequence_id:seqId,owner_id:SESSION.user.id,snapshot});
     if(ins.error)return;
     const{data:vs}=await sb.from("sequence_versions").select("id").eq("sequence_id",seqId).order("created_at",{ascending:false});
@@ -856,11 +888,11 @@ async function restoreVersion(seqId,vid){
   items=(snap.items||[]).map(it=>{
     if(it.item_type==="section")return{kind:"section",title:it.custom_name||"Section"};
     const p=POSES.find(x=>String(x.id)===String(it.pose_id))||{id:it.pose_id,name:it.custom_name,sanskrit_name:it.custom_sanskrit,emoji:it.emoji};
-    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored};
+    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored,variation_id:it.variation_id||null};
   });
   closeModal();renderCanvas();toast("Restored \u2014 review and Save to keep it.");
 }
-function copyItemRows(its,newId){return (its||[]).map(it=>({sequence_id:newId,position:it.position,item_type:it.item_type,pose_id:it.pose_id,custom_name:it.custom_name,custom_sanskrit:it.custom_sanskrit,notes:it.notes,custom_breaths:it.custom_breaths,custom_breath_pattern:it.custom_breath_pattern,emoji:it.emoji,level:it.level,mirrored:it.mirrored}));}
+function copyItemRows(its,newId){return (its||[]).map(it=>({sequence_id:newId,position:it.position,item_type:it.item_type,pose_id:it.pose_id,custom_name:it.custom_name,custom_sanskrit:it.custom_sanskrit,notes:it.notes,custom_breaths:it.custom_breaths,custom_breath_pattern:it.custom_breath_pattern,emoji:it.emoji,level:it.level,mirrored:it.mirrored,variation_id:it.variation_id}));}
 async function dupSeq(id){
   const{data:src}=await sb.from("sequences").select("*").eq("id",id).single();
   const{data:its}=await sb.from("sequence_items").select("*").eq("sequence_id",id).order("position");
@@ -905,8 +937,8 @@ async function doSwap(src,its){
   const fromId=$("sw_from").value,toId=$("sw_to").value;
   const toPose=POSES.find(x=>String(x.id)===String(toId));if(!toPose)return;
   let n=0;
-  const ni=(its||[]).map(it=>{const b={position:it.position,item_type:it.item_type,pose_id:it.pose_id,custom_name:it.custom_name,custom_sanskrit:it.custom_sanskrit,notes:it.notes,custom_breaths:it.custom_breaths,custom_breath_pattern:it.custom_breath_pattern,emoji:it.emoji,level:it.level};
-    if(it.item_type!=="section"&&String(it.pose_id)===String(fromId)){n++;b.pose_id=toPose.id;b.custom_name=toPose.name;b.custom_sanskrit=toPose.sanskrit_name||null;b.emoji=toPose.emoji||null;b.level=toPose.difficulty_level||null;}
+  const ni=(its||[]).map(it=>{const b={position:it.position,item_type:it.item_type,pose_id:it.pose_id,custom_name:it.custom_name,custom_sanskrit:it.custom_sanskrit,notes:it.notes,custom_breaths:it.custom_breaths,custom_breath_pattern:it.custom_breath_pattern,emoji:it.emoji,level:it.level,variation_id:it.variation_id};
+    if(it.item_type!=="section"&&String(it.pose_id)===String(fromId)){n++;b.pose_id=toPose.id;b.custom_name=toPose.name;b.custom_sanskrit=toPose.sanskrit_name||null;b.emoji=toPose.emoji||null;b.level=toPose.difficulty_level||null;b.variation_id=null;}
     return b;});
   if(!n)return toast("That pose isn't in this sequence.");
   const row={name:(src.name||"Untitled")+" ("+toPose.name+")",level:src.level,style:src.style,duration_label:src.duration_label,description:src.description,playlist_url:src.playlist_url,tags:src.tags,visibility:"private",theme:src.theme,owner_id:SESSION.user.id};
@@ -927,7 +959,7 @@ async function loadSeq(id){
   items=(its||[]).map(it=>{
     if(it.item_type==="section")return{kind:"section",title:it.custom_name||"Section"};
     const p=POSES.find(x=>String(x.id)===String(it.pose_id))||{id:it.pose_id,name:it.custom_name,sanskrit_name:it.custom_sanskrit,emoji:it.emoji};
-    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored};
+    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored,variation_id:it.variation_id||null};
   });
   closeModal();renderCanvas();toast("Loaded “"+(s.name||"")+"”");
 }
@@ -992,18 +1024,18 @@ function flowStep(){
     document.getElementById("flowMain").innerHTML=`<div class="flow-k">Section</div><div class="flow-name">${esc(it.title)}</div><div class="flow-count" id="flowCount"></div>`;
     if(!flowPaused)speakFlow(flowCueText(it));flowRemain=4;tickStart();return;
   }
-  const pp=it.pose,_iu=poseImgUrl(pp),thumb=_iu?`<img class="${it.mirror?'mir':''}" src="${esc(_iu)}">`:(pp.emoji||"🧘"),breaths=parseInt(it.breaths)||5;
+  const pp=it.pose,_iu=varImg(it),thumb=_iu?`<img class="${it.mirror?'mir':''}" src="${esc(_iu)}">`:(pp.emoji||"🧘"),breaths=parseInt(it.breaths)||5;
   flowRemain=breaths*flowBreathSec;
   document.getElementById("flowMain").innerHTML=`<div class="flow-th">${thumb}</div>
-    <div class="flow-name">${esc(pp.name)}</div><div class="flow-san">${esc(pp.sanskrit_name||"")}</div>
+    <div class="flow-name">${esc(varName(it))}</div><div class="flow-san">${esc(varSan(it))}</div>
     ${it.notes?`<div class="flow-cue">${esc(it.notes)}</div>`:""}
-    ${(()=>{const cl=cueList(pp,CUE_DEPTH);return cl.length?`<div class="flow-cuevar">${cl.map(c=>`<div>${esc(c)}</div>`).join("")}</div>`:"";})()}
+    ${(()=>{const cl=varCueList(it,CUE_DEPTH);return cl.length?`<div class="flow-cuevar">${cl.map(c=>`<div>${esc(c)}</div>`).join("")}</div>`:"";})()}
     <div class="flow-count" id="flowCount"></div><div class="flow-sub">${breaths} breaths</div>`;
   if(!flowPaused)speakFlow(flowCueText(it));tickStart();
 }
 function tickStart(){updateFlowCount();flowTimer=setInterval(()=>{if(flowPaused)return;flowRemain--;if(flowRemain<=0){clearInterval(flowTimer);if(flowChime)chimeFlow();flowIdx++;flowStep();return;}updateFlowCount();},1000);}
 function updateFlowCount(){const c=document.getElementById("flowCount");if(c)c.textContent=flowRemain;}
-function flowCueText(it){ if(!it)return""; if(it.kind==="section")return it.title||""; const p=it.pose||{}; let s=(p.name||"")+(it.notes?". "+it.notes:""); const cl=cueList(p,CUE_DEPTH); if(cl.length) s+=". "+cl.join(". "); return s; }
+function flowCueText(it){ if(!it)return""; if(it.kind==="section")return it.title||""; const p=it.pose||{}; let s=(varName(it)||"")+(it.notes?". "+it.notes:""); const cl=varCueList(it,CUE_DEPTH); if(cl.length) s+=". "+cl.join(". "); return s; }
 function flowToggle(){
   flowPaused=!flowPaused;
   const b=document.getElementById("flowPause");if(b)b.textContent=flowPaused?"▶ Play":"❚❚ Pause";
@@ -1108,7 +1140,7 @@ async function loadCommunity(id){
   $("m_tags").value=arr(s.tags).join(", ");$("m_share").checked=false;
   items=(its||[]).map(it=>{if(it.item_type==="section")return{kind:"section",title:it.custom_name||"Section"};
     const p=POSES.find(x=>String(x.id)===String(it.pose_id))||{id:it.pose_id,name:it.custom_name,sanskrit_name:it.custom_sanskrit,emoji:it.emoji};
-    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored};});
+    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored,variation_id:it.variation_id||null};});
   closeModal();renderCanvas();toast("Loaded a copy \u2014 tweak and Save to make it yours");
 }
 window.openAI=openAI;window.runAI=runAI;window.openCommunity=openCommunity;window.loadCommunity=loadCommunity;
@@ -1133,9 +1165,9 @@ async function saveAsTemplate(){
   const{data,error}=await sb.from("sequences").insert(row).select("id").single();
   if(error)return toast("Failed: "+error.message);
   const rows=items.map((it,i)=>({sequence_id:data.id,position:i,item_type:it.kind,pose_id:it.kind==="pose"?it.pose.id:null,
-    custom_name:it.kind==="section"?it.title:it.pose.name,custom_sanskrit:it.kind==="pose"?it.pose.sanskrit_name:null,
+    custom_name:it.kind==="section"?it.title:varName(it),custom_sanskrit:it.kind==="pose"?varSan(it):null,
     notes:it.notes||null,custom_breaths:it.kind==="pose"&&it.breaths?parseInt(it.breaths):null,custom_breath_pattern:it.kind==="pose"?(it.breath_pattern||null):null,
-    emoji:it.kind==="pose"?it.pose.emoji:null,level:it.kind==="pose"?it.pose.difficulty_level:null,mirrored:it.kind==="pose"?!!it.mirror:false}));
+    emoji:it.kind==="pose"?it.pose.emoji:null,level:it.kind==="pose"?it.pose.difficulty_level:null,mirrored:it.kind==="pose"?!!it.mirror:false,variation_id:it.kind==="pose"?(it.variation_id||null):null}));
   if(rows.length)await sb.from("sequence_items").insert(rows);
   toast("Saved as template \u2713");openTemplates();
 }
@@ -1147,7 +1179,7 @@ async function loadTemplate(id){
   setSel("m_level",s.level);setSel("m_duration",s.duration_label);setSel("m_style",s.style);$("m_tags").value=arr(s.tags).join(", ");$("m_share").checked=false;applyTheme(s.theme||"classic");
   items=(its||[]).map(it=>{if(it.item_type==="section")return{kind:"section",title:it.custom_name||"Section"};
     const p=POSES.find(x=>String(x.id)===String(it.pose_id))||{id:it.pose_id,name:it.custom_name,sanskrit_name:it.custom_sanskrit,emoji:it.emoji};
-    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored};});
+    return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored,variation_id:it.variation_id||null};});
   closeModal();renderCanvas();toast("Template loaded");
 }
 
