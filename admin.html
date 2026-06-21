@@ -1537,7 +1537,11 @@ function openEditor(id){
       </div>
 
       <div class="grp"><div class="gt">Variations <span style="font-weight:400;font-size:12px;color:var(--muted)">\u2014 alternate image, name, breaths or cues under this pose</span></div>
-        ${editing?`<div id="varBox"></div>
+        ${editing?`<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+          <input id="varAiLabel" placeholder="Describe a variation \u2014 e.g. chair adaptation, with a block, restorative" style="flex:1;min-width:220px"/>
+          <button type="button" class="btn" id="varAiBtn">\u2728 Generate variation</button>
+        </div>
+        <div id="varBox"></div>
         <div style="display:flex;gap:8px;margin-top:8px"><button type="button" class="btn ghost" id="varAdd">+ Add variation</button><button type="button" class="btn" id="varSave">Save variations</button></div>
         <div class="hint" id="varStatus" style="margin-top:6px"></div>`:`<div class="hint">Save the pose first, then reopen it to add variations.</div>`}
       </div>
@@ -1557,13 +1561,24 @@ function openEditor(id){
   $("imgFile").onchange=onUpload;
   $("saveBtn").onclick=save;
   var _gc=$("genCuesBtn"); if(_gc) _gc.onclick=genCues;
-  if(editing){ loadVarsEditor(editing); var _va=$("varAdd"); if(_va)_va.onclick=addVariation; var _vs=$("varSave"); if(_vs)_vs.onclick=function(){saveVars(false);}; }
+  if(editing){ loadVarsEditor(editing); var _va=$("varAdd"); if(_va)_va.onclick=addVariation; var _vs=$("varSave"); if(_vs)_vs.onclick=function(){saveVars(false);}; var _vai=$("varAiBtn"); if(_vai)_vai.onclick=genVariation; }
 }
 let VARS_EDIT=[], VARS_ORIG_IDS=[];
 function vCueText(cv,k){ return (cv && Array.isArray(cv[k]))?cv[k].join("\n"):""; }
 function vimg(v){ return v.image_url?('<img src="'+esc(v.image_url)+'">'):"\ud83e\uddd8"; }
 function val2(id){ const el=$(id); return el?el.value.trim():""; }
 function listLines(id){ const el=$(id); return el?el.value.split(/\n+/).map(s=>s.trim()).filter(Boolean):[]; }
+async function genVariation(){
+  const label=$("varAiLabel")?$("varAiLabel").value.trim():""; const st=$("varStatus");
+  if(!label){ if(st)st.textContent="Describe the variation first (e.g. chair adaptation, with a block)."; return; }
+  const btn=$("varAiBtn"); btn.disabled=true; const old=btn.textContent; btn.textContent="Generating\u2026";
+  try{
+    const {data,error}=await sb.functions.invoke("generate-cues",{body:{ mode:"variation", variation_label:label, pose_id:editing, name:val("name"), sanskrit:val("sanskrit_name"), level:val("difficulty_level"), category:val("category"), description:val("short_description"), teaching_cues:val("teaching_cues") }});
+    if(error||(data&&data.error)||!(data&&data.variation)){ if(st)st.textContent=(data&&data.error)||(error&&error.message)||"Generation failed."; }
+    else { const v=data.variation; syncVarsFromDOM(); VARS_EDIT.push({id:null,name:v.name||"",sanskrit_name:v.sanskrit_name||"",image_url:"",emoji:"",default_breaths:v.default_breaths||"",notes:v.notes||"",cv:v.cues||{}}); renderVarsEditor(); if(st)st.textContent="Variation drafted \u2713 \u2014 add an image if you have one, then Save variations."; if($("varAiLabel"))$("varAiLabel").value=""; }
+  }catch(e){ if(st)st.textContent=String((e&&e.message)||e); }
+  btn.disabled=false; btn.textContent=old;
+}
 async function loadVarsEditor(poseId){
   VARS_EDIT=[]; VARS_ORIG_IDS=[];
   try{ const {data}=await sb.from("pose_variations").select("*").eq("pose_id",poseId).order("position");
