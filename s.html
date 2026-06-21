@@ -51,6 +51,8 @@
   .card{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
   .num{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--field);color:var(--roseDeep);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:2px}
   .thumb{flex:0 0 auto;width:62px;height:62px;border-radius:12px;background:var(--field);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:32px}
+  .thumb img{max-width:100%;max-height:100%;object-fit:contain}
+  .thumb img.mir{transform:scaleX(-1)}
   .thumb img{width:100%;height:100%;object-fit:contain}
   .info{flex:1;min-width:0}
   .pname{font-family:var(--font-head);font-weight:600;color:var(--roseDeep);font-size:17px;line-height:1.2}
@@ -121,7 +123,7 @@
       if(it.item_type==="section"){
         return '<div class="section"><span class="lbl">'+esc(it.custom_name||"Section")+'</span><span class="ln"></span></div>';
       }
-      var thumb=it.image_url?('<img src="'+esc(it.image_url)+'" alt="">'):(esc(it.emoji||"🧘"));
+      var thumb=it.image_url?('<img class="'+(it.mirrored?"mir":"")+'" src="'+esc(it.image_url)+'" alt="">'):(esc(it.emoji||"🧘"));
       var bits=[];
       if(it.level)bits.push(esc(it.level));
       if(it.custom_breaths)bits.push(esc(it.custom_breaths)+" breaths");
