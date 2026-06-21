@@ -25,6 +25,10 @@
   .btn:hover{background:#925266}
   .btn.ghost{background:var(--card);color:var(--aub);border:1px solid var(--lineDk)}
   .btn.ghost:hover{border-color:var(--rose)}
+  .cuewrap{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:var(--muted)}
+  .cuesel{appearance:none;-webkit-appearance:none;-moz-appearance:none;background-color:var(--card);color:var(--aub);border:1px solid var(--lineDk);border-radius:9px;padding:8px 30px 8px 12px;font:inherit;font-size:13px;font-weight:500;line-height:1.1;cursor:pointer;outline:none;background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='10'%20height='6'%20viewBox='0%200%2010%206'%3E%3Cpath%20d='M1%201l4%204%204-4'%20fill='none'%20stroke='%23A87C83'%20stroke-width='1.6'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;background-size:10px 6px}
+  .cuesel:hover{border-color:var(--rose)}
+  .cuesel:focus{border-color:var(--rose)}
   .btn.soon{background:var(--field);color:#B3A8B8;border:1px solid var(--line)}
   .btn:disabled{opacity:.5}
 
@@ -400,8 +404,8 @@
         <button class="btn ghost" id="b_ai">✨ AI</button>
         <button class="btn ghost" id="b_flow">▶ Flow</button>
         <button class="btn ghost" id="b_theme">🎨 Theme</button>
-        <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted,#9a8f94)">Cues
-          <select id="b_cuedepth" style="padding:6px 8px"><option value="off">Off</option><option value="short">Short</option><option value="medium">Medium</option><option value="long">Long</option></select>
+        <label class="cuewrap">Cues
+          <select id="b_cuedepth" class="cuesel"><option value="off">Off</option><option value="short">Short</option><option value="medium">Medium</option><option value="long">Long</option></select>
         </label>
       </div>
       <label class="share"><input type="checkbox" id="m_share"/> Share with community when saving</label>
