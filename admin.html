@@ -1444,6 +1444,8 @@ function openEditor(id){
   tagState={}; TAG_FIELDS.forEach(f=>tagState[f]=arr(p[f]).slice());
   const lv=k=>p[k]==null?"":p[k];
   const listVal=k=>arr(p[k]).join("\n");
+  const cv=(p.cue_variations&&typeof p.cue_variations==="object")?p.cue_variations:{};
+  const cvv=k=>Array.isArray(cv[k])?cv[k].join("\n"):(cv[k]?String(cv[k]):"");
   const root=$("edRoot");
   root.innerHTML=`<div class="ovl" id="ovl"><div class="ed" onclick="event.stopPropagation()">
     <div class="edtop">
@@ -1491,6 +1493,16 @@ function openEditor(id){
         ${field("Affirmation","affirmation",lv("affirmation"))}
       </div>
 
+      <div class="grp"><div class="gt">Cue variations <span style="font-weight:400;font-size:12px;color:var(--muted)">\u2014 Short / Medium / Long</span></div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+          <button type="button" class="btn" id="genCuesBtn">\u2728 Generate with AI</button>
+          <span class="hint" id="genCuesStatus"></span>
+        </div>
+        ${area("Short cues","cue_short",cvv("short"),"One per line \u2014 brief calls for quick transitions")}
+        ${area("Medium cues","cue_medium",cvv("medium"),"One per line \u2014 standard alignment cues")}
+        ${area("Long cues","cue_long",cvv("long"),"One per line \u2014 detailed, beginner / workshop depth")}
+      </div>
+
       <div class="grp"><div class="gt">Illustration</div>
         <div class="imgrow">
           <div class="imgprev" id="imgPrev">${p.image_url?`<img src="${esc(p.image_url)}">`:"🧘"}</div>
@@ -1516,6 +1528,22 @@ function openEditor(id){
   TAG_FIELDS.forEach(setupTag);
   $("imgFile").onchange=onUpload;
   $("saveBtn").onclick=save;
+  var _gc=$("genCuesBtn"); if(_gc) _gc.onclick=genCues;
+}
+async function genCues(){
+  const name=val("name"); if(!name){ $("genCuesStatus").textContent="Add a pose name first."; return; }
+  const btn=$("genCuesBtn"); btn.disabled=true; const old=btn.textContent; btn.textContent="Generating\u2026"; $("genCuesStatus").textContent="";
+  try{
+    const {data,error}=await sb.functions.invoke("generate-cues",{body:{ name, sanskrit:val("sanskrit_name"), level:val("difficulty_level"), category:val("category"), description:val("short_description"), teaching_cues:val("teaching_cues") }});
+    if(error||(data&&data.error)){ $("genCuesStatus").textContent=(data&&data.error)||(error&&error.message)||"Failed."; }
+    else if(data&&data.cues){
+      $("f_cue_short").value=(data.cues.short||[]).join("\n");
+      $("f_cue_medium").value=(data.cues.medium||[]).join("\n");
+      $("f_cue_long").value=(data.cues.long||[]).join("\n");
+      $("genCuesStatus").textContent="Generated \u2713 \u2014 review and Save.";
+    }
+  }catch(e){ $("genCuesStatus").textContent=String((e&&e.message)||e); }
+  btn.disabled=false; btn.textContent=old;
 }
 function closeEd(){ $("edRoot").innerHTML=""; document.body.style.overflow=""; }
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("edRoot").innerHTML)closeEd();});
@@ -1566,6 +1594,7 @@ async function save(){
   };
   TAG_FIELDS.forEach(f=>payload[f]=tagState[f]);
   LIST_FIELDS.forEach(f=>payload[f]=listToArr(f));
+  payload.cue_variations={ short:listToArr("cue_short"), medium:listToArr("cue_medium"), long:listToArr("cue_long") };
   if(!payload.name){ return showEdErr("Name is required."); }
   if(!payload.slug){ payload.slug=payload.name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
   $("saveBtn").disabled=true; $("saveBtn").textContent="Saving…";
