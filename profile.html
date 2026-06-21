@@ -221,6 +221,7 @@
     <nav class="ppy-nav" id="ppyNav">
       <a href="/library">Pose Library</a>
       <a href="/builder">Sequence Builder</a>
+      <a data-nav="teacher" hidden href="/teacher">Teacher</a>
       <a data-nav="classes" hidden href="/classes">Classes</a>
       <a data-nav="challenges" hidden href="/challenges">Challenges</a>
       <a data-nav="shop" hidden href="/shop">Shop</a>
@@ -241,7 +242,8 @@
     <a href="#" id="ppyThemeM" role="button">Dark mode</a>
     <a href="/library">Pose Library</a>
     <a href="/builder">Sequence Builder</a>
-    <a data-nav="classes" hidden href="/classes">Classes</a>
+    <a data-nav="teacher" hidden href="/teacher">Teacher</a>
+      <a data-nav="classes" hidden href="/classes">Classes</a>
     <a data-nav="challenges" hidden href="/challenges">Challenges</a>
     <a data-nav="shop" hidden href="/shop">Shop</a>
     <a href="https://purepassionyoga.com/about">About</a>
@@ -924,6 +926,16 @@ $("navSignout").onclick=doSignout; $("signout2").onclick=doSignout;
   window.ppyApplyPalette=apply; window.ppyRefreshPalette=load;
   load();
   document.addEventListener("click",function(e){ var t=e.target; if(t&&t.closest&&(t.closest("#ppyTheme")||t.closest("#ppyThemeM"))) setTimeout(apply,20); });
+})();
+</script>
+<script>
+/* teacher nav gate */
+(function(){
+  var SB="https://nxjbpgnpblqepathojzr.supabase.co", KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik", REF="nxjbpgnpblqepathojzr";
+  function rs(){ try{ var raw=localStorage.getItem("sb-"+REF+"-auth-token"); if(!raw)return null; if(raw.indexOf("base64-")===0){ raw=decodeURIComponent(escape(atob(raw.slice(7)))); } var s=JSON.parse(raw); if(s&&s.access_token&&s.user&&s.user.id) return s; }catch(e){} return null; }
+  var sess=rs(); if(!sess) return;
+  fetch(SB+"/rest/v1/profiles?select=tier,is_admin&id=eq."+encodeURIComponent(sess.user.id),{headers:{apikey:KEY,Authorization:"Bearer "+sess.access_token}})
+    .then(function(r){return r.ok?r.json():[];}).then(function(rows){ var p=(rows&&rows[0])||{}; if(p.is_admin||p.tier==="teacher"||p.tier==="ultimate"){ document.querySelectorAll("[data-nav='teacher']").forEach(function(e){e.hidden=false;}); } }).catch(function(){});
 })();
 </script>
 </body>
