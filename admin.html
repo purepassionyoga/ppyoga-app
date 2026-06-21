@@ -296,6 +296,7 @@
     <div class="tabs">
       <button class="tab on" data-tab="dash">Dashboard</button>
       <button class="tab" data-tab="engage">Engagement</button>
+      <button class="tab" data-tab="students">Students</button>
       <button class="tab" data-tab="poses">Poses</button>
       <button class="tab" data-tab="avatars">Avatars</button>
       <button class="tab" data-tab="design">Design</button>
@@ -315,6 +316,7 @@
       <div id="stats" class="stats"></div>
     </div>
     <div id="engage" class="hidden"></div>
+    <div id="students" class="hidden"></div>
     <div id="poses" class="hidden">
       <div class="toolbar">
         <input id="search" placeholder="Search poses by name or Sanskrit…" />
@@ -496,10 +498,154 @@ async function removePoseAvatar(pid){
   if(error){const el=$("avErr");el.textContent=error.message;el.classList.remove("hidden");return;}
   p.avatar_images=imgs; renderAvatars();
 }
+/* ---------- STUDENTS ---------- */
+let STUD=[], ME=null, MYSEQS=[], STUD_FILTER={q:"",status:""};
+async function loadStudents(){
+  if(!ME){ try{ const {data:{user}}=await sb.auth.getUser(); ME=user?user.id:null; }catch(e){} }
+  try{ const {data:seqs}=await sb.from("sequences").select("id,name").eq("owner_id",ME).order("updated_at",{ascending:false}); MYSEQS=seqs||[]; }catch(e){ MYSEQS=[]; }
+  const {data,error}=await sb.rpc("get_teacher_roster");
+  if(error){ $("students").innerHTML='<div class="err">'+esc(error.message)+'</div>'; return; }
+  STUD=(data&&data.students)||[];
+  renderStudents();
+}
+function statusBadge(s){
+  const c={active:["#E5F0EC","#2E7D6B"],inactive:["#F1ECEC","#9A8F92"],prospect:["#F7EFD9","#B98A1F"]}[s]||["#F1ECEC","#9A8F92"];
+  return '<span style="font-size:11px;padding:2px 9px;border-radius:20px;background:'+c[0]+';color:'+c[1]+'">'+esc(s||"active")+'</span>';
+}
+function fmtD(d){ if(!d)return "\u2014"; try{return new Date(d).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});}catch(e){return d;} }
+function kpiTile(n,l){ return '<div style="background:var(--field);border-radius:12px;padding:12px 14px"><div style="font-size:22px;font-weight:600;color:var(--clayDk);font-family:\'Playfair Display\',Georgia,serif">'+n+'</div><div style="font-size:11px;color:var(--muted)">'+esc(l)+'</div></div>'; }
+function studAnalytics(){
+  const total=STUD.length, active=STUD.filter(s=>s.status==="active").length, linked=STUD.filter(s=>s.member_id).length;
+  const now=new Date(), m0=new Date(now.getFullYear(),now.getMonth(),1);
+  const newM=STUD.filter(s=>s.joined_on&&new Date(s.joined_on)>=m0).length;
+  const p7=STUD.filter(s=>s.s7>0).length, p30=STUD.filter(s=>s.s30>0).length;
+  const sess=STUD.reduce((a,s)=>a+(s.sessions||0),0), mins=STUD.reduce((a,s)=>a+(s.minutes||0),0);
+  return [[total,"Students"],[active,"Active"],[linked,"App members"],[newM,"New this month"],[p7,"Practiced (7d)"],[p30,"Practiced (30d)"],[sess,"Total sessions"],[mins,"Total minutes"]];
+}
+function renderStudents(){
+  const kpis=studAnalytics().map(t=>kpiTile(t[0],t[1])).join("");
+  const q=STUD_FILTER.q.toLowerCase(), st=STUD_FILTER.status;
+  const list=STUD.filter(s=> (!st||s.status===st) && (!q || (s.name||"").toLowerCase().includes(q) || (s.email||"").toLowerCase().includes(q) || (s.member_email||"").toLowerCase().includes(q)) );
+  const rows=list.map(s=>{
+    const initials=((s.name||s.member_name||"?").trim()[0]||"?").toUpperCase();
+    const av=s.profile_pic_url?'<img src="'+esc(s.profile_pic_url)+'" style="width:100%;height:100%;object-fit:cover">':initials;
+    const tags=(s.tags||[]).map(t=>'<span style="font-size:10px;background:var(--field);color:var(--muted);padding:1px 7px;border-radius:10px">'+esc(t)+'</span>').join(" ");
+    const linked=s.member_id?'<span style="font-size:11px;color:#2E7D6B">\u25cf member'+(s.member_tier?" \u00b7 "+esc(s.member_tier):"")+'</span>':'<span style="font-size:11px;color:var(--muted)">contact</span>';
+    const prac=s.member_id?((s.sessions||0)+" sessions \u00b7 last "+fmtD(s.last_practiced)):"\u2014";
+    return '<div class="srow" data-sid="'+s.id+'" style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer">'
+      +'<div style="width:38px;height:38px;border-radius:50%;background:var(--field);display:flex;align-items:center;justify-content:center;overflow:hidden;font-weight:600;color:var(--clayDk);flex:0 0 auto">'+av+'</div>'
+      +'<div style="flex:1;min-width:0"><div style="font-weight:600;color:var(--head)">'+esc(s.name||s.member_name||"Unnamed")+' '+statusBadge(s.status)+'</div>'
+      +'<div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(s.email||s.member_email||"")+' '+linked+' '+tags+'</div></div>'
+      +'<div style="font-size:12px;color:var(--muted);text-align:right;white-space:nowrap">'+prac+(s.note_count?(" \u00b7 "+s.note_count+" note"+(s.note_count>1?"s":"")):"")+'</div></div>';
+  }).join("")||'<div style="color:var(--muted);padding:14px 0">No students yet. Click \u201c+ Add student\u201d to start your roster.</div>';
+  $("students").innerHTML='<div id="stuErr" class="err hidden"></div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px">'+kpis+'</div>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">'
+    +'<input id="stu_q" placeholder="Search students\u2026" value="'+esc(STUD_FILTER.q)+'" style="flex:1;min-width:180px"/>'
+    +'<select id="stu_status"><option value="">All statuses</option>'+["active","inactive","prospect"].map(x=>'<option value="'+x+'"'+(st===x?" selected":"")+'>'+x+'</option>').join("")+'</select>'
+    +'<button class="btn" id="stu_add">+ Add student</button><button class="btn ghost" id="stu_csv">Export CSV</button></div>'
+    +'<div>'+rows+'</div>';
+  $("stu_q").oninput=()=>{STUD_FILTER.q=$("stu_q").value;renderStudents();};
+  $("stu_status").onchange=()=>{STUD_FILTER.status=$("stu_status").value;renderStudents();};
+  $("stu_add").onclick=()=>openStudent(null);
+  $("stu_csv").onclick=exportStudentsCSV;
+  document.querySelectorAll("#students .srow").forEach(r=>r.onclick=()=>openStudent(r.dataset.sid));
+}
+async function openStudent(sid){
+  let s = sid ? Object.assign({}, STUD.find(x=>x.id===sid)) : {id:null,name:"",email:"",phone:"",status:"active",tags:[],joined_on:new Date().toISOString().slice(0,10),notes:"",member_id:null};
+  let notes=[];
+  if(s.id){ try{ const {data}=await sb.from("student_notes").select("*").eq("student_id",s.id).order("created_at",{ascending:false}); notes=data||[]; }catch(e){} }
+  const seqOpts='<option value="">(no sequence)</option>'+MYSEQS.map(q=>'<option value="'+q.id+'">'+esc(q.name||"Untitled")+'</option>').join("");
+  const memberPanel = s.member_id ? '<div class="grp"><div class="gt">App member</div>'
+      +'<div style="font-size:13px;color:var(--muted);margin-bottom:8px">'+esc(s.member_name||s.member_email||"")+(s.member_tier?" \u00b7 "+esc(s.member_tier):"")+'</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px">'
+      +[[s.sessions||0,"Sessions"],[s.minutes||0,"Minutes"],[s.s7||0,"Last 7d"],[s.s30||0,"Last 30d"],[s.streak_current||0,"Streak"],[s.photo_count||0,"Photos"]].map(t=>'<div style="background:var(--field);border-radius:10px;padding:8px 10px"><div style="font-weight:600;color:var(--clayDk)">'+t[0]+'</div><div style="font-size:11px;color:var(--muted)">'+t[1]+'</div></div>').join("")
+      +'</div><div style="font-size:12px;color:var(--muted);margin-top:6px">Last practiced: '+fmtD(s.last_practiced)+'</div></div>' : "";
+  const notesHtml = notes.length ? notes.map(n=>{
+      const seq=MYSEQS.find(q=>q.id===n.sequence_id);
+      return '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="font-size:13px">'+esc(n.body)+'</div>'
+        +'<div style="font-size:11px;color:var(--muted)">'+fmtD(n.created_at)+(seq?(" \u00b7 "+esc(seq.name)):"")+' <a href="#" data-delnote="'+n.id+'" style="color:#A03A22;margin-left:6px">delete</a></div></div>';
+    }).join("") : '<div style="color:var(--muted);font-size:13px">No notes yet.</div>';
+  $("students").innerHTML='<div id="stuErr" class="err hidden"></div>'
+    +'<button class="btn ghost" id="stu_back" style="margin-bottom:14px">\u2190 Back to roster</button>'
+    +'<div class="grp"><div class="gt">'+(s.id?"Edit student":"New student")+'</div>'
+    +'<div class="row2"><div class="field"><label>Name</label><input id="se_name" value="'+esc(s.name||"")+'"/></div>'
+    +'<div class="field"><label>Status</label><select id="se_status">'+["active","inactive","prospect"].map(x=>'<option value="'+x+'"'+(s.status===x?" selected":"")+'>'+x+'</option>').join("")+'</select></div></div>'
+    +'<div class="row2"><div class="field"><label>Email</label><input id="se_email" value="'+esc(s.email||"")+'"/></div>'
+    +'<div class="field"><label>Phone</label><input id="se_phone" value="'+esc(s.phone||"")+'"/></div></div>'
+    +'<div class="row2"><div class="field"><label>Tags (comma-separated)</label><input id="se_tags" value="'+esc((s.tags||[]).join(", "))+'"/></div>'
+    +'<div class="field"><label>Joined on</label><input id="se_joined" type="date" value="'+esc(s.joined_on||"")+'"/></div></div>'
+    +'<div class="field"><label>Link to app member (by email)</label><div style="display:flex;gap:8px"><input id="se_link" placeholder="member@email.com"/><button class="btn ghost" id="se_linkbtn">Link</button></div>'
+    +'<div class="hint" id="se_linkmsg">'+(s.member_id?("Linked to "+esc(s.member_name||s.member_email||"member")):"Optional \u2014 connects this student to their account for practice stats.")+'</div></div>'
+    +'<div class="field"><label>General notes</label><textarea id="se_notes" rows="3">'+esc(s.notes||"")+'</textarea></div>'
+    +'<div style="display:flex;gap:10px"><button class="btn" id="se_save">'+(s.id?"Save changes":"Add student")+'</button>'+(s.id?'<button class="btn ghost" id="se_del">Delete</button>':"")+'</div></div>'
+    +memberPanel
+    +(s.id?('<div class="grp"><div class="gt">1:1 notes</div><div id="se_noteslist">'+notesHtml+'</div>'
+      +'<div class="field" style="margin-top:10px"><label>Add a note</label><textarea id="se_newnote" rows="2" placeholder="What you worked on, focus areas, modifications\u2026"></textarea></div>'
+      +'<div class="row2"><div class="field"><label>Link to a sequence (optional)</label><select id="se_noteseq">'+seqOpts+'</select></div>'
+      +'<div class="field" style="display:flex;align-items:flex-end"><button class="btn" id="se_addnote">Add note</button></div></div></div>'
+      +'<div class="grp"><div class="gt">Practice reminder</div><div class="field"><label>Message</label><textarea id="se_remind" rows="2" placeholder="A gentle nudge to practice this week\u2026"></textarea></div>'
+      +'<button class="btn ghost" id="se_queue">Queue reminder</button>'
+      +'<div class="hint">Saved to the reminder log. Email delivery can be wired to your weekly-email function next.</div></div>'):"");
+  let LINKED = s.member_id || null;
+  $("stu_back").onclick=()=>renderStudents();
+  $("se_save").onclick=()=>saveStudent(s.id, LINKED);
+  const del=$("se_del"); if(del) del.onclick=()=>deleteStudent(s.id);
+  $("se_linkbtn").onclick=async()=>{
+    const em=$("se_link").value.trim(); if(!em)return;
+    const {data,error}=await sb.rpc("find_member_by_email",{p_email:em});
+    if(error||!data){ $("se_linkmsg").textContent="No member found with that email."; return; }
+    LINKED=data.id; $("se_linkmsg").textContent="Linked to "+(data.display_name||data.email||"member")+" \u2014 Save to keep.";
+  };
+  const an=$("se_addnote"); if(an) an.onclick=()=>addNote(s.id);
+  const qn=$("se_queue"); if(qn) qn.onclick=()=>queueReminder(s.id);
+  document.querySelectorAll("[data-delnote]").forEach(a=>a.onclick=(e)=>{e.preventDefault();deleteNote(a.dataset.delnote, s.id);});
+}
+async function saveStudent(id, linked){
+  const row={ name:$("se_name").value.trim(), email:$("se_email").value.trim()||null, phone:$("se_phone").value.trim()||null,
+    status:$("se_status").value, tags:$("se_tags").value.split(",").map(x=>x.trim()).filter(Boolean),
+    joined_on:$("se_joined").value||null, notes:$("se_notes").value, member_id:linked||null };
+  if(!row.name && !row.email){ const e=$("stuErr"); e.textContent="Add at least a name or email."; e.classList.remove("hidden"); return; }
+  let res;
+  if(id){ res=await sb.from("students").update(row).eq("id",id); }
+  else { row.teacher_id=ME; res=await sb.from("students").insert(row); }
+  if(res.error){ const e=$("stuErr"); e.textContent=res.error.message; e.classList.remove("hidden"); return; }
+  await loadStudents();
+}
+async function deleteStudent(id){
+  if(!confirm("Delete this student and their notes? This cannot be undone."))return;
+  const {error}=await sb.from("students").delete().eq("id",id);
+  if(error){ const e=$("stuErr"); e.textContent=error.message; e.classList.remove("hidden"); return; }
+  await loadStudents();
+}
+async function addNote(sid){
+  const body=$("se_newnote").value.trim(); if(!body)return;
+  const seq=$("se_noteseq").value||null;
+  const {error}=await sb.from("student_notes").insert({teacher_id:ME,student_id:sid,sequence_id:seq,body:body});
+  if(error){ const e=$("stuErr"); e.textContent=error.message; e.classList.remove("hidden"); return; }
+  openStudent(sid);
+}
+async function deleteNote(nid,sid){ const {error}=await sb.from("student_notes").delete().eq("id",nid); if(!error) openStudent(sid); }
+async function queueReminder(sid){
+  const msg=$("se_remind").value.trim(); if(!msg)return;
+  const {error}=await sb.from("student_reminders").insert({teacher_id:ME,student_id:sid,message:msg,status:"queued"});
+  const e=$("stuErr");
+  if(error){ e.textContent=error.message; e.classList.remove("hidden"); return; }
+  $("se_remind").value=""; e.textContent=""; e.classList.add("hidden"); alert("Reminder queued \u2713");
+}
+function exportStudentsCSV(){
+  const cols=["name","email","phone","status","tags","joined_on","member_email","sessions","minutes","last_practiced","note_count"];
+  const ec=v=>{ v=(v==null?"":Array.isArray(v)?v.join("|"):String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const lines=STUD.map(s=>cols.map(c=>ec(s[c])).join(","));
+  const blob=new Blob([cols.join(",")+"\n"+lines.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="ppy-students.csv"; a.click();
+}
+
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
   $("dash").classList.toggle("hidden", t.dataset.tab!=="dash");
   $("engage").classList.toggle("hidden", t.dataset.tab!=="engage");
+  $("students").classList.toggle("hidden", t.dataset.tab!=="students");
   $("poses").classList.toggle("hidden", t.dataset.tab!=="poses");
   $("avatars").classList.toggle("hidden", t.dataset.tab!=="avatars");
   $("design").classList.toggle("hidden", t.dataset.tab!=="design");
@@ -512,6 +658,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   $("billing").classList.toggle("hidden", t.dataset.tab!=="billing");
   $("shop").classList.toggle("hidden", t.dataset.tab!=="shop");
   if(t.dataset.tab==="engage") loadEngagement();
+  if(t.dataset.tab==="students") loadStudents();
   if(t.dataset.tab==="avatars") loadAvatars();
   if(t.dataset.tab==="advanced") loadAdvanced();
   if(t.dataset.tab==="legal") loadLegal();
