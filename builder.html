@@ -254,6 +254,15 @@
 @media (max-width:820px){.ppy-nav{display:none}.ppy-right .hide-sm{display:none}.ppy-burger{display:inline-flex}.ppy-mobile.open{display:block}}
 /* ===== end header ===== */
 .ppy-header{position:static}
+.sc-cuevar{font-size:10.5px;color:var(--muted,#9a8f94);line-height:1.45;margin-top:4px;text-align:left;border-top:1px dashed rgba(0,0,0,.08);padding-top:5px}
+.sc-cuevar div{padding-left:9px;text-indent:-9px}
+.sc-cuevar div:before{content:"\2022 ";color:var(--sage,#a8ad91)}
+.flow-cuevar{margin-top:10px;max-width:460px;font-size:15px;line-height:1.5;color:rgba(255,255,255,.85);text-align:left}
+.flow-cuevar div{padding-left:14px;text-indent:-14px;margin:3px 0}
+.flow-cuevar div:before{content:"\2022 ";opacity:.7}
+.cueref label{display:block;margin-bottom:6px}
+.cuechip{display:inline-block;text-align:left;font:inherit;font-size:12px;line-height:1.35;background:var(--field,#f6efe9);color:var(--ink,#4a4047);border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:5px 9px;margin:0 5px 5px 0;cursor:pointer;max-width:100%}
+.cuechip:hover{border-color:var(--rose,#C8A0A6)}
 </style>
 </head>
 <body>
@@ -391,6 +400,9 @@
         <button class="btn ghost" id="b_ai">✨ AI</button>
         <button class="btn ghost" id="b_flow">▶ Flow</button>
         <button class="btn ghost" id="b_theme">🎨 Theme</button>
+        <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted,#9a8f94)">Cues
+          <select id="b_cuedepth" style="padding:6px 8px"><option value="off">Off</option><option value="short">Short</option><option value="medium">Medium</option><option value="long">Long</option></select>
+        </label>
       </div>
       <label class="share"><input type="checkbox" id="m_share"/> Share with community when saving</label>
 
@@ -414,7 +426,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const arr=v=>Array.isArray(v)?v:[];
 
-let SESSION=null, POSES=[], catFilter="", items=[], currentId=null, DRAG=null, seqTheme="classic", IS_ADMIN=false, FAVS=new Set(), AVATARS_ON=false, AVATAR_ID=null;
+let SESSION=null, POSES=[], catFilter="", items=[], currentId=null, DRAG=null, seqTheme="classic", IS_ADMIN=false, FAVS=new Set(), AVATARS_ON=false, AVATAR_ID=null, CUE_DEPTH="off";
 
 /* AUTH */
 async function init(){const{data:{session}}=await sb.auth.getSession();if(session)showApp(session);else $("login").classList.remove("hidden");}
@@ -437,8 +449,12 @@ async function loadAvatarPref(){
   if(AVATARS_ON&&SESSION){ try{ const {data:pr}=await sb.from("profiles").select("avatar_id").eq("id",SESSION.user.id).single(); AVATAR_ID=(pr&&pr.avatar_id)||null; }catch(e){ AVATAR_ID=null; } }
 }
 function poseImgUrl(p){ if(AVATARS_ON&&AVATAR_ID&&p&&p.avatar_images&&p.avatar_images[AVATAR_ID])return p.avatar_images[AVATAR_ID]; return (p&&p.image_url)||null; }
+function cueList(p,depth){ if(!p||!depth||depth==="off")return []; const cv=p.cue_variations||{}; const v=cv[depth]; return Array.isArray(v)?v:[]; }
+function cueRefHTML(p){ const cv=(p&&p.cue_variations)||{}; const sets=[["short","Short"],["medium","Medium"],["long","Long"]].map(d=>[d[1],Array.isArray(cv[d[0]])?cv[d[0]]:[]]).filter(x=>x[1].length); if(!sets.length)return ""; return '<label>Cue library \u2014 tap a cue to add it to your note</label>'+sets.map(s=>'<div style="margin-bottom:7px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--sage,#a8ad91);margin-bottom:4px">'+s[0]+'</div>'+s[1].map(c=>'<button type="button" class="cuechip" onclick="addCueToNote(this)">'+esc(c)+'</button>').join("")+'</div>').join(""); }
+function addCueToNote(btn){ const t=$("ie_notes"); if(!t)return; const c=btn.textContent; t.value=(t.value.trim()?t.value.trim()+" ":"")+c; t.focus(); }
+window.addCueToNote=addCueToNote;
 async function loadPoses(){
-  const{data,error}=await sb.from("poses").select("id,name,sanskrit_name,emoji,image_url,avatar_images,category,difficulty_level,teaching_cues,short_description").order("canonical_pose_id");
+  const{data,error}=await sb.from("poses").select("id,name,sanskrit_name,emoji,image_url,avatar_images,category,difficulty_level,teaching_cues,short_description,cue_variations").order("canonical_pose_id");
   if(error){$("plist").innerHTML='<div style="color:#A03A22;padding:8px">'+esc(error.message)+'</div>';return;}
   POSES=data||[];
   try{ if(SESSION){ const f=await sb.from("favorites").select("pose_id").eq("user_id",SESSION.user.id); FAVS=new Set((f.data||[]).map(r=>String(r.pose_id))); } }catch(e){}
@@ -515,6 +531,7 @@ function renderCanvas(){
       <div class="sc-name">${esc(p.name)}</div>
       <div class="sc-san">${esc(p.sanskrit_name||"")}</div>
       <div class="sc-cue">${esc(it.notes||"")}</div>
+      ${(()=>{const cl=cueList(p,CUE_DEPTH);return cl.length?`<div class="sc-cuevar">${cl.map(c=>`<div>${esc(c)}</div>`).join("")}</div>`:"";})()}
       <div class="sc-br">${[it.breaths?esc(it.breaths)+" breaths":"",(it.breath_pattern&&it.breath_pattern!=="Natural")?esc(it.breath_pattern):""].filter(Boolean).join(" \u00b7 ")||"&nbsp;"}</div>
       <button class="sc-edit" onclick="editItem(${i})">Edit</button>
     </div>`;
@@ -545,9 +562,11 @@ function wireCanvasDnD(){
 }
 function editItem(i){
   const it=items[i];if(!it||it.kind!=="pose")return;
+  const cueRef=cueRefHTML(it.pose);
   $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()">
     <h3 class="serif">${esc(it.pose.name)}</h3>
     <div class="field"><label>Cue / note for this pose</label><textarea id="ie_notes" rows="3">${esc(it.notes||"")}</textarea></div>
+    ${cueRef?`<div class="field cueref">${cueRef}</div>`:""}
     <div class="field"><label>Breaths</label><input id="ie_breaths" type="number" min="1" value="${esc(it.breaths||"")}"/></div>
     <div class="field"><label>Breath pattern</label><select id="ie_breath" class="ie-select">${BREATH_PATTERNS.map(bp=>`<option value="${bp}"${(it.breath_pattern||'Natural')===bp?' selected':''}>${bp}</option>`).join("")}</select></div>
     <div class="field"><label>Replace pose</label><select id="ie_replace" class="ie-select" onchange="substitutePose(${i},this.value)"><option value="">Swap this pose for another\u2026</option>${POSES.map(p=>`<option value="${p.id}">${esc(p.name)}${p.sanskrit_name?" \u2014 "+esc(p.sanskrit_name):""}</option>`).join("")}</select><div style="font-size:11px;color:var(--muted);margin-top:4px">Keeps your notes, breaths &amp; breath pattern.</div></div>
@@ -708,6 +727,7 @@ function printDoc(layout){
   var mins=Math.round(poseItems.reduce(function(s,it){return s+((parseInt(it.breaths)||5)*6);},0)/60);
   function E(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
   function img(p,sz,mir){ var _u=poseImgUrl(p); return _u?('<img src="'+E(_u)+'" style="width:'+sz+'px;height:'+sz+'px;object-fit:contain'+(mir?';transform:scaleX(-1)':'')+'">'):('<span style="font-size:'+Math.round(sz*0.5)+'px">'+(p.emoji||"\ud83e\uddd8")+'</span>'); }
+  function cuesHTML(p){ var cl=cueList(p,CUE_DEPTH); if(!cl.length)return""; return '<div class="pcues">'+cl.map(function(c){return '<div>'+E(c)+'</div>';}).join("")+'</div>'; }
   var CSS='*{box-sizing:border-box;margin:0;padding:0}'
     +'body{font-family:Poppins,system-ui,sans-serif;padding:30px 34px;color:#3a3a3a;background:#fff}'
     +'.phead{margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid '+ROSE+'}'
@@ -732,14 +752,14 @@ function printDoc(layout){
     +'.ci{width:130px;height:130px;display:flex;align-items:center;justify-content:center;background:#fdf8f7;border-radius:10px;overflow:hidden}'
     +'.cnm{font-family:\'Playfair Display\',serif;font-size:14px;font-weight:600;color:'+ROSE+';line-height:1.2}'
     +'.csn{font-size:10px;color:'+SAGE+';font-style:italic}.cm{font-size:10px;color:#888;margin-top:2px}'
-    +'.cnotes{font-size:10px;color:#666;font-style:italic;border-top:1px solid #f0ebe8;padding-top:6px;margin-top:2px;width:100%;line-height:1.4}';
+    +'.cnotes{font-size:10px;color:#666;font-style:italic;border-top:1px solid #f0ebe8;padding-top:6px;margin-top:2px;width:100%;line-height:1.4}'+'.pcues{font-size:9.5px;color:#777;margin-top:5px;line-height:1.4;text-align:left;width:100%}'+'.pcues div{padding-left:9px;text-indent:-9px}'+'.pcues div:before{content:"\u2022 ";color:'+SAGE+'}';
   var body;
   if(layout==="cards"){
     body='<div class="grid">'+poseItems.map(function(it,i){ var p=it.pose;
       return '<div class="card"><div class="cn">'+(i+1)+'</div><div class="ci">'+img(p,120,it.mirror)+'</div>'
         +'<div class="cnm">'+E(p.name)+'</div><div class="csn">'+E(p.sanskrit_name||"")+'</div>'
         +'<div class="cm">'+E(p.difficulty_level||"")+' &nbsp;\u00b7&nbsp; '+((parseInt(it.breaths)||5))+' breaths</div>'
-        +(it.notes?('<div class="cnotes">'+E(it.notes)+'</div>'):"")+'</div>'; }).join("")+'</div>';
+        +(it.notes?('<div class="cnotes">'+E(it.notes)+'</div>'):"")+cuesHTML(p)+'</div>'; }).join("")+'</div>';
   } else if(layout==="notes"){
     var nr=poseItems.filter(function(it){return it.notes;}).map(function(it){ return '<tr><td class="pn">'+E(it.pose.name)+'</td><td class="nt">'+E(it.notes)+'</td></tr>'; }).join("");
     body='<table><thead><tr><th>Pose</th><th>Notes &amp; cues</th></tr></thead><tbody>'+(nr||'<tr><td colspan="2" style="color:#999">No notes added yet.</td></tr>')+'</tbody></table>';
@@ -749,7 +769,7 @@ function printDoc(layout){
         return '<tr><td class="num">'+(i+1)+'</td><td class="im">'+img(p,34,it.mirror)+'</td>'
           +'<td><strong>'+E(p.name)+'</strong><span class="san">'+E(p.sanskrit_name||"")+'</span></td>'
           +'<td class="lv">'+E(p.difficulty_level||"")+'</td><td class="hold">'+((parseInt(it.breaths)||5))+' breaths</td>'
-          +'<td class="nts">'+E(it.notes||"\u2014")+'</td></tr>'; }).join("")+'</tbody></table>';
+          +'<td class="nts">'+E(it.notes||"\u2014")+cuesHTML(p)+'</td></tr>'; }).join("")+'</tbody></table>';
   }
   var metaLine=[level,dur,poseItems.length+" poses","~"+mins+" min"].filter(Boolean).join(" &nbsp;\u00b7&nbsp; ");
   var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+E(title)+'</title>'
@@ -973,12 +993,13 @@ function flowStep(){
   document.getElementById("flowMain").innerHTML=`<div class="flow-th">${thumb}</div>
     <div class="flow-name">${esc(pp.name)}</div><div class="flow-san">${esc(pp.sanskrit_name||"")}</div>
     ${it.notes?`<div class="flow-cue">${esc(it.notes)}</div>`:""}
+    ${(()=>{const cl=cueList(pp,CUE_DEPTH);return cl.length?`<div class="flow-cuevar">${cl.map(c=>`<div>${esc(c)}</div>`).join("")}</div>`:"";})()}
     <div class="flow-count" id="flowCount"></div><div class="flow-sub">${breaths} breaths</div>`;
   if(!flowPaused)speakFlow(flowCueText(it));tickStart();
 }
 function tickStart(){updateFlowCount();flowTimer=setInterval(()=>{if(flowPaused)return;flowRemain--;if(flowRemain<=0){clearInterval(flowTimer);if(flowChime)chimeFlow();flowIdx++;flowStep();return;}updateFlowCount();},1000);}
 function updateFlowCount(){const c=document.getElementById("flowCount");if(c)c.textContent=flowRemain;}
-function flowCueText(it){ if(!it)return""; if(it.kind==="section")return it.title||""; const p=it.pose||{}; return (p.name||"")+(it.notes?". "+it.notes:""); }
+function flowCueText(it){ if(!it)return""; if(it.kind==="section")return it.title||""; const p=it.pose||{}; let s=(p.name||"")+(it.notes?". "+it.notes:""); const cl=cueList(p,CUE_DEPTH); if(cl.length) s+=". "+cl.join(". "); return s; }
 function flowToggle(){
   flowPaused=!flowPaused;
   const b=document.getElementById("flowPause");if(b)b.textContent=flowPaused?"▶ Play":"❚❚ Pause";
@@ -1009,6 +1030,8 @@ function initFlowVoices(){
 function speakFlow(t){try{if(flowVoice&&"speechSynthesis"in window){const u=new SpeechSynthesisUtterance(t);u.rate=0.9;const v=flowVoiceObj();if(v){u.voice=v;u.lang=v.lang;}speechSynthesis.cancel();speechSynthesis.speak(u);}}catch(e){}}
 function chimeFlow(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type="sine";o.frequency.value=528;g.gain.setValueAtTime(0.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.25,ctx.currentTime+0.05);g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+1.1);o.start();o.stop(ctx.currentTime+1.15);}catch(e){}}
 $("b_flow").onclick=startFlow;
+try{ var _cd=localStorage.getItem("ppy-cue-depth"); if(_cd) CUE_DEPTH=_cd; }catch(e){}
+(function(){ var sel=$("b_cuedepth"); if(sel){ sel.value=CUE_DEPTH; sel.onchange=function(){ CUE_DEPTH=sel.value; try{localStorage.setItem("ppy-cue-depth",CUE_DEPTH);}catch(_){ } renderCanvas(); }; } })();
 function flowMirror(){const it=items[flowIdx];if(!it||it.kind!=="pose")return;it.mirror=!it.mirror;const img=document.querySelector("#flowMain .flow-th img");if(img)img.classList.toggle("mir",!!it.mirror);}
 window.endFlow=endFlow;window.flowPrev=flowPrev;window.flowNext=flowNext;window.flowToggle=flowToggle;window.flowMirror=flowMirror;
 /* ---------- AI GENERATE ---------- */
