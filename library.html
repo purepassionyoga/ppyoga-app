@@ -156,6 +156,13 @@
 .ppy-mobile a.admin{color:var(--ppy-accentDk,#A87C83)}
 @media (max-width:820px){.ppy-nav{display:none}.ppy-right .hide-sm{display:none}.ppy-burger{display:inline-flex}.ppy-mobile.open{display:block}}
 /* ===== end header ===== */
+.cuevars{margin-top:24px}
+.cuevars h2{font-family:var(--font-head);color:var(--roseTitle);font-size:20px;margin:0 0 12px}
+.cuetabs{display:flex;gap:6px;border-bottom:1px solid var(--line,#ece3e5);margin-bottom:14px;flex-wrap:wrap}
+.cuetab{background:none;border:none;padding:9px 14px;color:var(--taupe);font-size:14px;cursor:pointer;border-bottom:2px solid transparent;font-family:inherit}
+.cuetab.on{color:var(--rose);border-bottom-color:var(--rose);font-weight:600}
+.cuen{font-size:11px;opacity:.7}
+.cuepane.hidden{display:none}
 </style>
 </head>
 <body>
@@ -353,11 +360,19 @@ function openDetail(p){
         ${arr(p.movement_actions).length?sec("Movement Actions",chips(p.movement_actions)):""}
         ${arr(p.benefit_tags).length?sec("Focus & Benefits",chips(p.benefit_tags)):""}
       </div>
+      ${(()=>{const cv=p.cue_variations||{};const sets=[["short","Short",arr(cv.short)],["medium","Medium",arr(cv.medium)],["long","Long",arr(cv.long)]].filter(x=>x[2].length);if(!sets.length)return"";
+        const tabs=sets.map((x,i)=>`<button class="cuetab${i===0?" on":""}" data-cue="${x[0]}">${x[1]} <span class="cuen">${x[2].length}</span></button>`).join("");
+        const panes=sets.map((x,i)=>`<div class="cuepane${i===0?"":" hidden"}" data-cuepane="${x[0]}">${bullets(x[2])}</div>`).join("");
+        return `<div class="cuevars"><h2>Cueing variations</h2><div class="cuetabs">${tabs}</div>${panes}</div>`;})()}
       ${p.affirmation?`<div class="affirm"><div class="l">Affirmation</div><div class="q">“${esc(p.affirmation)}”</div></div>`:""}
       ${arr(p.advanced_variations).length?`<div class="vary"><h2>Pose Variations</h2><div class="vchips">${arr(p.advanced_variations).map(v=>`<span class="vchip">${esc(v)}</span>`).join("")}</div></div>`:""}
     </div></div></div>`;
   const root=document.getElementById("modalRoot");
   root.innerHTML=html;
+  root.querySelectorAll(".cuetab").forEach(b=>b.onclick=()=>{
+    root.querySelectorAll(".cuetab").forEach(t=>t.classList.toggle("on",t===b));
+    root.querySelectorAll(".cuepane").forEach(pn=>pn.classList.toggle("hidden",pn.dataset.cuepane!==b.dataset.cue));
+  });
   document.getElementById("ov").onclick=closeModal;
   document.body.style.overflow="hidden";
 }
