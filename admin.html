@@ -297,6 +297,7 @@
       <button class="tab on" data-tab="dash">Dashboard</button>
       <button class="tab" data-tab="engage">Engagement</button>
       <button class="tab" data-tab="poses">Poses</button>
+      <button class="tab" data-tab="avatars">Avatars</button>
       <button class="tab" data-tab="design">Design</button>
       <button class="tab" data-tab="library">Library</button>
       <button class="tab" data-tab="builder">Builder</button>
@@ -321,6 +322,7 @@
       </div>
       <div id="plist" class="plist"></div>
     </div>
+    <div id="avatars" class="hidden"></div>
     <div id="design" class="hidden"></div>
     <div id="library" class="hidden"></div>
     <div id="builder" class="hidden"></div>
@@ -382,11 +384,105 @@ $("password").addEventListener("keydown",e=>{if(e.key==="Enter")$("signin").clic
 $("signout").onclick=async()=>{ await sb.auth.signOut(); POSES=[]; showLogin(); };
 
 /* ---------- TABS ---------- */
+/* ---------- AVATARS ---------- */
+let AVA=null, AVA_POSES=[], AVA_SEL=null;
+async function loadAvatars(){
+  const {data:a}=await sb.from("app_settings").select("value").eq("key","avatars").single();
+  AVA=(a&&a.value)||{enabled:false,list:[]}; if(!Array.isArray(AVA.list))AVA.list=[];
+  const {data:ps}=await sb.from("poses").select("id,name,slug,emoji,image_url,avatar_images").eq("status","published").order("name");
+  AVA_POSES=ps||[];
+  if(!AVA_SEL && AVA.list[0]) AVA_SEL=AVA.list[0].id;
+  renderAvatars();
+}
+function avThumb(av){ return av.thumb_url?`<img src="${esc(av.thumb_url)}">`:'<span style="font-size:26px">\ud83e\uddd8</span>'; }
+function renderAvatars(){
+  const list=AVA.list||[];
+  const roster=list.map(av=>`<div class="grp" style="margin-bottom:10px">
+     <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+       <div class="imgprev" id="avthumb_${av.id}" style="width:72px;height:72px;flex:0 0 auto">${avThumb(av)}</div>
+       <div style="flex:1;min-width:240px">
+         <div class="row2"><div class="field"><label>Name</label><input id="avname_${av.id}" value="${esc(av.name||"")}"/></div>
+           <div class="field"><label>Avatar ID (fixed)</label><input value="${esc(av.id)}" disabled style="opacity:.55"/></div></div>
+         <div class="field"><label>Description</label><input id="avdesc_${av.id}" value="${esc(av.desc||"")}"/></div>
+         <div class="field"><label>Picker thumbnail</label><input type="file" id="avtf_${av.id}" accept="image/png,image/jpeg,image/webp"/><div class="hint" id="avtm_${av.id}">Shown in the member avatar picker. A clear front-facing illustration works best.</div></div>
+       </div></div></div>`).join("");
+  const chips=list.map(av=>`<button class="btn ${AVA_SEL===av.id?'':'ghost'}" data-avsel="${av.id}" style="padding:6px 12px">${esc(av.name||av.id)}</button>`).join(" ");
+  const sel=list.find(a=>a.id===AVA_SEL);
+  const setCount=AVA_POSES.filter(p=>p.avatar_images&&p.avatar_images[AVA_SEL]).length;
+  const grid=AVA_POSES.map(p=>{
+    const u=(p.avatar_images&&p.avatar_images[AVA_SEL])||"";
+    const prev=u?`<img src="${esc(u)}">`:(p.image_url?`<img src="${esc(p.image_url)}" style="opacity:.35">`:`<span style="font-size:22px">${esc(p.emoji||"\ud83e\uddd8")}</span>`);
+    return `<div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
+      <div class="imgprev" id="apprev_${p.id}" style="width:50px;height:50px;flex:0 0 auto">${prev}</div>
+      <div style="flex:1"><div style="font-weight:500;color:var(--head)">${esc(p.name)}</div>
+        <div style="font-size:11px;color:var(--muted)">${u?'\u2713 Avatar image set':'<span style="opacity:.7">Default photo / emoji</span>'}</div></div>
+      <label class="btn ghost" style="padding:6px 10px;cursor:pointer">Upload<input type="file" id="apf_${p.id}" accept="image/png,image/jpeg,image/webp" style="display:none"/></label>
+      ${u?`<button class="btn ghost" data-aprm="${p.id}" style="padding:6px 10px">Remove</button>`:''}
+    </div>`;
+  }).join("");
+  $("avatars").innerHTML=`<div id="avErr" class="err hidden"></div>
+    <div class="grp"><div class="gt">Pose avatars</div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="av_enabled" ${AVA.enabled?"checked":""}/> Enable avatars \u2014 let members choose an illustrated character for pose images</label>
+      <div class="hint">When on, members pick an avatar in their profile and pose cards show that avatar's illustration, falling back to the default pose photo, then emoji, anywhere an image isn't uploaded yet.</div></div>
+    <div class="grp"><div class="gt">The 6 avatars</div>${roster}
+      <button class="btn" id="av_save">Save avatars</button>
+      <span id="av_status" style="margin-left:12px;color:var(--muted);font-size:13px"></span></div>
+    <div class="grp"><div class="gt">Upload pose illustrations</div>
+      <div class="hint" style="margin-bottom:10px">Pick an avatar, then upload that avatar's image for each pose. <strong>${esc((sel&&sel.name)||"")}: ${setCount}/${AVA_POSES.length}</strong> uploaded.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">${chips}</div>
+      <div style="max-height:520px;overflow:auto">${grid}</div></div>`;
+  const en=$("av_enabled"); if(en)en.onchange=()=>{AVA.enabled=en.checked;};
+  $("av_save").onclick=saveAvatars;
+  list.forEach(av=>{const nm=$("avname_"+av.id),ds=$("avdesc_"+av.id),tf=$("avtf_"+av.id);
+    if(nm)nm.oninput=()=>{av.name=nm.value;}; if(ds)ds.oninput=()=>{av.desc=ds.value;}; if(tf)tf.onchange=e=>uploadAvatarThumb(e,av);});
+  document.querySelectorAll("[data-avsel]").forEach(b=>b.onclick=()=>{AVA_SEL=b.dataset.avsel;renderAvatars();});
+  AVA_POSES.forEach(p=>{const f=$("apf_"+p.id);if(f)f.onchange=e=>uploadPoseAvatar(e,p);});
+  document.querySelectorAll("[data-aprm]").forEach(b=>b.onclick=()=>removePoseAvatar(b.dataset.aprm));
+}
+async function saveAvatars(){
+  $("av_save").disabled=true;$("av_save").textContent="Saving\u2026";
+  const{error}=await sb.from("app_settings").upsert({key:"avatars",value:AVA});
+  $("av_save").disabled=false;$("av_save").textContent="Save avatars";
+  if(error){const e=$("avErr");e.textContent=error.message;e.classList.remove("hidden");return;}
+  $("av_status").textContent="Saved \u2713";
+}
+async function uploadAvatarThumb(e,av){
+  const f=e.target.files&&e.target.files[0]; if(!f)return;
+  const msg=$("avtm_"+av.id); if(msg)msg.textContent="Uploading\u2026";
+  const ext=(f.name.split(".").pop()||"png").toLowerCase();
+  const path="avatars/"+av.id+"-thumb-"+Date.now().toString(36)+"."+ext;
+  const{error}=await sb.storage.from("pose-images").upload(path,f,{upsert:true,contentType:f.type||undefined});
+  if(error){if(msg)msg.textContent="Upload failed: "+error.message;return;}
+  const{data}=sb.storage.from("pose-images").getPublicUrl(path);
+  av.thumb_url=data.publicUrl;
+  const pv=$("avthumb_"+av.id); if(pv)pv.innerHTML=`<img src="${esc(av.thumb_url)}">`;
+  if(msg)msg.textContent="Uploaded \u2713 \u2014 click Save avatars to keep.";
+}
+async function uploadPoseAvatar(e,p){
+  const f=e.target.files&&e.target.files[0]; if(!f)return;
+  const ext=(f.name.split(".").pop()||"png").toLowerCase();
+  const path="avatars/"+AVA_SEL+"/"+p.id+"-"+Date.now().toString(36)+"."+ext;
+  const{error}=await sb.storage.from("pose-images").upload(path,f,{upsert:true,contentType:f.type||undefined});
+  if(error){const el=$("avErr");el.textContent=error.message;el.classList.remove("hidden");return;}
+  const{data}=sb.storage.from("pose-images").getPublicUrl(path);
+  const imgs=Object.assign({},p.avatar_images||{}); imgs[AVA_SEL]=data.publicUrl;
+  const{error:ue}=await sb.from("poses").update({avatar_images:imgs}).eq("id",p.id);
+  if(ue){const el=$("avErr");el.textContent=ue.message;el.classList.remove("hidden");return;}
+  p.avatar_images=imgs; renderAvatars();
+}
+async function removePoseAvatar(pid){
+  const p=AVA_POSES.find(x=>x.id===pid); if(!p)return;
+  const imgs=Object.assign({},p.avatar_images||{}); delete imgs[AVA_SEL];
+  const{error}=await sb.from("poses").update({avatar_images:imgs}).eq("id",pid);
+  if(error){const el=$("avErr");el.textContent=error.message;el.classList.remove("hidden");return;}
+  p.avatar_images=imgs; renderAvatars();
+}
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
   $("dash").classList.toggle("hidden", t.dataset.tab!=="dash");
   $("engage").classList.toggle("hidden", t.dataset.tab!=="engage");
   $("poses").classList.toggle("hidden", t.dataset.tab!=="poses");
+  $("avatars").classList.toggle("hidden", t.dataset.tab!=="avatars");
   $("design").classList.toggle("hidden", t.dataset.tab!=="design");
   $("library").classList.toggle("hidden", t.dataset.tab!=="library");
   $("builder").classList.toggle("hidden", t.dataset.tab!=="builder");
@@ -397,6 +493,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   $("billing").classList.toggle("hidden", t.dataset.tab!=="billing");
   $("shop").classList.toggle("hidden", t.dataset.tab!=="shop");
   if(t.dataset.tab==="engage") loadEngagement();
+  if(t.dataset.tab==="avatars") loadAvatars();
   if(t.dataset.tab==="advanced") loadAdvanced();
   if(t.dataset.tab==="legal") loadLegal();
   if(t.dataset.tab==="site") loadSite();
