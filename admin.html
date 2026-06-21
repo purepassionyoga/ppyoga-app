@@ -1536,6 +1536,12 @@ function openEditor(id){
         </div>
       </div>
 
+      <div class="grp"><div class="gt">Variations <span style="font-weight:400;font-size:12px;color:var(--muted)">\u2014 alternate image, name, breaths or cues under this pose</span></div>
+        ${editing?`<div id="varBox"></div>
+        <div style="display:flex;gap:8px;margin-top:8px"><button type="button" class="btn ghost" id="varAdd">+ Add variation</button><button type="button" class="btn" id="varSave">Save variations</button></div>
+        <div class="hint" id="varStatus" style="margin-top:6px"></div>`:`<div class="hint">Save the pose first, then reopen it to add variations.</div>`}
+      </div>
+
       <div class="grp"><div class="gt">Publishing</div>
         <div class="row2">
           <label class="toggle"><input type="checkbox" id="f_published" ${p.status!=="draft"?"checked":""}/> Published to website</label>
@@ -1551,6 +1557,86 @@ function openEditor(id){
   $("imgFile").onchange=onUpload;
   $("saveBtn").onclick=save;
   var _gc=$("genCuesBtn"); if(_gc) _gc.onclick=genCues;
+  if(editing){ loadVarsEditor(editing); var _va=$("varAdd"); if(_va)_va.onclick=addVariation; var _vs=$("varSave"); if(_vs)_vs.onclick=function(){saveVars(false);}; }
+}
+let VARS_EDIT=[], VARS_ORIG_IDS=[];
+function vCueText(cv,k){ return (cv && Array.isArray(cv[k]))?cv[k].join("\n"):""; }
+function vimg(v){ return v.image_url?('<img src="'+esc(v.image_url)+'">'):"\ud83e\uddd8"; }
+function val2(id){ const el=$(id); return el?el.value.trim():""; }
+function listLines(id){ const el=$(id); return el?el.value.split(/\n+/).map(s=>s.trim()).filter(Boolean):[]; }
+async function loadVarsEditor(poseId){
+  VARS_EDIT=[]; VARS_ORIG_IDS=[];
+  try{ const {data}=await sb.from("pose_variations").select("*").eq("pose_id",poseId).order("position");
+    VARS_EDIT=(data||[]).map(v=>({id:v.id,name:v.name||"",sanskrit_name:v.sanskrit_name||"",image_url:v.image_url||"",emoji:v.emoji||"",default_breaths:v.default_breaths||"",notes:v.notes||"",cv:v.cue_variations||{}}));
+    VARS_ORIG_IDS=VARS_EDIT.map(v=>v.id);
+  }catch(e){}
+  renderVarsEditor();
+}
+function renderVarsEditor(){
+  const box=$("varBox"); if(!box)return;
+  if(!VARS_EDIT.length){ box.innerHTML='<div class="hint">No variations yet. Add one to offer an alternate image, name, breaths, or cues for this pose.</div>'; return; }
+  box.innerHTML=VARS_EDIT.map((v,i)=>`<div class="vcard" style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px">
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <div class="imgprev" id="vimg_${i}" style="width:64px;height:64px;flex:0 0 auto">${vimg(v)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="row2"><div class="field"><label>Variation name</label><input id="vn_${i}" value="${esc(v.name)}" placeholder="(blank = parent name)"/></div>
+          <div class="field"><label>Sanskrit</label><input id="vs_${i}" value="${esc(v.sanskrit_name)}" placeholder="(blank = parent)"/></div></div>
+        <div class="row2"><div class="field"><label>Default breaths</label><input id="vb_${i}" type="number" min="1" value="${esc(v.default_breaths)}" placeholder="(blank = parent)"/></div>
+          <div class="field"><label>Emoji</label><input id="ve_${i}" value="${esc(v.emoji)}"/></div></div>
+        <div class="field"><label>Image</label><input id="vurl_${i}" value="${esc(v.image_url)}" placeholder="Paste a URL or upload below"/><input type="file" id="vfile_${i}" accept="image/*" style="margin-top:5px"/><div class="hint" id="vup_${i}"></div></div>
+        <div class="field"><label>Default note / cue (optional)</label><textarea id="vnote_${i}" rows="2">${esc(v.notes)}</textarea></div>
+        <details><summary style="cursor:pointer;font-size:13px;color:var(--aub)">Cue variations for this variation (optional)</summary>
+          <div style="margin-top:8px">
+            <div class="field"><label>Short cues</label><textarea id="vcs_${i}" rows="2">${esc(vCueText(v.cv,"short"))}</textarea></div>
+            <div class="field"><label>Medium cues</label><textarea id="vcm_${i}" rows="3">${esc(vCueText(v.cv,"medium"))}</textarea></div>
+            <div class="field"><label>Long cues</label><textarea id="vcl_${i}" rows="3">${esc(vCueText(v.cv,"long"))}</textarea></div>
+          </div>
+        </details>
+        <button type="button" class="btn ghost" data-vdel="${i}" style="margin-top:8px">Delete variation</button>
+      </div>
+    </div>
+  </div>`).join("");
+  VARS_EDIT.forEach((v,i)=>{ const f=$("vfile_"+i); if(f) f.onchange=e=>uploadVarImg(i,e); });
+  box.querySelectorAll("[data-vdel]").forEach(b=>b.onclick=()=>delVariation(+b.dataset.vdel));
+}
+function syncVarsFromDOM(){
+  VARS_EDIT.forEach((v,i)=>{ if(!$("vn_"+i))return;
+    v.name=val2("vn_"+i); v.sanskrit_name=val2("vs_"+i); v.default_breaths=val2("vb_"+i); v.emoji=val2("ve_"+i);
+    v.image_url=val2("vurl_"+i); v.notes=$("vnote_"+i)?$("vnote_"+i).value:"";
+    v.cv={ short:listLines("vcs_"+i), medium:listLines("vcm_"+i), long:listLines("vcl_"+i) };
+  });
+}
+function addVariation(){ syncVarsFromDOM(); VARS_EDIT.push({id:null,name:"",sanskrit_name:"",image_url:"",emoji:"",default_breaths:"",notes:"",cv:{}}); renderVarsEditor(); }
+function delVariation(i){ syncVarsFromDOM(); VARS_EDIT.splice(i,1); renderVarsEditor(); }
+window.delVariation=delVariation;
+async function uploadVarImg(i,e){
+  const file=e.target.files[0]; if(!file)return;
+  const st=$("vup_"+i); if(st)st.textContent="Uploading\u2026";
+  const ext=(file.name.split(".").pop()||"png").toLowerCase();
+  const path="variations/"+(editing||"pose")+"-"+i+"-"+Date.now().toString(36)+"."+ext;
+  const {error}=await sb.storage.from("pose-images").upload(path,file,{upsert:true,contentType:file.type||undefined});
+  if(error){ if(st)st.textContent="Upload failed: "+error.message; return; }
+  const {data}=sb.storage.from("pose-images").getPublicUrl(path);
+  if($("vurl_"+i))$("vurl_"+i).value=data.publicUrl;
+  if($("vimg_"+i))$("vimg_"+i).innerHTML='<img src="'+esc(data.publicUrl)+'">';
+  if(VARS_EDIT[i])VARS_EDIT[i].image_url=data.publicUrl;
+  if(st)st.textContent="Uploaded \u2713";
+}
+async function saveVars(quiet){
+  if(!editing)return;
+  syncVarsFromDOM();
+  const st=$("varStatus"); const keepIds=[];
+  for(let i=0;i<VARS_EDIT.length;i++){ const v=VARS_EDIT[i];
+    const row={ pose_id:editing, name:v.name||null, sanskrit_name:v.sanskrit_name||null, image_url:v.image_url||null, emoji:v.emoji||null,
+      default_breaths:v.default_breaths?parseInt(v.default_breaths):null, notes:v.notes||null,
+      cue_variations:{ short:(v.cv&&v.cv.short)||[], medium:(v.cv&&v.cv.medium)||[], long:(v.cv&&v.cv.long)||[] }, position:i };
+    if(v.id){ const {error}=await sb.from("pose_variations").update(row).eq("id",v.id); if(error){ if(st)st.textContent=error.message; return; } keepIds.push(v.id); }
+    else { const {data,error}=await sb.from("pose_variations").insert(row).select("id").single(); if(error){ if(st)st.textContent=error.message; return; } if(data){keepIds.push(data.id); v.id=data.id;} }
+  }
+  const toDel=VARS_ORIG_IDS.filter(id=>!keepIds.includes(id));
+  if(toDel.length){ await sb.from("pose_variations").delete().in("id",toDel); }
+  VARS_ORIG_IDS=keepIds.slice();
+  if(!quiet){ if(st)st.textContent="Variations saved \u2713"; }
 }
 async function genCues(){
   const name=val("name"); if(!name){ $("genCuesStatus").textContent="Add a pose name first."; return; }
@@ -1625,6 +1711,7 @@ async function save(){
   else res=await sb.from("poses").insert(payload).select("id").single();
   $("saveBtn").disabled=false; $("saveBtn").textContent="Save";
   if(res.error){ return showEdErr(res.error.message); }
+  if(editing){ try{ await saveVars(true); }catch(e){} }
   closeEd(); await loadPoses();
 }
 function showEdErr(m){ const e=$("edErr"); e.textContent=m; e.classList.remove("hidden"); e.scrollIntoView({behavior:"smooth",block:"center"}); }
