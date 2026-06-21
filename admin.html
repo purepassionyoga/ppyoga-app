@@ -319,6 +319,8 @@
       <div class="toolbar">
         <input id="search" placeholder="Search poses by name or Sanskrit…" />
         <button id="newPose" class="btn">+ New pose</button>
+        <button id="bulkCueBtn" class="btn ghost">\u2728 Generate missing cues</button>
+        <span class="hint" id="bulkCueStatus"></span>
       </div>
       <div id="plist" class="plist"></div>
     </div>
@@ -1129,6 +1131,26 @@ function renderPoses(){
 }
 $("search").addEventListener("input",renderPoses);
 $("newPose").onclick=()=>openEditor(null);
+async function bulkGenCues(){
+  const missing=POSES.filter(p=>{ const cv=p.cue_variations||{}; const has=(Array.isArray(cv.short)&&cv.short.length)||(Array.isArray(cv.medium)&&cv.medium.length)||(Array.isArray(cv.long)&&cv.long.length); return !has; });
+  const st=$("bulkCueStatus");
+  if(!missing.length){ st.textContent="All poses already have cues \u2713"; return; }
+  if(!confirm("Generate cues for "+missing.length+" pose(s) missing them? This may take a couple of minutes \u2014 keep this tab open."))return;
+  const btn=$("bulkCueBtn"); btn.disabled=true; let done=0, fail=0;
+  for(const p of missing){
+    st.textContent="Generating "+(done+fail+1)+" / "+missing.length+" \u2014 "+p.name+"\u2026";
+    try{
+      const {data,error}=await sb.functions.invoke("generate-cues",{body:{pose_id:p.id}});
+      if(error||(data&&data.error)||!(data&&data.cues)){ fail++; continue; }
+      const {error:ue}=await sb.from("poses").update({cue_variations:data.cues}).eq("id",p.id);
+      if(ue){ fail++; } else { done++; p.cue_variations=data.cues; }
+    }catch(e){ fail++; }
+  }
+  btn.disabled=false;
+  st.textContent="Done \u2014 "+done+" generated"+(fail?(", "+fail+" failed (try again)"):"")+" \u2713";
+  renderPoses();
+}
+$("bulkCueBtn").onclick=bulkGenCues;
 
 /* ---------- DESIGN ---------- */
 let DESIGN={};
