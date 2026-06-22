@@ -164,6 +164,7 @@
 .cuen{font-size:11px;opacity:.7}
 .cuepane.hidden{display:none}
 .vargal{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px}
+.fambase{display:inline-block;font-size:9px;text-transform:uppercase;letter-spacing:.06em;background:var(--sage,#a8ad91);color:#fff;border-radius:6px;padding:1px 5px;margin-left:4px;vertical-align:middle}
 .varcard{background:var(--paper,#fff);border:2px solid var(--line,#ece3e5);border-radius:14px;padding:12px;text-align:center;cursor:pointer;font-family:inherit;width:100%;transition:border-color .15s,box-shadow .15s}
 .varcard:hover{border-color:var(--rose)}
 .varcard.on{border-color:var(--rose);box-shadow:0 0 0 3px rgba(200,160,166,.18)}
@@ -195,7 +196,7 @@
       <a data-nav="teacher" hidden href="/teacher">Teacher</a>
       <a data-nav="classes" hidden href="/classes">Classes</a>
       <a data-nav="challenges" hidden href="/challenges">Challenges</a>
-      <a href="https://purepassionyoga.com/shop">Shop</a>
+      <a href="/shop">Shop</a>
       <a href="https://purepassionyoga.com/about">About</a>
     </nav>
     <div class="ppy-right" id="ppyRight">
@@ -216,7 +217,7 @@
     <a data-nav="teacher" hidden href="/teacher">Teacher</a>
       <a data-nav="classes" hidden href="/classes">Classes</a>
     <a data-nav="challenges" hidden href="/challenges">Challenges</a>
-    <a href="https://purepassionyoga.com/shop">Shop</a>
+    <a href="/shop">Shop</a>
     <a href="https://purepassionyoga.com/about">About</a>
     <a class="admin" id="ppyAdminM" hidden href="/admin">Admin</a>
     <a class="up" id="ppyAuthM" href="/profile">Sign in</a>
@@ -269,7 +270,7 @@ async function load(){
     const r=await fetch(`${SB}/rest/v1/poses?select=*&status=eq.published&order=canonical_pose_id`,{headers:{apikey:KEY,Authorization:"Bearer "+KEY}});
     if(!r.ok) throw new Error("HTTP "+r.status);
     POSES=await r.json();
-    try{ const rv=await fetch(`${SB}/rest/v1/pose_variations?select=pose_id,name,sanskrit_name,image_url,emoji,notes,cue_variations,default_breaths,position&order=position`,{headers:{apikey:KEY,Authorization:"Bearer "+KEY}}); const vj=await rv.json(); VARSMAP={}; (Array.isArray(vj)?vj:[]).forEach(v=>{ (VARSMAP[v.pose_id]=VARSMAP[v.pose_id]||[]).push(v); }); }catch(e){ VARSMAP={}; }
+    // variations are now standalone poses linked via pose_relations; family loads per-modal
     document.getElementById("state").style.display="none";
     if(UID) await loadFavorites();
     await loadAvatarPref();
@@ -349,6 +350,18 @@ function cueSetsHTML(cv){
 }
 function mergedCues(p,v){ const pc=p.cue_variations||{}, vc=(v&&v.cue_variations)||{}; const pick=k=>(arr(vc[k]).length?arr(vc[k]):arr(pc[k])); return {short:pick("short"),medium:pick("medium"),long:pick("long")}; }
 function wireCueTabs(root){ root.querySelectorAll(".cuetab").forEach(b=>b.onclick=()=>{ root.querySelectorAll(".cuetab").forEach(t=>t.classList.toggle("on",t===b)); root.querySelectorAll(".cuepane").forEach(pn=>pn.classList.toggle("hidden",pn.dataset.cuepane!==b.dataset.cue)); }); }
+async function loadFamily(p){
+  const box=document.getElementById("mFamily"); if(!box||!p||!p.id)return;
+  try{
+    const r=await fetch(`${SB}/rest/v1/rpc/get_pose_family`,{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+(TOKEN||KEY),"Content-Type":"application/json"},body:JSON.stringify({p_pose_id:p.id})});
+    const fam=await r.json();
+    if(!Array.isArray(fam)||fam.length<2){ box.style.display="none"; box.innerHTML=""; return; }
+    const tiles=fam.map(f=>`<button type="button" class="varcard${f.is_current?' on':''}" data-fam="${esc(String(f.id))}"><div class="varth">${f.image_url?`<img src="${esc(f.image_url)}" alt="">`:(esc(f.emoji||"\ud83e\uddd8"))}</div><div class="varnm">${esc(f.name)}${f.is_base?' <span class="fambase">base</span>':''}</div>${f.sanskrit_name?`<div class="varsn">${esc(f.sanskrit_name)}</div>`:''}</button>`).join("");
+    box.style.display="";
+    box.innerHTML=`<h2>Variations &amp; related poses</h2><p class="varhint">Tap any pose to open it \u2014 the base pose is marked.</p><div class="vargal">${tiles}</div>`;
+    box.querySelectorAll("[data-fam]").forEach(b=>b.onclick=()=>{ const pose=POSES.find(x=>String(x.id)===String(b.dataset.fam)); if(pose){ closeModal&&0; openDetail(pose); } });
+  }catch(e){ box.style.display="none"; }
+}
 function selVar(idx){
   const p=CUR_POSE; if(!p)return;
   const v=(idx===""||idx==null)?null:CUR_VARS[+idx];
@@ -364,7 +377,7 @@ function selVar(idx){
   root.querySelectorAll("[data-vsel]").forEach(c=>c.classList.toggle("on", c.dataset.vsel===String(idx)));
 }
 function openDetail(p){
-  CUR_POSE=p; CUR_VARS=VARSMAP[p.id]||[];
+  CUR_POSE=p; CUR_VARS=[];
   const _iu=poseImgUrl(p);const fig=_iu?`<img src="${esc(_iu)}" alt="${esc(p.name)}">`:(p.emoji||"🧘");
   const facts=[["Category",p.category],["Difficulty",p.difficulty_level],["Primary Movement",p.primary_movement]].filter(f=>f[1]);
   const html=`<div class="overlay" id="ov"><div class="modal" onclick="event.stopPropagation()">
@@ -396,17 +409,14 @@ function openDetail(p){
         ${arr(p.benefit_tags).length?sec("Focus & Benefits",chips(p.benefit_tags)):""}
       </div>
       ${(()=>{const inner=cueSetsHTML(p.cue_variations||{});return `<div class="cuevars" id="mCues"${inner?"":' style="display:none"'}>${inner?'<h2>Cueing variations</h2>'+inner:""}</div>`;})()}
-      ${(()=>{const vs=CUR_VARS;if(!vs.length)return"";
-        const og=`<button type="button" class="varcard on" data-vsel=""><div class="varth">${poseImgUrl(p)?`<img src="${esc(poseImgUrl(p))}" alt="">`:(p.emoji||"🧘")}</div><div class="varnm">Original</div>${p.sanskrit_name?`<div class="varsn">${esc(p.sanskrit_name)}</div>`:""}</button>`;
-        const cards=vs.map((v,i)=>`<button type="button" class="varcard" data-vsel="${i}"><div class="varth">${v.image_url?`<img src="${esc(v.image_url)}" alt="">`:(esc(v.emoji||p.emoji||"🧘"))}</div><div class="varnm">${esc(v.name||p.name)}</div>${v.sanskrit_name?`<div class="varsn">${esc(v.sanskrit_name)}</div>`:""}${v.notes?`<div class="varnote">${esc(v.notes)}</div>`:""}</button>`).join("");
-        return `<div class="cuevars"><h2>Variations</h2><p class="varhint">Tap to preview a variation\u2019s image and cues.</p><div class="vargal">${og}${cards}</div></div>`;})()}
+      <div class="cuevars" id="mFamily" style="display:none"></div>
       ${p.affirmation?`<div class="affirm"><div class="l">Affirmation</div><div class="q">“${esc(p.affirmation)}”</div></div>`:""}
       ${arr(p.advanced_variations).length?`<div class="vary"><h2>Pose Variations</h2><div class="vchips">${arr(p.advanced_variations).map(v=>`<span class="vchip">${esc(v)}</span>`).join("")}</div></div>`:""}
     </div></div></div>`;
   const root=document.getElementById("modalRoot");
   root.innerHTML=html;
   wireCueTabs(root);
-  root.querySelectorAll("[data-vsel]").forEach(c=>c.onclick=()=>selVar(c.dataset.vsel));
+  loadFamily(p);
   document.getElementById("ov").onclick=closeModal;
   document.body.style.overflow="hidden";
 }
