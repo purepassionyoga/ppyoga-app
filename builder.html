@@ -489,7 +489,7 @@ function addCueToNote(btn){ const t=$("ie_notes"); if(!t)return; const c=btn.tex
 window.addCueToNote=addCueToNote;
 async function loadPoses(){
   const{data,error}=await sb.from("poses").select("id,name,sanskrit_name,emoji,image_url,avatar_images,category,difficulty_level,teaching_cues,short_description,cue_variations,yoga_styles").order("canonical_pose_id");
-  try{ const {data:vrs}=await sb.from("pose_variations").select("id,pose_id,name,sanskrit_name,image_url,emoji,cue_variations,default_breaths,notes,position").order("position"); VARS={}; (vrs||[]).forEach(v=>{ (VARS[v.pose_id]=VARS[v.pose_id]||[]).push(v); }); }catch(e){ VARS={}; }
+  VARS={}; // variations are now standalone poses (pose_relations); legacy picker retired
   if(error){$("plist").innerHTML='<div style="color:#A03A22;padding:8px">'+esc(error.message)+'</div>';return;}
   POSES=data||[];
   try{ if(SESSION){ const f=await sb.from("favorites").select("pose_id").eq("user_id",SESSION.user.id); FAVS=new Set((f.data||[]).map(r=>String(r.pose_id))); } }catch(e){}
