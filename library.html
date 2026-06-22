@@ -676,27 +676,36 @@ window.PPY_TOUR={page:"library",steps:[
   function teardown(){ [ovl,tip].forEach(function(e){ if(e&&e.parentNode)e.parentNode.removeChild(e); }); ovl=tip=hole=ring=null; window.removeEventListener("resize",reflow); window.removeEventListener("scroll",reflow,true); }
   function findEl(sel){ try{ return document.querySelector(sel); }catch(e){ return null; } }
   function visible(el){ return el && (el.offsetWidth>0||el.offsetHeight>0||el.getClientRects().length>0); }
-  function reflow(){ if(curSteps)place(); }
-  function place(){
+  function reflow(){ if(curSteps)position(); }
+  function position(){
+    if(!curSteps)return;
     var step=curSteps[curIdx]; var el=findEl(step.sel);
-    if(!visible(el)){ if(curIdx<curSteps.length-1){ curIdx++; return place(); } else { return finish(); } }
-    el.scrollIntoView({block:"center",behavior:"smooth"});
+    if(!visible(el))return;
     var r=el.getBoundingClientRect(); var pad=6;
     hole.style.left=(r.left-pad)+"px"; hole.style.top=(r.top-pad)+"px"; hole.style.width=(r.width+pad*2)+"px"; hole.style.height=(r.height+pad*2)+"px";
     ring.style.left=(r.left-pad)+"px"; ring.style.top=(r.top-pad)+"px"; ring.style.width=(r.width+pad*2)+"px"; ring.style.height=(r.height+pad*2)+"px";
+    var tr=tip.getBoundingClientRect(); var vw=innerWidth, vh=innerHeight; var top,left;
+    var below=r.bottom+12, above=r.top-tr.height-12;
+    if(below+tr.height<vh){ top=below; } else if(above>0){ top=above; } else { top=Math.max(12,(vh-tr.height)/2); }
+    left=Math.min(Math.max(12,r.left+r.width/2-tr.width/2), vw-tr.width-12);
+    tip.style.top=top+"px"; tip.style.left=left+"px";
+  }
+  function showStep(){
+    var step=curSteps[curIdx]; var el=findEl(step.sel);
+    if(!visible(el)){ if(curIdx<curSteps.length-1){ curIdx++; return showStep(); } else { return finish(); } }
     tip.innerHTML='<h4>'+esc(step.title)+'</h4><p>'+esc(step.text)+'</p>'+
       '<div class="ppt-row"><button class="ppt-skip">Skip tour</button><div class="ppt-row" style="gap:6px">'+
       (curIdx>0?'<button class="ppt-b" data-back>Back</button>':'')+
       '<span class="ppt-dots">'+(curIdx+1)+' / '+curSteps.length+'</span>'+
       '<button class="ppt-b pri" data-next>'+(curIdx===curSteps.length-1?"Done":"Next")+'</button></div></div>';
     tip.querySelector(".ppt-skip").onclick=function(){ finish(true); };
-    var bk=tip.querySelector("[data-back]"); if(bk)bk.onclick=function(){ curIdx=Math.max(0,curIdx-1); place(); };
-    tip.querySelector("[data-next]").onclick=function(){ if(curIdx>=curSteps.length-1)finish(); else { curIdx++; place(); } };
-    var tr=tip.getBoundingClientRect(); var vw=innerWidth, vh=innerHeight; var top,left;
-    var below=r.bottom+12, above=r.top-tr.height-12;
-    if(below+tr.height<vh){ top=below; } else if(above>0){ top=above; } else { top=Math.max(12,(vh-tr.height)/2); }
-    left=Math.min(Math.max(12,r.left+r.width/2-tr.width/2), vw-tr.width-12);
-    tip.style.top=top+"px"; tip.style.left=left+"px";
+    var bk=tip.querySelector("[data-back]"); if(bk)bk.onclick=function(){ curIdx=Math.max(0,curIdx-1); showStep(); };
+    tip.querySelector("[data-next]").onclick=function(){ if(curIdx>=curSteps.length-1)finish(); else { curIdx++; showStep(); } };
+    // scroll first, then measure after the scroll settles (avoids stale-coord misalignment)
+    el.scrollIntoView({block:"center",behavior:"smooth"});
+    position();
+    requestAnimationFrame(function(){ requestAnimationFrame(position); });
+    setTimeout(position,200); setTimeout(position,420); setTimeout(position,640);
   }
   function runSteps(steps,doneCb){
     if(!steps||!steps.length){ if(doneCb)doneCb(); return; }
@@ -707,7 +716,7 @@ window.PPY_TOUR={page:"library",steps:[
     tip=document.createElement("div"); tip.className="ppt-tip";
     document.body.appendChild(ovl); document.body.appendChild(tip);
     window.addEventListener("resize",reflow); window.addEventListener("scroll",reflow,true);
-    setTimeout(place,60);
+    setTimeout(showStep,60);
   }
   function finish(skipped){ var cb=onDone; teardown(); curSteps=null; if(cb)cb(skipped); }
 
