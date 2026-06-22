@@ -1589,14 +1589,8 @@ function openEditor(id){
         </div>
       </div>
 
-      <div class="grp"><div class="gt">Variations <span style="font-weight:400;font-size:12px;color:var(--muted)">\u2014 alternate image, name, breaths or cues under this pose</span></div>
-        ${editing?`<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-          <input id="varAiLabel" placeholder="Describe a variation \u2014 e.g. chair adaptation, with a block, restorative" style="flex:1;min-width:220px"/>
-          <button type="button" class="btn" id="varAiBtn">\u2728 Generate variation</button>
-        </div>
-        <div id="varBox"></div>
-        <div style="display:flex;gap:8px;margin-top:8px"><button type="button" class="btn ghost" id="varAdd">+ Add variation</button><button type="button" class="btn" id="varSave">Save variations</button></div>
-        <div class="hint" id="varStatus" style="margin-top:6px"></div>`:`<div class="hint">Save the pose first, then reopen it to add variations.</div>`}
+            <div class="grp"><div class="gt">Pose family <span style="font-weight:400;font-size:12px;color:var(--muted)">— link this pose to a base pose, or add variations under it</span></div>
+        ${editing?`<div id="famBox"><div class="hint">Loading…</div></div>`:`<div class="hint">Save the pose first, then reopen it to link it.</div>`}
       </div>
 
       <div class="grp"><div class="gt">Publishing</div>
@@ -1614,7 +1608,54 @@ function openEditor(id){
   $("imgFile").onchange=onUpload;
   $("saveBtn").onclick=save;
   var _gc=$("genCuesBtn"); if(_gc) _gc.onclick=genCues;
-  if(editing){ loadVarsEditor(editing); var _va=$("varAdd"); if(_va)_va.onclick=addVariation; var _vs=$("varSave"); if(_vs)_vs.onclick=function(){saveVars(false);}; var _vai=$("varAiBtn"); if(_vai)_vai.onclick=genVariation; }
+  if(editing){ loadFamilyEditor(editing); }
+}
+let FAM_BASE=[], FAM_VARS=[];
+function poseName(id){ const p=POSES.find(x=>String(x.id)===String(id)); return p?(p.name||p.id):id; }
+function famOptions(exclude){ const ex=new Set([String(editing)].concat((exclude||[]).map(String))); return POSES.filter(p=>!ex.has(String(p.id))).slice().sort((a,b)=>(a.name||"").localeCompare(b.name||"")).map(p=>`<option value="${p.id}">${esc(p.name||p.id)}</option>`).join(""); }
+function famTag(t){ return '<span style="background:var(--field,#f6efe9);border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:13px">'+esc(t)+'</span>'; }
+async function loadFamilyEditor(poseId){
+  FAM_BASE=[]; FAM_VARS=[];
+  try{
+    const {data:asVar}=await sb.from("pose_relations").select("base_pose_id").eq("variation_pose_id",poseId);
+    FAM_BASE=(asVar||[]).map(r=>r.base_pose_id);
+    const {data:asBase}=await sb.from("pose_relations").select("variation_pose_id,position").eq("base_pose_id",poseId).order("position");
+    FAM_VARS=(asBase||[]).map(r=>r.variation_pose_id);
+  }catch(e){}
+  renderFamilyEditor();
+}
+function renderFamilyEditor(){
+  const box=$("famBox"); if(!box)return;
+  let h='<div class="field"><label>This pose is a variation of</label>';
+  if(FAM_BASE.length){
+    h+=FAM_BASE.map(b=>'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+famTag(poseName(b))+'<button class="btn ghost" data-famunlink="'+b+'|'+editing+'" style="padding:3px 9px">Unlink</button></div>').join("");
+  } else {
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap"><select id="famBaseSel" style="flex:1;min-width:200px"><option value="">Choose a base pose…</option>'+famOptions(FAM_VARS)+'</select><button class="btn" id="famBaseBtn">Link as variation</button></div><div class="hint" style="margin-top:4px">Marks this pose as a variation under the chosen base (e.g. link \u201cChair Tree\u201d under \u201cTree Pose\u201d).</div>';
+  }
+  h+='</div><div class="field" style="margin-top:14px"><label>Variations under this pose</label>';
+  if(FAM_VARS.length){
+    h+=FAM_VARS.map(v=>'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+famTag(poseName(v))+'<button class="btn ghost" data-famunlink="'+editing+'|'+v+'" style="padding:3px 9px">Unlink</button></div>').join("");
+  } else { h+='<div class="hint" style="margin-bottom:6px">None yet.</div>'; }
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><select id="famVarSel" style="flex:1;min-width:200px"><option value="">Choose a pose to add…</option>'+famOptions(FAM_BASE.concat(FAM_VARS))+'</select><button class="btn" id="famVarBtn">Add as variation</button></div></div><div class="hint" id="famStatus" style="margin-top:8px"></div>';
+  box.innerHTML=h;
+  var bb=$("famBaseBtn"); if(bb)bb.onclick=()=>{ const v=$("famBaseSel").value; if(v)linkRelation(v,editing); };
+  var vb=$("famVarBtn"); if(vb)vb.onclick=()=>{ const v=$("famVarSel").value; if(v)linkRelation(editing,v); };
+  box.querySelectorAll("[data-famunlink]").forEach(b=>b.onclick=()=>{ const parts=b.dataset.famunlink.split("|"); unlinkRelation(parts[0],parts[1]); });
+}
+async function linkRelation(baseId,varId){
+  const st=$("famStatus");
+  if(String(baseId)===String(varId)){ if(st)st.textContent="A pose can't be a variation of itself."; return; }
+  try{
+    const {data:dup}=await sb.from("pose_relations").select("id").eq("base_pose_id",varId).eq("variation_pose_id",baseId).limit(1);
+    if(dup&&dup.length){ if(st)st.textContent="Those two are already linked the other way \u2014 unlink that first."; return; }
+    const {error}=await sb.from("pose_relations").insert({base_pose_id:baseId,variation_pose_id:varId,relation_type:"variation",position:FAM_VARS.length});
+    if(error){ if(st)st.textContent=error.message; return; }
+    await loadFamilyEditor(editing); const s2=$("famStatus"); if(s2)s2.textContent="Linked \u2713";
+  }catch(e){ if(st)st.textContent=String((e&&e.message)||e); }
+}
+async function unlinkRelation(baseId,varId){
+  try{ await sb.from("pose_relations").delete().eq("base_pose_id",baseId).eq("variation_pose_id",varId); }catch(e){}
+  await loadFamilyEditor(editing); const st=$("famStatus"); if(st)st.textContent="Unlinked \u2713";
 }
 let VARS_EDIT=[], VARS_ORIG_IDS=[];
 function vCueText(cv,k){ return (cv && Array.isArray(cv[k]))?cv[k].join("\n"):""; }
@@ -1779,7 +1820,6 @@ async function save(){
   else res=await sb.from("poses").insert(payload).select("id").single();
   $("saveBtn").disabled=false; $("saveBtn").textContent="Save";
   if(res.error){ return showEdErr(res.error.message); }
-  if(editing){ try{ await saveVars(true); }catch(e){} }
   closeEd(); await loadPoses();
 }
 function showEdErr(m){ const e=$("edErr"); e.textContent=m; e.classList.remove("hidden"); e.scrollIntoView({behavior:"smooth",block:"center"}); }
