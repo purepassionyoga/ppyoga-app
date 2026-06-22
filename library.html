@@ -619,5 +619,178 @@ initAuth();loadDesign();loadLib();load();
     .then(function(r){return r.ok?r.json():[];}).then(function(rows){ var p=(rows&&rows[0])||{}; if(p.is_admin||p.tier==="teacher"||p.tier==="ultimate"){ document.querySelectorAll("[data-nav='teacher']").forEach(function(e){e.hidden=false;}); } }).catch(function(){});
 })();
 </script>
+
+<script>
+window.PPY_TOUR={page:"library",steps:[
+  {sel:"#search",title:"Find any pose",text:"Search by name or Sanskrit \u2014 type a few letters and the grid filters instantly."},
+  {sel:"#filters",title:"Filter visually",text:"Not sure of a pose\u2019s name? Filter by category, difficulty, body focus, or yoga style instead."},
+  {sel:"#grid",title:"The full library",text:"Every pose lives here. Tap a card to open full details, cues, and its related variations."},
+  {sel:"#potd",title:"Pose of the day",text:"A little daily inspiration each time you visit.",optional:true}
+]};
+</script>
+<script>
+(function(){
+  var REF="nxjbpgnpblqepathojzr", SB="https://"+REF+".supabase.co",
+      KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
+  var CFG = window.PPY_TOUR || {page:"",steps:[]};
+  var PAGE = CFG.page, STEPS = CFG.steps||[];
+  var PATHS = {profile:"/profile",library:"/library",builder:"/builder",shop:"/shop",classes:"/classes",challenges:"/challenges"};
+  var LABELS = {profile:"Your profile & avatar",library:"The pose library",builder:"The sequence builder",shop:"The shop",classes:"Classes",challenges:"Challenges"};
+  var UIDg=null, TIERg="free", FLAGS={}, DONEg=true;
+  function sess(){ try{ var raw=localStorage.getItem("sb-"+REF+"-auth-token"); if(!raw)return null; if(raw.indexOf("base64-")===0){ raw=decodeURIComponent(escape(atob(raw.slice(7)))); } var s=JSON.parse(raw); var at=s&&(s.access_token||(s.currentSession&&s.currentSession.access_token)); var uid=s&&((s.user&&s.user.id)||(s.currentSession&&s.currentSession.user&&s.currentSession.user.id)); if(at&&uid)return {token:at,uid:uid}; }catch(e){} return null; }
+  function tok(){ var s=sess(); return s?s.token:null; }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function get(url,auth){ var t=auth&&tok(); var h={apikey:KEY,Authorization:"Bearer "+(t||KEY)}; return fetch(SB+url,{headers:h}).then(function(r){return r.json();}); }
+  function patchProfile(body){ var t=tok(); if(!t||!UIDg)return Promise.resolve(); return fetch(SB+"/rest/v1/profiles?id=eq."+encodeURIComponent(UIDg),{method:"PATCH",headers:{apikey:KEY,Authorization:"Bearer "+t,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify(body)}); }
+
+  var css=document.createElement("style"); css.textContent=
+  '.ppt-ov{position:fixed;inset:0;z-index:99998;pointer-events:none}'+
+  '.ppt-hole{position:absolute;border-radius:12px;box-shadow:0 0 0 9999px rgba(40,28,33,.62);transition:all .2s ease;pointer-events:none}'+
+  '.ppt-ring{position:absolute;border:2px solid #C8A0A6;border-radius:12px;transition:all .2s ease;pointer-events:none;box-shadow:0 0 0 4px rgba(200,160,166,.25)}'+
+  '.ppt-tip{position:fixed;z-index:100000;max-width:330px;background:#fff;border-radius:14px;box-shadow:0 18px 50px rgba(40,28,33,.28);padding:16px 18px;font-family:Poppins,system-ui,sans-serif;color:#4a4047;pointer-events:auto}'+
+  '.ppt-tip h4{margin:0 0 6px;font-family:"Playfair Display",Georgia,serif;color:#A87C83;font-size:18px}'+
+  '.ppt-tip p{margin:0 0 12px;font-size:13.5px;line-height:1.5}'+
+  '.ppt-row{display:flex;align-items:center;justify-content:space-between;gap:8px}'+
+  '.ppt-dots{font-size:11px;color:#9b8e92}'+
+  '.ppt-b{font-family:inherit;font-size:13px;border-radius:9px;padding:7px 13px;cursor:pointer;border:1px solid #e7dcdf;background:#fff;color:#4a4047}'+
+  '.ppt-b.pri{background:#C8A0A6;border-color:#C8A0A6;color:#fff}'+
+  '.ppt-skip{background:none;border:none;color:#9b8e92;font-size:12px;cursor:pointer;font-family:inherit}'+
+  '.ppt-modal-ov{position:fixed;inset:0;z-index:100001;background:rgba(40,28,33,.5);display:flex;align-items:center;justify-content:center;padding:18px;font-family:Poppins,system-ui,sans-serif}'+
+  '.ppt-modal{background:#fff;border-radius:18px;max-width:480px;width:100%;max-height:86vh;overflow:auto;padding:24px;color:#4a4047;box-shadow:0 24px 70px rgba(40,28,33,.3)}'+
+  '.ppt-modal h2{font-family:"Playfair Display",Georgia,serif;color:#A87C83;margin:0 0 6px;font-size:24px}'+
+  '.ppt-stop{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #eee2e4;border-radius:11px;margin-bottom:8px;cursor:pointer;background:#faf6f4}'+
+  '.ppt-stop b{font-size:14px;font-weight:600}'+
+  '.ppt-stop span{font-size:12px;color:#9b8e92}'+
+  '.ppt-num{width:24px;height:24px;border-radius:50%;background:#C8A0A6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex:0 0 auto}'+
+  '.ppt-faqq{border:1px solid #eee2e4;border-radius:11px;margin-bottom:8px;overflow:hidden}'+
+  '.ppt-faqq summary{cursor:pointer;padding:12px 14px;font-weight:500;font-size:14px;list-style:none}'+
+  '.ppt-faqq summary::-webkit-details-marker{display:none}'+
+  '.ppt-faqq .a{padding:0 14px 14px;font-size:13px;line-height:1.55;color:#5b5258}'+
+  '.ppt-faqcat{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#a8ad91;margin:14px 0 6px;font-weight:600}'+
+  '.ppt-launch{position:fixed;right:18px;bottom:18px;z-index:99990;display:flex;gap:8px;font-family:Poppins,system-ui,sans-serif}'+
+  '.ppt-launch button{border:1px solid #e7dcdf;background:#fff;border-radius:22px;padding:9px 15px;font-size:13px;cursor:pointer;box-shadow:0 6px 18px rgba(40,28,33,.12);color:#A87C83;font-family:inherit}'+
+  '.ppt-launch button.tour{background:#C8A0A6;color:#fff;border-color:#C8A0A6}';
+  document.head.appendChild(css);
+
+  var ovl,hole,ring,tip,curSteps,curIdx,onDone;
+  function teardown(){ [ovl,tip].forEach(function(e){ if(e&&e.parentNode)e.parentNode.removeChild(e); }); ovl=tip=hole=ring=null; window.removeEventListener("resize",reflow); window.removeEventListener("scroll",reflow,true); }
+  function findEl(sel){ try{ return document.querySelector(sel); }catch(e){ return null; } }
+  function visible(el){ return el && (el.offsetWidth>0||el.offsetHeight>0||el.getClientRects().length>0); }
+  function reflow(){ if(curSteps)place(); }
+  function place(){
+    var step=curSteps[curIdx]; var el=findEl(step.sel);
+    if(!visible(el)){ if(curIdx<curSteps.length-1){ curIdx++; return place(); } else { return finish(); } }
+    el.scrollIntoView({block:"center",behavior:"smooth"});
+    var r=el.getBoundingClientRect(); var pad=6;
+    hole.style.left=(r.left-pad)+"px"; hole.style.top=(r.top-pad)+"px"; hole.style.width=(r.width+pad*2)+"px"; hole.style.height=(r.height+pad*2)+"px";
+    ring.style.left=(r.left-pad)+"px"; ring.style.top=(r.top-pad)+"px"; ring.style.width=(r.width+pad*2)+"px"; ring.style.height=(r.height+pad*2)+"px";
+    tip.innerHTML='<h4>'+esc(step.title)+'</h4><p>'+esc(step.text)+'</p>'+
+      '<div class="ppt-row"><button class="ppt-skip">Skip tour</button><div class="ppt-row" style="gap:6px">'+
+      (curIdx>0?'<button class="ppt-b" data-back>Back</button>':'')+
+      '<span class="ppt-dots">'+(curIdx+1)+' / '+curSteps.length+'</span>'+
+      '<button class="ppt-b pri" data-next>'+(curIdx===curSteps.length-1?"Done":"Next")+'</button></div></div>';
+    tip.querySelector(".ppt-skip").onclick=function(){ finish(true); };
+    var bk=tip.querySelector("[data-back]"); if(bk)bk.onclick=function(){ curIdx=Math.max(0,curIdx-1); place(); };
+    tip.querySelector("[data-next]").onclick=function(){ if(curIdx>=curSteps.length-1)finish(); else { curIdx++; place(); } };
+    var tr=tip.getBoundingClientRect(); var vw=innerWidth, vh=innerHeight; var top,left;
+    var below=r.bottom+12, above=r.top-tr.height-12;
+    if(below+tr.height<vh){ top=below; } else if(above>0){ top=above; } else { top=Math.max(12,(vh-tr.height)/2); }
+    left=Math.min(Math.max(12,r.left+r.width/2-tr.width/2), vw-tr.width-12);
+    tip.style.top=top+"px"; tip.style.left=left+"px";
+  }
+  function runSteps(steps,doneCb){
+    if(!steps||!steps.length){ if(doneCb)doneCb(); return; }
+    curSteps=steps; curIdx=0; onDone=doneCb;
+    ovl=document.createElement("div"); ovl.className="ppt-ov";
+    hole=document.createElement("div"); hole.className="ppt-hole"; ovl.appendChild(hole);
+    ring=document.createElement("div"); ring.className="ppt-ring"; ovl.appendChild(ring);
+    tip=document.createElement("div"); tip.className="ppt-tip";
+    document.body.appendChild(ovl); document.body.appendChild(tip);
+    window.addEventListener("resize",reflow); window.addEventListener("scroll",reflow,true);
+    setTimeout(place,60);
+  }
+  function finish(skipped){ var cb=onDone; teardown(); curSteps=null; if(cb)cb(skipped); }
+
+  function getState(){ try{ return JSON.parse(localStorage.getItem("ppy-tour"))||null; }catch(e){ return null; } }
+  function setState(s){ if(s)localStorage.setItem("ppy-tour",JSON.stringify(s)); else localStorage.removeItem("ppy-tour"); }
+  function nav(page){ location.href=PATHS[page]||"/"; }
+  function computeRoute(){
+    var t=(TIERg||"free").toLowerCase(); var r=[];
+    var cls=!!FLAGS.classes_enabled, ch=!!FLAGS.challenges_enabled;
+    if(t==="practitioner"){ r=[]; if(cls)r.push("classes"); if(ch)r.push("challenges"); r.push("shop"); }
+    else if(t==="teacher"){ r=["profile","library","builder","shop"]; }
+    else if(t==="ultimate"||t==="premium"){ r=["profile","library","builder"]; if(cls)r.push("classes"); if(ch)r.push("challenges"); r.push("shop"); }
+    else { r=["profile","library","shop"]; }
+    return r;
+  }
+  function maybeContinue(){
+    var st=getState(); if(!st||!st.active)return false;
+    if(st.route[st.idx]!==PAGE)return false;
+    runSteps(STEPS,function(skipped){
+      if(skipped){ st.active=false; setState(st); return; }
+      st.idx++;
+      if(st.idx>=st.route.length){ setState(null); }
+      else { setState(st); nav(st.route[st.idx]); }
+    });
+    return true;
+  }
+  function startFullTour(){
+    var route=computeRoute(); var st={route:route,idx:0,active:true}; setState(st);
+    patchProfile({tour_done:true});
+    if(route[0]===PAGE) maybeContinue(); else nav(route[0]);
+  }
+  function startLocal(){ runSteps(STEPS); }
+
+  function welcome(){
+    var route=computeRoute();
+    var stops=route.map(function(p,i){ return '<div class="ppt-stop" data-stop="'+p+'"><div class="ppt-num">'+(i+1)+'</div><div><b>'+esc(LABELS[p]||p)+'</b><br><span>'+esc(PATHS[p])+'</span></div></div>'; }).join("");
+    var ov=document.createElement("div"); ov.className="ppt-modal-ov";
+    ov.innerHTML='<div class="ppt-modal"><h2>Welcome to Pure Passion Yoga</h2><p style="font-size:14px;margin:0 0 14px;color:#5b5258">Take a quick tour to get set up. We\'ll start with your profile so you can pick an avatar \u2014 then it shows up across the app.</p>'+stops+
+      '<div style="display:flex;gap:8px;margin-top:16px"><button class="ppt-b pri" data-full style="flex:1">Start the tour</button><button class="ppt-b" data-later>Maybe later</button></div></div>';
+    document.body.appendChild(ov);
+    function later(){ patchProfile({tour_done:true}); if(ov.parentNode)ov.parentNode.removeChild(ov); }
+    ov.addEventListener("click",function(e){ if(e.target===ov)later(); });
+    ov.querySelector("[data-later]").onclick=later;
+    ov.querySelector("[data-full]").onclick=function(){ if(ov.parentNode)ov.parentNode.removeChild(ov); startFullTour(); };
+    ov.querySelectorAll("[data-stop]").forEach(function(s){ s.onclick=function(){ var p=s.dataset.stop; patchProfile({tour_done:true}); if(ov.parentNode)ov.parentNode.removeChild(ov); var rt=computeRoute(); var st={route:rt,idx:rt.indexOf(p),active:true}; setState(st); if(p===PAGE)maybeContinue(); else nav(p); }; });
+  }
+
+  function openFAQ(){
+    var ov=document.createElement("div"); ov.className="ppt-modal-ov";
+    ov.innerHTML='<div class="ppt-modal"><h2>Help & FAQs</h2><div id="ppt-faqbody"><p style="font-size:13px;color:#9b8e92">Loading\u2026</p></div><button class="ppt-b" style="width:100%;margin-top:14px" data-close>Close</button></div>';
+    document.body.appendChild(ov);
+    function cl(){ if(ov.parentNode)ov.parentNode.removeChild(ov); }
+    ov.addEventListener("click",function(e){ if(e.target===ov)cl(); });
+    ov.querySelector("[data-close]").onclick=cl;
+    get("/rest/v1/faqs?select=category,question,answer,position&is_published=eq.true&order=category,position",false).then(function(rows){
+      rows=Array.isArray(rows)?rows:[]; var byCat={}; rows.forEach(function(f){ (byCat[f.category]=byCat[f.category]||[]).push(f); });
+      var html=Object.keys(byCat).map(function(c){ return '<div class="ppt-faqcat">'+esc(c)+'</div>'+byCat[c].map(function(f){ return '<details class="ppt-faqq"><summary>'+esc(f.question)+'</summary><div class="a">'+esc(f.answer)+'</div></details>'; }).join(""); }).join("");
+      document.getElementById("ppt-faqbody").innerHTML=html||'<p style="font-size:13px;color:#9b8e92">No FAQs yet.</p>';
+    }).catch(function(){ var b=document.getElementById("ppt-faqbody"); if(b)b.innerHTML='<p style="font-size:13px;color:#9b8e92">Couldn\'t load FAQs.</p>'; });
+  }
+
+  function buttons(){
+    var wrap=document.createElement("div"); wrap.className="ppt-launch";
+    var t=document.createElement("button"); t.className="tour"; t.textContent="\u2728 Take a tour"; t.onclick=startLocal;
+    var help=document.createElement("button"); help.textContent="\u2753 Help"; help.onclick=openFAQ;
+    if(STEPS&&STEPS.length)wrap.appendChild(t); wrap.appendChild(help);
+    document.body.appendChild(wrap);
+  }
+
+  function init(){
+    buttons();
+    var s=sess(); if(s)UIDg=s.uid;
+    var sitePromise=get("/rest/v1/app_settings?key=eq.site&select=value",false).then(function(j){ FLAGS=(j&&j[0]&&j[0].value)||{}; }).catch(function(){});
+    var profPromise = (s) ? get("/rest/v1/profiles?select=tier,tour_done&id=eq."+encodeURIComponent(s.uid),true).then(function(j){ if(j&&j[0]){ TIERg=j[0].tier||"free"; DONEg=!!j[0].tour_done; } }).catch(function(){}) : Promise.resolve();
+    Promise.all([sitePromise,profPromise]).then(function(){
+      if(maybeContinue())return;
+      if(s && !DONEg){ welcome(); }
+    });
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init); else init();
+  window.PPYTour={start:startLocal,welcome:welcome,faq:openFAQ,full:startFullTour};
+})();
+
+</script>
 </body>
 </html>
