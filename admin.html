@@ -393,6 +393,10 @@ function slugifyOut(x){return String(x||"").toLowerCase().replace(/[^a-z0-9]+/g,
 async function loadAvatars(){
   const {data:a}=await sb.from("app_settings").select("value").eq("key","avatars").single();
   AVA=(a&&a.value)||{enabled:false,list:[]}; if(!Array.isArray(AVA.list))AVA.list=[];
+  AVA.list.forEach(av=>{ if(av.active===undefined)av.active=true; if(!Array.isArray(av.outfits))av.outfits=[]; });
+  if(!AVA.list.some(av=>av.id==="site")){ AVA.list.unshift({id:"site",name:"Pure Passion Yoga (site default)",desc:"Your caricature \u2014 the default character; base image is each pose's main image",thumb_url:"",outfits:[],active:true}); }
+  else { const si=AVA.list.findIndex(av=>av.id==="site"); if(si>0){ AVA.list.unshift(AVA.list.splice(si,1)[0]); } }
+  if(AVA.coming_soon_label===undefined)AVA.coming_soon_label="More coming soon";
   const {data:ps}=await sb.from("poses").select("id,name,slug,emoji,image_url,avatar_images").eq("status","published").order("name");
   AVA_POSES=ps||[];
   if(!AVA_SEL && AVA.list[0]) AVA_SEL=AVA.list[0].id;
@@ -407,6 +411,7 @@ function renderAvatars(){
        <div style="flex:1;min-width:240px">
          <div class="row2"><div class="field"><label>Name</label><input id="avname_${av.id}" value="${esc(av.name||"")}"/></div>
            <div class="field"><label>Avatar ID (fixed)</label><input value="${esc(av.id)}" disabled style="opacity:.55"/></div></div>
+         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:2px 0 8px;font-size:13px"><input type="checkbox" data-avact="${av.id}" ${av.active?"checked":""}/> Visible to members ${av.active?'<span style="color:var(--sage,#a8ad91)">\u2014 active</span>':'<span style="color:var(--muted)">\u2014 hidden (\u201cmore coming soon\u201d)</span>'}</label>
          <div class="field"><label>Description</label><input id="avdesc_${av.id}" value="${esc(av.desc||"")}"/></div>
          <div class="field"><label>Picker thumbnail</label><input type="file" id="avtf_${av.id}" accept="image/png,image/jpeg,image/webp"/><div class="hint" id="avtm_${av.id}">Shown in the member avatar picker. A clear front-facing illustration works best.</div></div>
          <div class="field"><label>Outfit colors for this avatar</label>
@@ -418,18 +423,26 @@ function renderAvatars(){
            </div>`).join(""):'<div class="hint" style="margin:0 0 5px">No outfit colors yet \u2014 add one (e.g. Lavender) to offer it for this avatar.</div>')}
            <button class="btn ghost" data-avoutadd="${av.id}" style="padding:5px 11px;margin-top:2px">+ Add color</button>
          </div>
-       </div><button class="btn ghost" data-avdel="${av.id}" style="padding:6px 12px;align-self:flex-start">Delete</button></div></div>`).join("");
+       </div>${av.id==='site'?'<span class="hint" style="align-self:flex-start;max-width:96px">Built-in \u2014 can\u2019t be deleted</span>':`<button class="btn ghost" data-avdel="${av.id}" style="padding:6px 12px;align-self:flex-start">Delete</button>`}</div></div>`).join("");
   const chips=list.map(av=>`<button class="btn ${AVA_SEL===av.id?'':'ghost'}" data-avsel="${av.id}" style="padding:6px 12px">${esc(av.name||av.id)}</button>`).join(" ");
   const sel=list.find(a=>a.id===AVA_SEL);
   const _ik=avImgKey();
-  const setCount=AVA_POSES.filter(p=>p.avatar_images&&p.avatar_images[_ik]).length;
+  const isSiteBase=(AVA_SEL==="site"&&!AVA_OUTFIT);
+  const setCount=isSiteBase?AVA_POSES.filter(p=>p.image_url).length:AVA_POSES.filter(p=>p.avatar_images&&p.avatar_images[_ik]).length;
   const grid=AVA_POSES.map(p=>{
     const u=(p.avatar_images&&p.avatar_images[_ik])||"";
+    if(isSiteBase){
+      const sprev=p.image_url?`<img src="${esc(p.image_url)}">`:`<span style="font-size:22px">${esc(p.emoji||"\ud83e\uddd8")}</span>`;
+      return `<div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
+        <div class="imgprev" style="width:50px;height:50px;flex:0 0 auto">${sprev}</div>
+        <div style="flex:1"><div style="font-weight:500;color:var(--head)">${esc(p.name)}</div>
+          <div style="font-size:11px;color:var(--muted)">Uses the pose\u2019s main image \u2014 edit it in the Poses tab</div></div></div>`;
+    }
     const prev=u?`<img src="${esc(u)}">`:(p.image_url?`<img src="${esc(p.image_url)}" style="opacity:.35">`:`<span style="font-size:22px">${esc(p.emoji||"\ud83e\uddd8")}</span>`);
     return `<div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
       <div class="imgprev" id="apprev_${p.id}" style="width:50px;height:50px;flex:0 0 auto">${prev}</div>
       <div style="flex:1"><div style="font-weight:500;color:var(--head)">${esc(p.name)}</div>
-        <div style="font-size:11px;color:var(--muted)">${u?'\u2713 Avatar image set':'<span style="opacity:.7">Default photo / emoji</span>'}</div></div>
+        <div style="font-size:11px;color:var(--muted)">${u?'\u2713 Image set':'<span style="opacity:.7">Falls back to site image</span>'}</div></div>
       <label class="btn ghost" style="padding:6px 10px;cursor:pointer">Upload<input type="file" id="apf_${p.id}" accept="image/png,image/jpeg,image/webp" style="display:none"/></label>
       ${u?`<button class="btn ghost" data-aprm="${p.id}" style="padding:6px 10px">Remove</button>`:''}
     </div>`;
@@ -437,7 +450,8 @@ function renderAvatars(){
   $("avatars").innerHTML=`<div id="avErr" class="err hidden"></div>
     <div class="grp"><div class="gt">Pose avatars</div>
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="av_enabled" ${AVA.enabled?"checked":""}/> Enable avatars \u2014 let members choose an illustrated character for pose images</label>
-      <div class="hint">When on, members pick an avatar in their profile and pose cards show that avatar's illustration, falling back to the default pose photo, then emoji, anywhere an image isn't uploaded yet.</div></div>
+      <div class="field" style="margin-top:10px;max-width:340px"><label>\u201cMore coming soon\u201d label (member picker)</label><input id="av_soon" value="${esc(AVA.coming_soon_label||"")}"/></div>
+      <div class="hint">Master switch for the whole feature. Each avatar also has its own <strong>Visible to members</strong> toggle \u2014 turn them on one at a time as you finish them. Members see only active avatars (plus a \u201c${esc(AVA.coming_soon_label||"More coming soon")}\u201d note while others are still hidden), with images falling back outfit \u2192 avatar base \u2192 site image \u2192 emoji.</div></div>
     <div class="grp"><div class="gt">Avatars</div>${roster}
       <button class="btn" id="av_save">Save avatars</button>
       <button class="btn ghost" id="av_add">+ Add avatar</button>
@@ -448,6 +462,8 @@ function renderAvatars(){
       ${(()=>{const o=(sel&&sel.outfits)||[];return `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px"><span style="font-size:12px;color:var(--muted)">Outfit:</span><button class="btn ${!AVA_OUTFIT?'':'ghost'}" data-avout="">Base</button>`+o.map(ot=>`<button class="btn ${AVA_OUTFIT===ot.id?'':'ghost'}" data-avout="${ot.id}"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(ot.hex||'#ccc')};margin-right:5px;vertical-align:middle"></span>${esc(ot.name||ot.id)}</button>`).join("")+`</div>`;})()}
       <div style="max-height:520px;overflow:auto">${grid}</div></div>`;
   const en=$("av_enabled"); if(en)en.onchange=()=>{AVA.enabled=en.checked;};
+  const so=$("av_soon"); if(so)so.oninput=()=>{AVA.coming_soon_label=so.value;};
+  document.querySelectorAll("[data-avact]").forEach(c=>c.onchange=()=>{const av=AVA.list.find(x=>x.id===c.dataset.avact); if(av){av.active=c.checked; renderAvatars();}});
   $("av_save").onclick=saveAvatars;
   const aa=$("av_add"); if(aa)aa.onclick=addAvatar;
   list.forEach(av=>{const nm=$("avname_"+av.id),ds=$("avdesc_"+av.id),tf=$("avtf_"+av.id);
@@ -467,11 +483,12 @@ function addAvatar(){
   const name=prompt("New avatar name (e.g. River):"); if(!name||!name.trim())return;
   let id=slugifyAv(name)||("avatar"+Date.now().toString(36));
   if(AVA.list.some(a=>a.id===id)) id=id+"-"+Date.now().toString(36).slice(-3);
-  AVA.list.push({id:id,name:name.trim(),desc:"",thumb_url:"",outfits:[]});
+  AVA.list.push({id:id,name:name.trim(),desc:"",thumb_url:"",outfits:[],active:true});
   AVA_SEL=id; renderAvatars();
   const st=$("av_status"); if(st)st.textContent="Added — click Save avatars to keep.";
 }
 function deleteAvatar(id){
+  if(id==="site")return;
   if(!confirm("Delete this avatar? Members using it fall back to default pose photos. Images already uploaded for it stay in storage but become unlinked."))return;
   AVA.list=(AVA.list||[]).filter(a=>a.id!==id);
   if(AVA_SEL===id) AVA_SEL=AVA.list[0]?AVA.list[0].id:null;
