@@ -356,7 +356,7 @@ async function loadFamily(p){
     const r=await fetch(`${SB}/rest/v1/rpc/get_pose_family`,{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+(TOKEN||KEY),"Content-Type":"application/json"},body:JSON.stringify({p_pose_id:p.id})});
     const fam=await r.json();
     if(!Array.isArray(fam)||fam.length<2){ box.style.display="none"; box.innerHTML=""; return; }
-    const tiles=fam.map(f=>`<button type="button" class="varcard${f.is_current?' on':''}" data-fam="${esc(String(f.id))}"><div class="varth">${f.image_url?`<img src="${esc(f.image_url)}" alt="">`:(esc(f.emoji||"\ud83e\uddd8"))}</div><div class="varnm">${esc(f.name)}${f.is_base?' <span class="fambase">base</span>':''}</div>${f.sanskrit_name?`<div class="varsn">${esc(f.sanskrit_name)}</div>`:''}</button>`).join("");
+    const tiles=fam.map(f=>{ const lp=POSES.find(x=>String(x.id)===String(f.id)); const iu=lp?poseImgUrl(lp):f.image_url; return `<button type="button" class="varcard${f.is_current?' on':''}" data-fam="${esc(String(f.id))}"><div class="varth">${iu?`<img src="${esc(iu)}" alt="">`:(esc(f.emoji||"\ud83e\uddd8"))}</div><div class="varnm">${esc(f.name)}${f.is_base?' <span class="fambase">base</span>':''}</div>${f.sanskrit_name?`<div class="varsn">${esc(f.sanskrit_name)}</div>`:''}</button>`; }).join("");
     box.style.display="";
     box.innerHTML=`<h2>Variations &amp; related poses</h2><p class="varhint">Tap any pose to open it \u2014 the base pose is marked.</p><div class="vargal">${tiles}</div>`;
     box.querySelectorAll("[data-fam]").forEach(b=>b.onclick=()=>{ const pose=POSES.find(x=>String(x.id)===String(b.dataset.fam)); if(pose){ closeModal&&0; openDetail(pose); } });
