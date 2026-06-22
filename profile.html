@@ -357,6 +357,7 @@
       <div class="ch">Pose avatar</div>
       <div class="cb">
         <div class="td" style="color:var(--muted);font-size:13px;margin-bottom:12px">Choose an illustrated character to appear on pose images across the app. “Default photos” uses the standard pose pictures.</div>
+        <div id="avaPreview" class="hidden" style="margin-bottom:14px;padding:12px;border:1px solid var(--line,#eadfe1);border-radius:12px;background:var(--stage,#faf6f4)"></div>
         <div id="avatarPick" class="avapick"></div>
         <div id="outfitPick" class="hidden"></div>
       </div>
@@ -529,13 +530,14 @@ function buildStaticBits(){
     $("emojiPick").querySelectorAll("button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); renderEditAva(); });
 }
 
-let AVATARS=[],AVATARS_ON=false,AVATAR_ID=null,OUTFIT=null,COMING_SOON="More coming soon";
+let AVATARS=[],AVATARS_ON=false,AVATAR_ID=null,OUTFIT=null,COMING_SOON="More coming soon",SAMPLE_POSE=null;
 async function loadProfile(){
   const { data, error } = await sb.from("profiles").select("*").eq("id",UID).single();
   if(error){ /* profile row may lag right after signup */ PROFILE={ id:UID, email:EMAIL, tier:"free" }; }
   else PROFILE=data;
   try{ const {data:av}=await sb.from("app_settings").select("value").eq("key","avatars").single(); const v=(av&&av.value)||{}; AVATARS_ON=!!v.enabled; AVATARS=Array.isArray(v.list)?v.list:[]; COMING_SOON=v.coming_soon_label||"More coming soon"; }catch(e){ AVATARS=[]; AVATARS_ON=false; }
   AVATAR_ID=(PROFILE&&PROFILE.avatar_id)||null; OUTFIT=(PROFILE&&PROFILE.outfit)||null;
+  if(AVATARS_ON){ try{ const {data:sp}=await sb.from("poses").select("id,name,image_url,avatar_images").eq("status","published").not("image_url","is",null).limit(60); SAMPLE_POSE=(sp||[]).find(p=>p.avatar_images&&Object.keys(p.avatar_images).some(k=>k.indexOf("site__")===0))||(sp||[]).find(p=>p.avatar_images&&Object.keys(p.avatar_images).length)||(sp||[])[0]||null; }catch(e){ SAMPLE_POSE=null; } }
   NOTIFS=Object.assign({}, ...NOTIF_DEFS.map(n=>({[n[0]]:n[3]})), (PROFILE&&PROFILE.notification_prefs)||{});
   renderProfile();
 }
@@ -590,7 +592,7 @@ function renderAvatarPicker(){
   }
   $("avatarPick").innerHTML=html;
   $("avatarPick").querySelectorAll("[data-av]").forEach(b=>b.onclick=()=>selectAvatar(b.dataset.av));
-  renderOutfitPicker();
+  renderOutfitPicker(); renderAvaPreview();
 }
 function renderOutfitPicker(){
   const box=$("outfitPick"); if(!box)return;
@@ -615,7 +617,32 @@ async function selectAvatar(id){
 async function selectOutfit(id){
   OUTFIT=id||null;
   try{ await sb.from("profiles").update({outfit:OUTFIT}).eq("id",UID); if(PROFILE)PROFILE.outfit=OUTFIT; }catch(e){}
-  renderOutfitPicker();
+  renderOutfitPicker(); renderAvaPreview();
+}
+function resolveSample(){
+  const p=SAMPLE_POSE; if(!p)return{url:null,label:"none"};
+  const ai=p.avatar_images||{};
+  if(AVATAR_ID){
+    if(OUTFIT&&ai[AVATAR_ID+"__"+OUTFIT])return{url:ai[AVATAR_ID+"__"+OUTFIT],label:"color"};
+    if(ai[AVATAR_ID])return{url:ai[AVATAR_ID],label:"avatarbase"};
+    if(OUTFIT&&ai["site__"+OUTFIT])return{url:ai["site__"+OUTFIT],label:"color"};
+  }
+  return{url:p.image_url||null,label:"base"};
+}
+function renderAvaPreview(){
+  const box=$("avaPreview"); if(!box)return;
+  if(!AVATARS_ON||!SAMPLE_POSE||!AVATAR_ID){ box.classList.add("hidden"); box.innerHTML=""; return; }
+  const r=resolveSample();
+  const av=AVATARS.find(a=>a.id===AVATAR_ID);
+  const outName=OUTFIT?(((av&&av.outfits)||[]).find(o=>o.id===OUTFIT)||{}).name||OUTFIT:"";
+  let cap;
+  if(OUTFIT){ cap=(r.label==="color")?('Showing <strong style="color:var(--roseDeep,#A87C83)">'+esc(outName)+'</strong>'):('No <strong>'+esc(outName)+'</strong> image uploaded for this pose yet \u2014 showing the base'); }
+  else { cap='Showing <strong>'+esc((av&&av.name)||"avatar")+'</strong> base'; }
+  box.classList.remove("hidden");
+  box.innerHTML=`<div style="display:flex;align-items:center;gap:14px">
+    <div style="width:88px;height:88px;border-radius:12px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:1px solid var(--line,#eadfe1)">${r.url?`<img src="${esc(r.url)}" style="width:100%;height:100%;object-fit:contain">`:`<span style="font-size:32px">\ud83e\uddd8</span>`}</div>
+    <div><div style="font-size:12px;color:var(--muted)">Live preview \u00b7 ${esc(SAMPLE_POSE.name)}</div><div style="font-size:13px;color:var(--ink,#4a4047);margin-top:3px">${cap}</div></div>
+  </div>`;
 }
 function renderEditAva(){
   const preview={ display_name:$("editName").value, email:EMAIL,
