@@ -440,7 +440,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const arr=v=>Array.isArray(v)?v:[];
 
-let SESSION=null, POSES=[], catFilter="", styleFilter="", items=[], currentId=null, DRAG=null, seqTheme="classic", IS_ADMIN=false, FAVS=new Set(), AVATARS_ON=false, AVATAR_ID=null, CUE_DEPTH="off";
+let SESSION=null, POSES=[], catFilter="", styleFilter="", items=[], currentId=null, DRAG=null, seqTheme="classic", IS_ADMIN=false, FAVS=new Set(), AVATARS_ON=false, AVATAR_ID=null, OUTFIT=null, CUE_DEPTH="off";
 var VARS={};
 
 /* AUTH */
@@ -461,9 +461,9 @@ $("signout").onclick=async()=>{await sb.auth.signOut();location.reload();};
 /* POSES (picker) */
 async function loadAvatarPref(){
   try{ const {data:av}=await sb.from("app_settings").select("value").eq("key","avatars").single(); const v=(av&&av.value)||{}; AVATARS_ON=!!v.enabled; }catch(e){ AVATARS_ON=false; }
-  if(AVATARS_ON&&SESSION){ try{ const {data:pr}=await sb.from("profiles").select("avatar_id").eq("id",SESSION.user.id).single(); AVATAR_ID=(pr&&pr.avatar_id)||null; }catch(e){ AVATAR_ID=null; } }
+  if(AVATARS_ON&&SESSION){ try{ const {data:pr}=await sb.from("profiles").select("avatar_id,outfit").eq("id",SESSION.user.id).single(); AVATAR_ID=(pr&&pr.avatar_id)||null; OUTFIT=(pr&&pr.outfit)||null; }catch(e){ AVATAR_ID=null; OUTFIT=null; } }
 }
-function poseImgUrl(p){ if(AVATARS_ON&&AVATAR_ID&&p&&p.avatar_images&&p.avatar_images[AVATAR_ID])return p.avatar_images[AVATAR_ID]; return (p&&p.image_url)||null; }
+function poseImgUrl(p){ if(AVATARS_ON&&AVATAR_ID&&p&&p.avatar_images){ const ai=p.avatar_images; if(OUTFIT&&ai[AVATAR_ID+"__"+OUTFIT])return ai[AVATAR_ID+"__"+OUTFIT]; if(ai[AVATAR_ID])return ai[AVATAR_ID]; if(OUTFIT&&ai["site__"+OUTFIT])return ai["site__"+OUTFIT]; } return (p&&p.image_url)||null; }
 function cueList(p,depth){ if(!p||!depth||depth==="off")return []; const cv=p.cue_variations||{}; const v=cv[depth]; return Array.isArray(v)?v:[]; }
 function cueRefHTML(p){ const cv=(p&&p.cue_variations)||{}; const sets=[["short","Short"],["medium","Medium"],["long","Long"]].map(d=>[d[1],Array.isArray(cv[d[0]])?cv[d[0]]:[]]).filter(x=>x[1].length); if(!sets.length)return ""; return '<label>Cue library \u2014 tap a cue to add it to your note</label>'+sets.map(s=>'<div style="margin-bottom:7px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--sage,#a8ad91);margin-bottom:4px">'+s[0]+'</div>'+s[1].map(c=>'<button type="button" class="cuechip" onclick="addCueToNote(this)">'+esc(c)+'</button>').join("")+'</div>').join(""); }
 function poseVars(p){ return (p&&VARS[p.id])||[]; }
