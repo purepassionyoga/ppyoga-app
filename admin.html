@@ -304,6 +304,7 @@
       <button class="tab" data-tab="email">Email</button>
       <button class="tab" data-tab="advanced">Advanced</button>
       <button class="tab" data-tab="legal">Legal</button>
+      <button class="tab" data-tab="faqs">Help/FAQ</button>
       <button class="tab" data-tab="site">Site</button>
       <button class="tab" data-tab="billing">Billing</button>
       <button class="tab" data-tab="shop">Shop</button>
@@ -331,6 +332,7 @@
     <div id="emailtab" class="hidden"></div>
     <div id="advanced" class="hidden"></div>
     <div id="legal" class="hidden"></div>
+    <div id="faqs" class="hidden"></div>
     <div id="site" class="hidden"></div>
     <div id="billing" class="hidden"></div>
     <div id="shop" class="hidden"></div>
@@ -563,6 +565,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   $("emailtab").classList.toggle("hidden", t.dataset.tab!=="email");
   $("advanced").classList.toggle("hidden", t.dataset.tab!=="advanced");
   $("legal").classList.toggle("hidden", t.dataset.tab!=="legal");
+  $("faqs").classList.toggle("hidden", t.dataset.tab!=="faqs");
   $("site").classList.toggle("hidden", t.dataset.tab!=="site");
   $("billing").classList.toggle("hidden", t.dataset.tab!=="billing");
   $("shop").classList.toggle("hidden", t.dataset.tab!=="shop");
@@ -570,6 +573,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   if(t.dataset.tab==="avatars") loadAvatars();
   if(t.dataset.tab==="advanced") loadAdvanced();
   if(t.dataset.tab==="legal") loadLegal();
+  if(t.dataset.tab==="faqs") loadFaqs();
   if(t.dataset.tab==="site") loadSite();
   if(t.dataset.tab==="billing") loadBilling();
   if(t.dataset.tab==="shop") loadShop();
@@ -903,6 +907,96 @@ const LEGAL_URL="/legal";
 let LEGAL=[], legalLoaded=false, legalQuery="";
 function slugifyL(t){ return (t||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
 
+let FAQS=[], faqsLoaded=false, faqQuery="";
+async function loadFaqs(force){
+  if(faqsLoaded && !force) return;
+  $("faqs").innerHTML='<div style="padding:18px;color:var(--muted)">Loading…</div>';
+  const { data, error } = await sb.from("faqs").select("*").order("category").order("position");
+  if(error){ $("faqs").innerHTML='<div style="padding:18px;color:#A03A22">'+esc(error.message)+'</div>'; return; }
+  FAQS=data||[]; faqsLoaded=true; renderFaqs();
+}
+function renderFaqs(){
+  const pub=FAQS.filter(f=>f.is_published).length;
+  const q=faqQuery.trim().toLowerCase();
+  const list=FAQS.filter(f=>!q||f.question.toLowerCase().includes(q)||(f.category||"").toLowerCase().includes(q));
+  const cats={}; list.forEach(f=>{(cats[f.category]=cats[f.category]||[]).push(f);});
+  let html=`<div class="erow-top">
+    <div class="note">${pub} of ${FAQS.length} FAQs are published. These appear in the Help pop-up across the site.</div>
+    <button id="faqNew" class="btn" style="padding:7px 14px">+ New FAQ</button>
+  </div>
+  <div class="toolbar"><input id="faqSearch" placeholder="Search FAQs…" value="${esc(faqQuery)}"/></div>`;
+  Object.keys(cats).forEach(cat=>{
+    html+=`<div class="lcat">${esc(cat)}</div>`;
+    cats[cat].forEach(f=>{
+      html+=`<div class="lrow">
+        <label class="sw"><input type="checkbox" data-fpub="${f.id}" ${f.is_published?"checked":""}><span class="sl"></span></label>
+        <div><div class="mn">${esc(f.question)}</div><div class="ms">${esc(f.audience==="all"?"everyone":f.audience)} · pos ${f.position}</div></div>
+        <div class="lright">
+          <span class="${f.is_published?"pill-on":"pill-off"}">${f.is_published?"Published":"Hidden"}</span>
+          <button class="btn ghost" style="padding:5px 11px" data-fedit="${f.id}">Edit</button>
+        </div>
+      </div>`;
+    });
+  });
+  $("faqs").innerHTML=html;
+  $("faqNew").onclick=()=>openFaqEditor(null);
+  $("faqSearch").oninput=e=>{ faqQuery=e.target.value; const c=e.target.selectionStart; renderFaqs(); const sx=$("faqSearch"); if(sx){ sx.focus(); sx.setSelectionRange(c,c);} };
+  $("faqs").querySelectorAll("[data-fpub]").forEach(c=>c.onchange=()=>toggleFaqPub(c.dataset.fpub,c.checked));
+  $("faqs").querySelectorAll("[data-fedit]").forEach(b=>b.onclick=()=>openFaqEditor(b.dataset.fedit));
+}
+async function toggleFaqPub(id,checked){
+  const f=FAQS.find(x=>x.id===id); if(f)f.is_published=checked;
+  const { error } = await sb.from("faqs").update({ is_published:checked }).eq("id",id);
+  if(error){ alert("Couldn’t update: "+error.message); if(f)f.is_published=!checked; loadFaqs(true); return; }
+  renderFaqs();
+}
+function openFaqEditor(id){
+  const f = id ? FAQS.find(x=>x.id===id) : { question:"", answer:"", category:"General", audience:"all", is_published:true, position:(FAQS.reduce((m,x)=>Math.max(m,x.position||0),0)+1) };
+  const cats=[...new Set(FAQS.map(x=>x.category).filter(Boolean))];
+  const auds=["all","free","practitioner","teacher","ultimate"];
+  $("edRoot").innerHTML=`<div class="ovl"><div class="ed">
+    <div class="edtop"><h2>${id?"Edit FAQ":"New FAQ"}</h2><button id="faqClose" class="btn ghost" style="margin-left:auto;padding:7px 13px">Close</button></div>
+    <div class="edbody">
+      <div class="grp">
+        <div class="field"><label>Question</label><input id="fQ" value="${esc(f.question)}"/></div>
+        <div class="field"><label>Answer</label><textarea id="fA" style="min-height:140px">${esc(f.answer)}</textarea><div class="hint">Plain text. Keep it short and friendly.</div></div>
+        <div class="row2">
+          <div class="field"><label>Category</label><input id="fCat" list="fCats" value="${esc(f.category||"General")}"/><datalist id="fCats">${cats.map(c=>`<option value="${esc(c)}">`).join("")}</datalist></div>
+          <div class="field"><label>Audience</label><select id="fAud">${auds.map(a=>`<option value="${a}"${f.audience===a?" selected":""}>${a==="all"?"Everyone":a}</option>`).join("")}</select></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Sort order</label><input id="fPos" type="number" value="${f.position||0}"/></div>
+          <label class="toggle" style="align-self:end"><input id="fPub" type="checkbox" ${f.is_published?"checked":""}/> Published</label>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button id="fSave" class="btn">Save</button>
+        ${id?`<button id="fDel" class="btn ghost" style="color:#A03A22;border-color:#E9C9BE">Delete</button>`:""}
+        <span id="fMsg" style="font-size:12px"></span>
+      </div>
+    </div>
+  </div></div>`;
+  $("faqClose").onclick=()=>{ $("edRoot").innerHTML=""; };
+  $("fSave").onclick=()=>saveFaq(id);
+  if(id) $("fDel").onclick=()=>deleteFaq(id);
+}
+async function saveFaq(id){
+  const question=$("fQ").value.trim(), answer=$("fA").value.trim();
+  if(!question||!answer){ $("fMsg").innerHTML='<span style="color:#A03A22">Question and answer are required.</span>'; return; }
+  const payload={ question, answer, category:$("fCat").value.trim()||"General", audience:$("fAud").value, position:parseInt($("fPos").value,10)||0, is_published:$("fPub").checked };
+  $("fSave").disabled=true; $("fMsg").innerHTML='<span style="color:var(--muted)">Saving…</span>';
+  let res; if(id) res=await sb.from("faqs").update(payload).eq("id",id); else res=await sb.from("faqs").insert(payload);
+  $("fSave").disabled=false;
+  if(res.error){ $("fMsg").innerHTML='<span style="color:#A03A22">'+esc(res.error.message)+'</span>'; return; }
+  $("edRoot").innerHTML=""; loadFaqs(true);
+}
+async function deleteFaq(id){
+  const f=FAQS.find(x=>x.id===id);
+  if(!confirm(`Delete “${f?f.question:"this FAQ"}”? This can’t be undone.`)) return;
+  const { error } = await sb.from("faqs").delete().eq("id",id);
+  if(error){ $("fMsg").innerHTML='<span style="color:#A03A22">'+esc(error.message)+'</span>'; return; }
+  $("edRoot").innerHTML=""; loadFaqs(true);
+}
 async function loadLegal(force){
   if(legalLoaded && !force) return;
   $("legal").innerHTML='<div style="padding:18px;color:var(--muted)">Loading…</div>';
