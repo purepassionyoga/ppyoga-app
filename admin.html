@@ -417,6 +417,7 @@ function renderAvatars(){
          <div class="field"><label>Outfit colors for this avatar</label>
            ${((av.outfits||[]).length?(av.outfits||[]).map((ot,oi)=>`<div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">
              <input type="color" value="${esc(ot.hex||'#cccccc')}" data-avouthex="${av.id}|${oi}" style="width:38px;height:30px;padding:0;border:1px solid var(--line);border-radius:6px;background:none;cursor:pointer"/>
+             <input value="${esc(ot.hex||'')}" data-avouthextxt="${av.id}|${oi}" placeholder="#A87C83" maxlength="7" spellcheck="false" style="width:96px;font-family:monospace"/>
              <input value="${esc(ot.name||'')}" placeholder="Color name" data-avoutname="${av.id}|${oi}" style="flex:1"/>
              <input value="${esc(ot.id||'')}" disabled title="Filename key (fixed)" style="width:84px;opacity:.55"/>
              <button class="btn ghost" data-avoutdel="${av.id}|${oi}" style="padding:4px 9px">\u00d7</button>
@@ -472,7 +473,8 @@ function renderAvatars(){
   document.querySelectorAll("[data-avout]").forEach(b=>b.onclick=()=>{AVA_OUTFIT=b.dataset.avout;renderAvatars();});
   document.querySelectorAll("[data-avoutadd]").forEach(b=>b.onclick=()=>addOutfit(b.dataset.avoutadd));
   document.querySelectorAll("[data-avoutdel]").forEach(b=>b.onclick=()=>{const[a,i]=b.dataset.avoutdel.split("|");delOutfit(a,+i);});
-  document.querySelectorAll("[data-avouthex]").forEach(inp=>inp.oninput=()=>{const[a,i]=inp.dataset.avouthex.split("|");const av=AVA.list.find(x=>x.id===a);if(av&&av.outfits&&av.outfits[+i])av.outfits[+i].hex=inp.value;});
+  document.querySelectorAll("[data-avouthex]").forEach(inp=>inp.oninput=()=>{const[a,i]=inp.dataset.avouthex.split("|");const av=AVA.list.find(x=>x.id===a);if(av&&av.outfits&&av.outfits[+i]){av.outfits[+i].hex=inp.value; const t=document.querySelector('[data-avouthextxt="'+a+'|'+i+'"]'); if(t)t.value=inp.value;}});
+  document.querySelectorAll("[data-avouthextxt]").forEach(inp=>inp.oninput=()=>{const[a,i]=inp.dataset.avouthextxt.split("|");const av=AVA.list.find(x=>x.id===a);if(!av||!av.outfits||!av.outfits[+i])return; let h=inp.value.trim(); if(h&&h[0]!=="#")h="#"+h; if(/^#[0-9a-fA-F]{6}$/.test(h)){av.outfits[+i].hex=h; const sw=document.querySelector('[data-avouthex="'+a+'|'+i+'"]'); if(sw)sw.value=h;} });
   document.querySelectorAll("[data-avoutname]").forEach(inp=>inp.oninput=()=>{const[a,i]=inp.dataset.avoutname.split("|");const av=AVA.list.find(x=>x.id===a);if(av&&av.outfits&&av.outfits[+i])av.outfits[+i].name=inp.value;});
   document.querySelectorAll("[data-avdel]").forEach(b=>b.onclick=()=>deleteAvatar(b.dataset.avdel));
   AVA_POSES.forEach(p=>{const f=$("apf_"+p.id);if(f)f.onchange=e=>uploadPoseAvatar(e,p);});
