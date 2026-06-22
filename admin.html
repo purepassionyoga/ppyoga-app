@@ -387,7 +387,9 @@ $("signout").onclick=async()=>{ await sb.auth.signOut(); POSES=[]; showLogin(); 
 
 /* ---------- TABS ---------- */
 /* ---------- AVATARS ---------- */
-let AVA=null, AVA_POSES=[], AVA_SEL=null;
+let AVA=null, AVA_POSES=[], AVA_SEL=null, AVA_OUTFIT="";
+function avImgKey(){ return AVA_OUTFIT?(AVA_SEL+"__"+AVA_OUTFIT):AVA_SEL; }
+function slugifyOut(x){return String(x||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,20);}
 async function loadAvatars(){
   const {data:a}=await sb.from("app_settings").select("value").eq("key","avatars").single();
   AVA=(a&&a.value)||{enabled:false,list:[]}; if(!Array.isArray(AVA.list))AVA.list=[];
@@ -407,12 +409,22 @@ function renderAvatars(){
            <div class="field"><label>Avatar ID (fixed)</label><input value="${esc(av.id)}" disabled style="opacity:.55"/></div></div>
          <div class="field"><label>Description</label><input id="avdesc_${av.id}" value="${esc(av.desc||"")}"/></div>
          <div class="field"><label>Picker thumbnail</label><input type="file" id="avtf_${av.id}" accept="image/png,image/jpeg,image/webp"/><div class="hint" id="avtm_${av.id}">Shown in the member avatar picker. A clear front-facing illustration works best.</div></div>
+         <div class="field"><label>Outfit colors for this avatar</label>
+           ${((av.outfits||[]).length?(av.outfits||[]).map((ot,oi)=>`<div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">
+             <input type="color" value="${esc(ot.hex||'#cccccc')}" data-avouthex="${av.id}|${oi}" style="width:38px;height:30px;padding:0;border:1px solid var(--line);border-radius:6px;background:none;cursor:pointer"/>
+             <input value="${esc(ot.name||'')}" placeholder="Color name" data-avoutname="${av.id}|${oi}" style="flex:1"/>
+             <input value="${esc(ot.id||'')}" disabled title="Filename key (fixed)" style="width:84px;opacity:.55"/>
+             <button class="btn ghost" data-avoutdel="${av.id}|${oi}" style="padding:4px 9px">\u00d7</button>
+           </div>`).join(""):'<div class="hint" style="margin:0 0 5px">No outfit colors yet \u2014 add one (e.g. Lavender) to offer it for this avatar.</div>')}
+           <button class="btn ghost" data-avoutadd="${av.id}" style="padding:5px 11px;margin-top:2px">+ Add color</button>
+         </div>
        </div><button class="btn ghost" data-avdel="${av.id}" style="padding:6px 12px;align-self:flex-start">Delete</button></div></div>`).join("");
   const chips=list.map(av=>`<button class="btn ${AVA_SEL===av.id?'':'ghost'}" data-avsel="${av.id}" style="padding:6px 12px">${esc(av.name||av.id)}</button>`).join(" ");
   const sel=list.find(a=>a.id===AVA_SEL);
-  const setCount=AVA_POSES.filter(p=>p.avatar_images&&p.avatar_images[AVA_SEL]).length;
+  const _ik=avImgKey();
+  const setCount=AVA_POSES.filter(p=>p.avatar_images&&p.avatar_images[_ik]).length;
   const grid=AVA_POSES.map(p=>{
-    const u=(p.avatar_images&&p.avatar_images[AVA_SEL])||"";
+    const u=(p.avatar_images&&p.avatar_images[_ik])||"";
     const prev=u?`<img src="${esc(u)}">`:(p.image_url?`<img src="${esc(p.image_url)}" style="opacity:.35">`:`<span style="font-size:22px">${esc(p.emoji||"\ud83e\uddd8")}</span>`);
     return `<div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
       <div class="imgprev" id="apprev_${p.id}" style="width:50px;height:50px;flex:0 0 auto">${prev}</div>
@@ -431,15 +443,21 @@ function renderAvatars(){
       <button class="btn ghost" id="av_add">+ Add avatar</button>
       <span id="av_status" style="margin-left:12px;color:var(--muted);font-size:13px"></span></div>
     <div class="grp"><div class="gt">Upload pose illustrations</div>
-      <div class="hint" style="margin-bottom:10px">Pick an avatar, then upload that avatar's image for each pose. <strong>${esc((sel&&sel.name)||"")}: ${setCount}/${AVA_POSES.length}</strong> uploaded.</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">${chips}</div>
+      <div class="hint" style="margin-bottom:10px">Pick an avatar and an outfit color, then upload that combination's image for each pose. Missing images fall back: outfit \u2192 the avatar's base \u2192 the site image. <strong>${esc((sel&&sel.name)||"")} \u00b7 ${AVA_OUTFIT?esc((((sel&&sel.outfits)||[]).find(x=>x.id===AVA_OUTFIT)||{}).name||AVA_OUTFIT):"Base"}: ${setCount}/${AVA_POSES.length}</strong> uploaded.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">${chips}</div>
+      ${(()=>{const o=(sel&&sel.outfits)||[];return `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px"><span style="font-size:12px;color:var(--muted)">Outfit:</span><button class="btn ${!AVA_OUTFIT?'':'ghost'}" data-avout="">Base</button>`+o.map(ot=>`<button class="btn ${AVA_OUTFIT===ot.id?'':'ghost'}" data-avout="${ot.id}"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(ot.hex||'#ccc')};margin-right:5px;vertical-align:middle"></span>${esc(ot.name||ot.id)}</button>`).join("")+`</div>`;})()}
       <div style="max-height:520px;overflow:auto">${grid}</div></div>`;
   const en=$("av_enabled"); if(en)en.onchange=()=>{AVA.enabled=en.checked;};
   $("av_save").onclick=saveAvatars;
   const aa=$("av_add"); if(aa)aa.onclick=addAvatar;
   list.forEach(av=>{const nm=$("avname_"+av.id),ds=$("avdesc_"+av.id),tf=$("avtf_"+av.id);
     if(nm)nm.oninput=()=>{av.name=nm.value;}; if(ds)ds.oninput=()=>{av.desc=ds.value;}; if(tf)tf.onchange=e=>uploadAvatarThumb(e,av);});
-  document.querySelectorAll("[data-avsel]").forEach(b=>b.onclick=()=>{AVA_SEL=b.dataset.avsel;renderAvatars();});
+  document.querySelectorAll("[data-avsel]").forEach(b=>b.onclick=()=>{AVA_SEL=b.dataset.avsel;AVA_OUTFIT="";renderAvatars();});
+  document.querySelectorAll("[data-avout]").forEach(b=>b.onclick=()=>{AVA_OUTFIT=b.dataset.avout;renderAvatars();});
+  document.querySelectorAll("[data-avoutadd]").forEach(b=>b.onclick=()=>addOutfit(b.dataset.avoutadd));
+  document.querySelectorAll("[data-avoutdel]").forEach(b=>b.onclick=()=>{const[a,i]=b.dataset.avoutdel.split("|");delOutfit(a,+i);});
+  document.querySelectorAll("[data-avouthex]").forEach(inp=>inp.oninput=()=>{const[a,i]=inp.dataset.avouthex.split("|");const av=AVA.list.find(x=>x.id===a);if(av&&av.outfits&&av.outfits[+i])av.outfits[+i].hex=inp.value;});
+  document.querySelectorAll("[data-avoutname]").forEach(inp=>inp.oninput=()=>{const[a,i]=inp.dataset.avoutname.split("|");const av=AVA.list.find(x=>x.id===a);if(av&&av.outfits&&av.outfits[+i])av.outfits[+i].name=inp.value;});
   document.querySelectorAll("[data-avdel]").forEach(b=>b.onclick=()=>deleteAvatar(b.dataset.avdel));
   AVA_POSES.forEach(p=>{const f=$("apf_"+p.id);if(f)f.onchange=e=>uploadPoseAvatar(e,p);});
   document.querySelectorAll("[data-aprm]").forEach(b=>b.onclick=()=>removePoseAvatar(b.dataset.aprm));
@@ -449,7 +467,7 @@ function addAvatar(){
   const name=prompt("New avatar name (e.g. River):"); if(!name||!name.trim())return;
   let id=slugifyAv(name)||("avatar"+Date.now().toString(36));
   if(AVA.list.some(a=>a.id===id)) id=id+"-"+Date.now().toString(36).slice(-3);
-  AVA.list.push({id:id,name:name.trim(),desc:"",thumb_url:""});
+  AVA.list.push({id:id,name:name.trim(),desc:"",thumb_url:"",outfits:[]});
   AVA_SEL=id; renderAvatars();
   const st=$("av_status"); if(st)st.textContent="Added — click Save avatars to keep.";
 }
@@ -459,6 +477,22 @@ function deleteAvatar(id){
   if(AVA_SEL===id) AVA_SEL=AVA.list[0]?AVA.list[0].id:null;
   renderAvatars();
   const st=$("av_status"); if(st)st.textContent="Removed — click Save avatars to keep.";
+}
+function addOutfit(avId){
+  const av=AVA.list.find(a=>a.id===avId); if(!av)return;
+  const name=prompt("New outfit color name for "+(av.name||av.id)+" (e.g. Lavender):"); if(!name||!name.trim())return;
+  if(!Array.isArray(av.outfits))av.outfits=[];
+  let id=slugifyOut(name)||("c"+Date.now().toString(36));
+  if(av.outfits.some(o=>o.id===id))id=id+"-"+Date.now().toString(36).slice(-3);
+  av.outfits.push({id:id,name:name.trim(),hex:"#cccccc"});
+  renderAvatars(); const st=$("av_status"); if(st)st.textContent="Color added \u2014 set its hex, then Save avatars.";
+}
+function delOutfit(avId,oi){
+  const av=AVA.list.find(a=>a.id===avId); if(!av||!av.outfits)return;
+  if(!confirm("Remove this outfit color? Images uploaded for it stay in storage but become unlinked."))return;
+  av.outfits.splice(oi,1);
+  if(AVA_SEL===avId)AVA_OUTFIT="";
+  renderAvatars(); const st=$("av_status"); if(st)st.textContent="Color removed \u2014 click Save avatars to keep.";
 }
 async function saveAvatars(){
   $("av_save").disabled=true;$("av_save").textContent="Saving\u2026";
@@ -482,18 +516,18 @@ async function uploadAvatarThumb(e,av){
 async function uploadPoseAvatar(e,p){
   const f=e.target.files&&e.target.files[0]; if(!f)return;
   const ext=(f.name.split(".").pop()||"png").toLowerCase();
-  const path="avatars/"+AVA_SEL+"/"+p.id+"-"+Date.now().toString(36)+"."+ext;
+  const path="avatars/"+AVA_SEL+"/"+(AVA_OUTFIT||"base")+"/"+p.id+"-"+Date.now().toString(36)+"."+ext;
   const{error}=await sb.storage.from("pose-images").upload(path,f,{upsert:true,contentType:f.type||undefined});
   if(error){const el=$("avErr");el.textContent=error.message;el.classList.remove("hidden");return;}
   const{data}=sb.storage.from("pose-images").getPublicUrl(path);
-  const imgs=Object.assign({},p.avatar_images||{}); imgs[AVA_SEL]=data.publicUrl;
+  const imgs=Object.assign({},p.avatar_images||{}); imgs[avImgKey()]=data.publicUrl;
   const{error:ue}=await sb.from("poses").update({avatar_images:imgs}).eq("id",p.id);
   if(ue){const el=$("avErr");el.textContent=ue.message;el.classList.remove("hidden");return;}
   p.avatar_images=imgs; renderAvatars();
 }
 async function removePoseAvatar(pid){
   const p=AVA_POSES.find(x=>x.id===pid); if(!p)return;
-  const imgs=Object.assign({},p.avatar_images||{}); delete imgs[AVA_SEL];
+  const imgs=Object.assign({},p.avatar_images||{}); delete imgs[avImgKey()];
   const{error}=await sb.from("poses").update({avatar_images:imgs}).eq("id",pid);
   if(error){const el=$("avErr");el.textContent=error.message;el.classList.remove("hidden");return;}
   p.avatar_images=imgs; renderAvatars();
