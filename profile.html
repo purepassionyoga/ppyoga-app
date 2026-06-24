@@ -619,6 +619,16 @@ async function selectOutfit(id){
   try{ await sb.from("profiles").update({outfit:OUTFIT}).eq("id",UID); if(PROFILE)PROFILE.outfit=OUTFIT; }catch(e){}
   renderOutfitPicker(); renderAvaPreview();
 }
+function poseImgUrl(p){
+  if(!p)return null;
+  if(AVATARS_ON&&AVATAR_ID&&p.avatar_images){
+    const ai=p.avatar_images;
+    if(OUTFIT&&ai[AVATAR_ID+"__"+OUTFIT])return ai[AVATAR_ID+"__"+OUTFIT];
+    if(ai[AVATAR_ID])return ai[AVATAR_ID];
+    if(OUTFIT&&ai["site__"+OUTFIT])return ai["site__"+OUTFIT];
+  }
+  return p.image_url||null;
+}
 function resolveSample(){
   const p=SAMPLE_POSE; if(!p)return{url:null,label:"none"};
   const ai=p.avatar_images||{};
@@ -704,7 +714,7 @@ function renderHeat(days){
 /* ---------- favorites ---------- */
 async function loadFavorites(){
   const { data } = await sb.from("favorites")
-    .select("pose_id, created_at, poses(id,name,sanskrit_name,emoji,image_url,category,slug)")
+    .select("pose_id, created_at, poses(id,name,sanskrit_name,emoji,image_url,avatar_images,category,slug)")
     .eq("user_id",UID).order("created_at",{ascending:false});
   const rows=(data||[]).filter(r=>r.poses);
   $("favMini").textContent=rows.length?`${rows.length}`:"";
@@ -712,7 +722,7 @@ async function loadFavorites(){
   $("favorites").innerHTML=`<div class="favgrid">`+rows.map(r=>{
     const po=r.poses;
     return `<div class="fav"><button class="xbtn x" data-unfav="${esc(r.pose_id)}" title="Remove">♡</button>
-      <div class="em">${po.image_url?`<img src="${esc(po.image_url)}" alt="${esc(po.name||"")}">`:esc(po.emoji||"🧘")}</div>
+      <div class="em">${(()=>{const _u=poseImgUrl(po);return _u?`<img src="${esc(_u)}" alt="${esc(po.name||"")}">`:esc(po.emoji||"🧘");})()}</div>
       <div class="nm">${esc(po.name||"")}</div>
       ${po.sanskrit_name?`<div class="sn">${esc(po.sanskrit_name)}</div>`:""}</div>`;
   }).join("")+`</div>`;
