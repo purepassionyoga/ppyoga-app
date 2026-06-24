@@ -305,6 +305,7 @@
       <button class="tab" data-tab="advanced">Advanced</button>
       <button class="tab" data-tab="legal">Legal</button>
       <button class="tab" data-tab="faqs">Help/FAQ</button>
+      <button class="tab" data-tab="fieldopts">Field options</button>
       <button class="tab" data-tab="site">Site</button>
       <button class="tab" data-tab="billing">Billing</button>
       <button class="tab" data-tab="shop">Shop</button>
@@ -333,6 +334,74 @@
     <div id="advanced" class="hidden"></div>
     <div id="legal" class="hidden"></div>
     <div id="faqs" class="hidden"></div>
+    <style id="foCSS">
+    #fieldopts{--rose:#C8A0A6;--sage:#a8ad91;--aub:#A87C83;--fobg:#FBF8F6;--fosurf:#fff;--fotext:#3A3236;--fomuted:#8A7E82;--foline:#ECE3E4;--rose-tint:#F6ECEE;--sage-tint:#EEF0E8;--danger:#B5544E;--ok:#6E8B5B}
+    #fieldopts .fo-shell{display:grid;grid-template-columns:240px 1fr;gap:20px;align-items:start}
+    #fieldopts .fo-sidebar{border:1px solid var(--foline);background:var(--fosurf);border-radius:12px;padding:14px 10px}
+    #fieldopts .fo-lede{padding:4px 10px 12px;font-size:12px;color:var(--fomuted)}
+    #fieldopts .fo-grouplist{display:flex;flex-direction:column;gap:2px}
+    #fieldopts .fo-groupbtn{display:flex;align-items:center;gap:10px;width:100%;border:none;background:transparent;color:var(--fotext);padding:9px 11px;border-radius:9px;text-align:left;font:inherit;font-size:13.5px;cursor:pointer}
+    #fieldopts .fo-groupbtn:hover{background:var(--rose-tint)}
+    #fieldopts .fo-groupbtn.active{background:var(--rose-tint);color:var(--aub);font-weight:600}
+    #fieldopts .fo-groupbtn .fo-count{margin-left:auto;font-size:11px;color:var(--fomuted);background:var(--fobg);border:1px solid var(--foline);border-radius:999px;padding:1px 8px}
+    #fieldopts .fo-main-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+    #fieldopts .fo-main-head h2{font-size:22px;margin:0}
+    #fieldopts .fo-col{font-size:12px;color:var(--fomuted)}
+    #fieldopts .fo-hint{background:var(--sage-tint);border:1px solid #dfe3d3;color:#5d6747;border-radius:10px;padding:10px 14px;font-size:12.5px;margin:12px 0 18px}
+    #fieldopts .fo-hint code{background:#fff;border:1px solid #dfe3d3;border-radius:5px;padding:1px 6px;font-size:12px}
+    #fieldopts .fo-addrow{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;background:var(--fosurf);border:1px solid var(--foline);border-radius:12px;padding:12px 14px}
+    #fieldopts .fo-addrow input{border:1px solid var(--foline);border-radius:9px;padding:9px 12px;font:inherit;font-size:14px;color:var(--fotext);background:var(--fobg)}
+    #fieldopts .fo-addrow input:focus{outline:none;border-color:var(--rose);background:#fff}
+    #fieldopts .fo-val-in{flex:1 1 220px}
+    #fieldopts .fo-label-in{flex:1 1 180px}
+    #fieldopts .fo-btn{border:1px solid var(--foline);background:var(--fosurf);color:var(--fotext);padding:9px 16px;border-radius:999px;font:inherit;font-size:13px;font-weight:500;cursor:pointer}
+    #fieldopts .fo-btn.primary{background:var(--aub);border-color:var(--aub);color:#fff}
+    #fieldopts .fo-btn:disabled{opacity:.5;cursor:not-allowed}
+    #fieldopts .fo-opts{display:flex;flex-direction:column;gap:8px}
+    #fieldopts .fo-opt{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--fosurf);border:1px solid var(--foline);border-radius:12px;padding:10px 14px}
+    #fieldopts .fo-opt.inactive{opacity:.55}
+    #fieldopts .fo-reorder{display:flex;flex-direction:column;gap:2px}
+    #fieldopts .fo-reorder button{border:none;background:transparent;color:var(--fomuted);padding:0;font-size:11px;line-height:1;cursor:pointer}
+    #fieldopts .fo-reorder button:hover{color:var(--aub)}
+    #fieldopts .fo-reorder button:disabled{opacity:.3;cursor:default}
+    #fieldopts .fo-maincol{flex:1 1 220px;min-width:0;display:flex;flex-direction:column;gap:1px}
+    #fieldopts .fo-value{font-size:14.5px;color:var(--fotext);display:flex;align-items:center;gap:8px}
+    #fieldopts .fo-value .fo-lock{font-size:11px;color:var(--fomuted)}
+    #fieldopts .fo-label-edit{border:1px solid transparent;background:transparent;border-radius:7px;padding:4px 8px;font:inherit;font-size:12.5px;color:var(--fomuted);width:100%;max-width:340px}
+    #fieldopts .fo-label-edit:hover{border-color:var(--foline)}
+    #fieldopts .fo-label-edit:focus{outline:none;border-color:var(--rose);background:var(--fobg);color:var(--fotext)}
+    #fieldopts .fo-usage{font-size:12px;color:var(--fomuted);white-space:nowrap;margin-left:auto}
+    #fieldopts .fo-usage b{color:var(--fotext);font-weight:600}
+    #fieldopts .fo-usage.zero{color:#b9adb1}
+    #fieldopts .fo-actions{display:flex;align-items:center;gap:6px}
+    #fieldopts .fo-toggle{border:1px solid var(--foline);background:var(--fobg);border-radius:999px;font-size:11px;padding:4px 11px;color:var(--fomuted);font-weight:500;cursor:pointer}
+    #fieldopts .fo-toggle.on{background:var(--sage-tint);border-color:#cdd4ba;color:var(--ok)}
+    #fieldopts .fo-del{border:none;background:transparent;color:#c9a9ac;padding:6px;font-size:14px;border-radius:7px;cursor:pointer}
+    #fieldopts .fo-del:hover{background:#f7ecec;color:var(--danger)}
+    #fieldopts .fo-empty{color:var(--fomuted);font-size:14px;padding:24px 4px}
+    #fieldopts .fo-toastbox{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#3A3236;color:#fff;padding:11px 20px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
+    #fieldopts .fo-toastbox.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    @media(max-width:760px){#fieldopts .fo-shell{grid-template-columns:1fr}#fieldopts .fo-grouplist{flex-direction:row;flex-wrap:wrap}#fieldopts .fo-groupbtn{width:auto}}
+    </style>
+    <div id="fieldopts" class="hidden">
+      <div class="fo-shell">
+        <aside class="fo-sidebar">
+          <div class="fo-lede">Lists that fill the dropdowns in the pose editor. Add, rename, reorder, or retire values.</div>
+          <nav class="fo-grouplist" id="foGrouplist"></nav>
+        </aside>
+        <div class="fo-main">
+          <div class="fo-main-head"><h2 id="foGroupTitle">Categories</h2><span class="fo-col" id="foGroupCount"></span></div>
+          <div class="fo-hint" id="foGroupHint"></div>
+          <div class="fo-addrow">
+            <input class="fo-val-in" id="foNewValue" placeholder="New value (stored on the pose)" />
+            <input class="fo-label-in" id="foNewLabel" placeholder="Display label (optional)" />
+            <button class="fo-btn primary" id="foAddBtn">Add option</button>
+          </div>
+          <div class="fo-opts" id="foOpts"></div>
+          <div class="fo-toastbox" id="foToastBox"></div>
+        </div>
+      </div>
+    </div>
     <div id="site" class="hidden"></div>
     <div id="billing" class="hidden"></div>
     <div id="shop" class="hidden"></div>
@@ -566,6 +635,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   $("advanced").classList.toggle("hidden", t.dataset.tab!=="advanced");
   $("legal").classList.toggle("hidden", t.dataset.tab!=="legal");
   $("faqs").classList.toggle("hidden", t.dataset.tab!=="faqs");
+  $("fieldopts").classList.toggle("hidden", t.dataset.tab!=="fieldopts");
   $("site").classList.toggle("hidden", t.dataset.tab!=="site");
   $("billing").classList.toggle("hidden", t.dataset.tab!=="billing");
   $("shop").classList.toggle("hidden", t.dataset.tab!=="shop");
@@ -574,11 +644,141 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   if(t.dataset.tab==="advanced") loadAdvanced();
   if(t.dataset.tab==="legal") loadLegal();
   if(t.dataset.tab==="faqs") loadFaqs();
+  if(t.dataset.tab==="fieldopts") foInit();
   if(t.dataset.tab==="site") loadSite();
   if(t.dataset.tab==="billing") loadBilling();
   if(t.dataset.tab==="shop") loadShop();
   if(t.dataset.tab==="email") loadEmail();
 });
+
+/* ---------- FIELD OPTIONS ---------- */
+const FO_GROUPS=[
+  { key:"category",              title:"Categories",            hint:"One per pose. A new category becomes its own filter bucket. Examples: <code>Standing</code>, <code>Inversion</code>." },
+  { key:"level",                 title:"Levels",                hint:"Difficulty tiers. Editing these is rare \u2014 the app expects <code>Beginner</code>, <code>Intermediate</code>, <code>Advanced</code>." },
+  { key:"chakras",               title:"Chakras",               hint:"Use the <code>\u2026 Chakra</code> suffix, e.g. <code>Throat Chakra</code>." },
+  { key:"body_focus",            title:"Body Focus",            hint:"Areas of the body a pose targets, e.g. <code>Hips</code>, <code>Spine</code>." },
+  { key:"muscle_groups",         title:"Muscle Groups",         hint:"Specific muscles worked, e.g. <code>Hamstrings</code>, <code>Glutes</code>." },
+  { key:"required_props",        title:"Props",                 hint:"Equipment a pose may use, e.g. <code>Block</code>, <code>Bolster</code>, <code>Strap</code>." },
+  { key:"yoga_styles",           title:"Yoga Styles",           hint:"Use the <code>\u2026 Yoga</code> suffix (except <code>Meditation</code>), e.g. <code>Aerial Yoga</code>." },
+  { key:"pose_phases",           title:"Pose Phases",           hint:"Where a pose fits in a sequence, e.g. <code>Warm Up</code>, <code>Peak Pose</code>, <code>Cool Down</code>." },
+  { key:"movement_actions",      title:"Movement Actions",      hint:"Joint actions, e.g. <code>Hip Flexion</code>, <code>Spinal Rotation</code>." },
+  { key:"benefit_tags",          title:"Benefit Tags",          hint:"Short benefit keywords, e.g. <code>Flexibility</code>, <code>Calming</code>." },
+  { key:"contraindication_tags", title:"Contraindication Tags", hint:"Caution keywords, e.g. <code>Knee Injury</code>, <code>Pregnancy</code>." }
+];
+let FO={options:[],usage:{},current:"category",loaded:false};
+function foEsc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function foToast(msg){var t=$("foToastBox");if(!t)return;t.textContent=msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},2200);}
+function foGroupOf(k){return FO_GROUPS.find(g=>g.key===k);}
+function foOptionsFor(k){return FO.options.filter(o=>o.field_key===k).sort((a,b)=>a.sort_order-b.sort_order||a.value.localeCompare(b.value));}
+function foUsageFor(k,v){return FO.usage[k+"|"+v]||0;}
+async function foLoadAll(){
+  const [{data:opts,error:e1},{data:use}]=await Promise.all([
+    sb.from("pose_field_options").select("*").order("field_key").order("sort_order"),
+    sb.rpc("get_field_option_usage")
+  ]);
+  if(e1){foToast("Could not load options");}
+  FO.options=opts||[]; FO.usage={};
+  (use||[]).forEach(r=>{FO.usage[r.field_key+"|"+r.value]=Number(r.n);});
+}
+function foRenderGroups(){
+  const wrap=$("foGrouplist"); wrap.innerHTML="";
+  FO_GROUPS.forEach(g=>{
+    const n=foOptionsFor(g.key).length;
+    const b=document.createElement("button");
+    b.className="fo-groupbtn"+(g.key===FO.current?" active":"");
+    b.innerHTML="<span>"+g.title+"</span><span class='fo-count'>"+n+"</span>";
+    b.onclick=()=>foSelectGroup(g.key);
+    wrap.appendChild(b);
+  });
+}
+function foSelectGroup(key){
+  FO.current=key; const g=foGroupOf(key);
+  $("foGroupTitle").textContent=g.title; $("foGroupHint").innerHTML=g.hint;
+  $("foNewValue").value=""; $("foNewLabel").value="";
+  foRenderGroups(); foRenderOptions();
+}
+function foRenderOptions(){
+  const key=FO.current; const list=foOptionsFor(key);
+  const total=list.reduce((s,o)=>s+foUsageFor(key,o.value),0);
+  $("foGroupCount").textContent=list.length+" option"+(list.length===1?"":"s")+" \u00b7 "+total+" uses across the catalog";
+  const wrap=$("foOpts"); wrap.innerHTML="";
+  if(!list.length){ wrap.innerHTML="<div class='fo-empty'>No options yet. Add the first one above.</div>"; return; }
+  list.forEach((o,i)=>{
+    const uses=foUsageFor(key,o.value);
+    const row=document.createElement("div"); row.className="fo-opt"+(o.is_active?"":" inactive");
+    const re=document.createElement("div"); re.className="fo-reorder";
+    const up=document.createElement("button"); up.innerHTML="\u25B2"; up.title="Move up"; up.disabled=i===0; up.onclick=()=>foMove(o,-1);
+    const dn=document.createElement("button"); dn.innerHTML="\u25BC"; dn.title="Move down"; dn.disabled=i===list.length-1; dn.onclick=()=>foMove(o,1);
+    re.append(up,dn);
+    const main=document.createElement("div"); main.className="fo-maincol";
+    const val=document.createElement("div"); val.className="fo-value";
+    val.innerHTML="<span>"+foEsc(o.value)+"</span><span class='fo-lock' title='The stored value is locked to protect existing poses'>\uD83D\uDD12</span>";
+    const lab=document.createElement("input"); lab.className="fo-label-edit"; lab.value=o.label||"";
+    lab.placeholder="Display label \u00b7 defaults to \u201c"+o.value+"\u201d"; lab.title="Display label";
+    lab.onchange=()=>foUpdateLabel(o,lab.value.trim());
+    main.append(val,lab);
+    const us=document.createElement("div"); us.className="fo-usage"+(uses===0?" zero":"");
+    us.innerHTML=uses===0?"unused":"<b>"+uses+"</b> pose"+(uses===1?"":"s");
+    const act=document.createElement("div"); act.className="fo-actions";
+    const tg=document.createElement("button"); tg.className="fo-toggle"+(o.is_active?" on":""); tg.textContent=o.is_active?"Active":"Hidden";
+    tg.title=o.is_active?"Showing in dropdowns \u2014 click to hide":"Hidden from dropdowns \u2014 click to show"; tg.onclick=()=>foToggleActive(o);
+    const del=document.createElement("button"); del.className="fo-del"; del.innerHTML="\u2715"; del.title="Delete option"; del.onclick=()=>foRemoveOption(o,uses);
+    act.append(tg,del);
+    row.append(re,main,us,act); wrap.appendChild(row);
+  });
+}
+async function foAdd(){
+  const key=FO.current; const value=$("foNewValue").value.trim(); const label=$("foNewLabel").value.trim();
+  if(!value){ foToast("Enter a value first"); $("foNewValue").focus(); return; }
+  if(foOptionsFor(key).some(o=>o.value.toLowerCase()===value.toLowerCase())){ foToast("That value already exists"); return; }
+  const nextSort=Math.max(0,...foOptionsFor(key).map(o=>o.sort_order))+1;
+  const { error }=await sb.from("pose_field_options").insert({ field_key:key, value, label:label||null, sort_order:nextSort, is_active:true });
+  if(error){ foToast(error.message.includes("row-level")?"Admin access required":"Could not add"); return; }
+  $("foNewValue").value=""; $("foNewLabel").value="";
+  await foLoadAll(); foRenderGroups(); foRenderOptions(); foToast("Added \u201c"+value+"\u201d");
+}
+async function foUpdateLabel(o,label){
+  if((o.label||"")===label) return;
+  const { error }=await sb.from("pose_field_options").update({ label:label||null }).eq("id",o.id);
+  if(error){ foToast("Could not save label"); return; }
+  o.label=label||null; foToast("Label saved");
+}
+async function foToggleActive(o){
+  const next=!o.is_active;
+  const { error }=await sb.from("pose_field_options").update({ is_active:next }).eq("id",o.id);
+  if(error){ foToast("Could not update"); return; }
+  o.is_active=next; foRenderOptions(); foToast(next?"Showing in dropdowns":"Hidden from dropdowns");
+}
+async function foMove(o,dir){
+  const list=foOptionsFor(FO.current); const i=list.findIndex(x=>x.id===o.id); const j=i+dir;
+  if(j<0||j>=list.length) return;
+  const a=list[i], b=list[j]; const sa=a.sort_order, sbv=b.sort_order;
+  await Promise.all([
+    sb.from("pose_field_options").update({ sort_order:sbv }).eq("id",a.id),
+    sb.from("pose_field_options").update({ sort_order:sa }).eq("id",b.id)
+  ]);
+  a.sort_order=sbv; b.sort_order=sa; foRenderOptions();
+}
+async function foRemoveOption(o,uses){
+  let warn="Delete \u201c"+o.value+"\u201d?";
+  if(uses>0) warn+="\n\n"+uses+" pose"+(uses===1?"":"s")+" still use this value. Deleting it removes the dropdown option, but those poses keep the value until you re-tag them. Consider hiding it instead.";
+  if(!confirm(warn)) return;
+  const { error }=await sb.from("pose_field_options").delete().eq("id",o.id);
+  if(error){ foToast("Could not delete"); return; }
+  await foLoadAll(); foRenderGroups(); foRenderOptions(); foToast("Deleted \u201c"+o.value+"\u201d");
+}
+let foWired=false;
+function foWire(){
+  if(foWired) return; foWired=true;
+  $("foAddBtn").onclick=foAdd;
+  $("foNewValue").addEventListener("keydown",e=>{ if(e.key==="Enter") foAdd(); });
+  $("foNewLabel").addEventListener("keydown",e=>{ if(e.key==="Enter") foAdd(); });
+}
+async function foInit(){
+  foWire();
+  if(FO.loaded) return; FO.loaded=true;
+  await foLoadAll(); foRenderGroups(); foSelectGroup(FO.current);
+}
 
 /* ---------- SHOP ---------- */
 let SHOP=null, SHOP_PRODUCTS=[];
