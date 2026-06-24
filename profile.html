@@ -612,12 +612,12 @@ async function selectAvatar(id){
   const av=AVATARS.find(a=>a.id===AVATAR_ID);
   if(!av||!Array.isArray(av.outfits)||!av.outfits.some(o=>o.id===OUTFIT))OUTFIT=null;
   try{ await sb.from("profiles").update({avatar_id:AVATAR_ID,outfit:OUTFIT}).eq("id",UID); if(PROFILE){PROFILE.avatar_id=AVATAR_ID;PROFILE.outfit=OUTFIT;} }catch(e){}
-  renderAvatarPicker();
+  renderAvatarPicker(); if(typeof renderFavorites==="function")renderFavorites();
 }
 async function selectOutfit(id){
   OUTFIT=id||null;
   try{ await sb.from("profiles").update({outfit:OUTFIT}).eq("id",UID); if(PROFILE)PROFILE.outfit=OUTFIT; }catch(e){}
-  renderOutfitPicker(); renderAvaPreview();
+  renderOutfitPicker(); renderAvaPreview(); if(typeof renderFavorites==="function")renderFavorites();
 }
 function poseImgUrl(p){
   if(!p)return null;
@@ -712,11 +712,16 @@ function renderHeat(days){
 }
 
 /* ---------- favorites ---------- */
+let FAV_ROWS=[];
 async function loadFavorites(){
   const { data } = await sb.from("favorites")
     .select("pose_id, created_at, poses(id,name,sanskrit_name,emoji,image_url,avatar_images,category,slug)")
     .eq("user_id",UID).order("created_at",{ascending:false});
-  const rows=(data||[]).filter(r=>r.poses);
+  FAV_ROWS=(data||[]).filter(r=>r.poses);
+  renderFavorites();
+}
+function renderFavorites(){
+  const rows=FAV_ROWS;
   $("favMini").textContent=rows.length?`${rows.length}`:"";
   if(!rows.length){ $("favorites").innerHTML=`<div class="empty"><span class="ei">💗</span>No favorites yet. <a href="${esc(LIBRARY_URL)}" target="_blank" rel="noopener">Browse the pose library</a> and tap the heart on poses you love.</div>`; return; }
   $("favorites").innerHTML=`<div class="favgrid">`+rows.map(r=>{
@@ -729,7 +734,7 @@ async function loadFavorites(){
   $("favorites").querySelectorAll("[data-unfav]").forEach(b=>b.onclick=async()=>{
     b.disabled=true;
     const { error } = await sb.from("favorites").delete().eq("user_id",UID).eq("pose_id",b.dataset.unfav);
-    if(!error) loadFavorites();
+    if(!error){ FAV_ROWS=FAV_ROWS.filter(r=>String(r.pose_id)!==String(b.dataset.unfav)); renderFavorites(); }
   });
 }
 
