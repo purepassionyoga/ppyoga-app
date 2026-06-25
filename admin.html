@@ -306,6 +306,7 @@
       <button class="tab" data-tab="advanced">Advanced</button>
       <button class="tab" data-tab="legal">Legal</button>
       <button class="tab" data-tab="faqs">Help/FAQ</button>
+      <button class="tab" data-tab="support">Support</button>
       <button class="tab" data-tab="fieldopts">Field options</button>
       <button class="tab" data-tab="themes">Class themes</button>
       <button class="tab" data-tab="site">Site</button>
@@ -335,7 +336,29 @@
     <div id="emailtab" class="hidden"></div>
     <div id="advanced" class="hidden"></div>
     <div id="legal" class="hidden"></div>
-    <div id="faqs" class="hidden"></div>
+    <div id="support" class="hidden"></div>
+    <style id="supCSS">
+    #support{font-size:13.5px}
+    #support .sup-seg{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+    #support .sup-seg button{border:1px solid #ece3e4;background:#fff;color:#6f5b61;border-radius:10px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer}
+    #support .sup-seg button.on{background:#C8A0A6;color:#fff;border-color:#C8A0A6}
+    #support .sup-tools{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+    #support .sup-tools select{border:1px solid #ece3e4;border-radius:9px;padding:7px 10px;font:inherit;font-size:13px;color:#4a4047;background:#fff}
+    #support .sup-card{border:1px solid #ece3e4;border-radius:12px;padding:13px 15px;margin-bottom:10px;background:#fff}
+    #support .sup-meta{font-size:11.5px;color:#9a8f93;margin-top:7px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    #support .sup-q{font-weight:600;color:#4a4047}
+    #support .sup-a{color:#6f5b61;margin-top:6px;white-space:pre-wrap;line-height:1.5;background:#faf6f5;border-radius:9px;padding:9px 11px}
+    #support .sup-badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:999px;background:#f3edee;color:#A87C83;font-weight:600}
+    #support .sup-badge.topic{background:#eef0e8;color:#6b7355}
+    #support .sup-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px}
+    #support .sup-row select{border:1px solid #ece3e4;border-radius:8px;padding:5px 9px;font:inherit;font-size:12px;background:#fff}
+    #support .sup-note{width:100%;box-sizing:border-box;border:1px solid #ece3e4;border-radius:8px;padding:7px 9px;font:inherit;font-size:12.5px;margin-top:8px;resize:vertical}
+    #support .sup-del{margin-left:auto;border:none;background:transparent;color:#b5544e;cursor:pointer;font-size:12px}
+    #support .sup-empty{padding:34px;text-align:center;color:#9a8f93}
+    #support .sup-subj{font-weight:600;color:#4a4047}
+    #support .sup-body{color:#6f5b61;margin-top:5px;white-space:pre-wrap;line-height:1.5}
+    #support a.sup-link{color:#A87C83;font-size:11.5px}
+    </style>
     <style id="foCSS">
     #fieldopts{--rose:#C8A0A6;--sage:#a8ad91;--aub:#A87C83;--fobg:#FBF8F6;--fosurf:#fff;--fotext:#3A3236;--fomuted:#8A7E82;--foline:#ECE3E4;--rose-tint:#F6ECEE;--sage-tint:#EEF0E8;--danger:#B5544E;--ok:#6E8B5B}
     #fieldopts .fo-shell{display:grid;grid-template-columns:240px 1fr;gap:20px;align-items:start}
@@ -638,6 +661,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   $("advanced").classList.toggle("hidden", t.dataset.tab!=="advanced");
   $("legal").classList.toggle("hidden", t.dataset.tab!=="legal");
   $("faqs").classList.toggle("hidden", t.dataset.tab!=="faqs");
+  $("support").classList.toggle("hidden", t.dataset.tab!=="support");
   $("fieldopts").classList.toggle("hidden", t.dataset.tab!=="fieldopts");
   $("themes").classList.toggle("hidden", t.dataset.tab!=="themes");
   $("site").classList.toggle("hidden", t.dataset.tab!=="site");
@@ -648,6 +672,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   if(t.dataset.tab==="advanced") loadAdvanced();
   if(t.dataset.tab==="legal") loadLegal();
   if(t.dataset.tab==="faqs") loadFaqs();
+  if(t.dataset.tab==="support") loadSupport();
   if(t.dataset.tab==="fieldopts") foInit();
   if(t.dataset.tab==="themes") loadThemes();
   if(t.dataset.tab==="site") loadSite();
@@ -1199,6 +1224,100 @@ const LEGAL_URL="/legal";
 let LEGAL=[], legalLoaded=false, legalQuery="";
 function slugifyL(t){ return (t||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
 
+/* ---------- Support: AI questions + bug/feature/pose feedback ---------- */
+let SUPP_Q=[], SUPP_F=[], suppView="feedback", suppKind="", suppStatus="", suppLoaded=false;
+const KIND_LABEL={bug:"\ud83d\udc1e Bug",pose_request:"\ud83e\uddd8 Pose request",feature_request:"\u2728 Feature request"};
+const FB_STATUS=["new","planned","in_progress","done","declined"];
+const Q_STATUS=["answered","flagged","archived"];
+function supDate(x){ try{ return new Date(x).toLocaleString(undefined,{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}); }catch(e){ return x; } }
+async function loadSupport(force){
+  if(suppLoaded && !force) return;
+  $("support").innerHTML='<div style="padding:18px;color:#9a8f93">Loading\u2026</div>';
+  const [q,fb]=await Promise.all([
+    sb.from("support_questions").select("*").order("created_at",{ascending:false}).limit(500),
+    sb.from("feedback_items").select("*").order("created_at",{ascending:false}).limit(500)
+  ]);
+  if(q.error||fb.error){ $("support").innerHTML='<div style="padding:18px;color:#A03A22">'+esc((q.error||fb.error).message)+'</div>'; return; }
+  SUPP_Q=q.data||[]; SUPP_F=fb.data||[]; suppLoaded=true; renderSupport();
+}
+function renderSupport(){
+  const newCount=SUPP_F.filter(x=>x.status==="new").length;
+  let html=`<div class="sup-seg">
+    <button class="${suppView==='feedback'?'on':''}" data-sv="feedback">Bugs &amp; Requests (${SUPP_F.length}${newCount?` \u00b7 ${newCount} new`:''})</button>
+    <button class="${suppView==='questions'?'on':''}" data-sv="questions">AI Questions (${SUPP_Q.length})</button>
+  </div>`;
+  html += suppView==="feedback" ? renderFeedback() : renderQuestions();
+  $("support").innerHTML=html;
+  $("support").querySelectorAll("[data-sv]").forEach(b=>b.onclick=()=>{ suppView=b.dataset.sv; renderSupport(); });
+  wireSupport();
+}
+function renderFeedback(){
+  let list=SUPP_F.slice();
+  if(suppKind) list=list.filter(x=>x.kind===suppKind);
+  if(suppStatus) list=list.filter(x=>x.status===suppStatus);
+  let html=`<div class="sup-tools">
+    <select id="supKind"><option value="">All types</option><option value="bug">\ud83d\udc1e Bugs</option><option value="pose_request">\ud83e\uddd8 Pose requests</option><option value="feature_request">\u2728 Feature requests</option></select>
+    <select id="supStatus"><option value="">All statuses</option>${FB_STATUS.map(x=>`<option value="${x}">${x.replace("_"," ")}</option>`).join("")}</select>
+  </div>`;
+  if(!list.length) return html+`<div class="sup-empty">No items yet.</div>`;
+  list.forEach(it=>{
+    html+=`<div class="sup-card">
+      <span class="sup-badge">${KIND_LABEL[it.kind]||esc(it.kind)}</span>${it.subject?` <span class="sup-subj">${esc(it.subject)}</span>`:""}
+      <div class="sup-body">${esc(it.body)}</div>
+      <div class="sup-meta"><span>${esc(it.display_name||"Unknown")}${it.email?" \u00b7 "+esc(it.email):""}</span><span>${supDate(it.created_at)}</span>${it.page_url?` <a class="sup-link" href="${esc(it.page_url)}" target="_blank" rel="noopener">page \u2197</a>`:""}</div>
+      <div class="sup-row"><label style="font-size:11.5px;color:#9a8f93">Status</label>
+        <select data-fbstatus="${it.id}">${FB_STATUS.map(x=>`<option value="${x}" ${it.status===x?"selected":""}>${x.replace("_"," ")}</option>`).join("")}</select>
+        <button class="sup-del" data-fbdel="${it.id}">Delete</button></div>
+      <textarea class="sup-note" data-fbnote="${it.id}" placeholder="Private admin notes\u2026" rows="1">${esc(it.admin_notes||"")}</textarea>
+    </div>`;
+  });
+  return html;
+}
+function renderQuestions(){
+  let list=SUPP_Q.slice();
+  if(!list.length) return `<div class="sup-empty">No questions yet. When members use the Help button to ask the AI, their questions and answers appear here.</div>`;
+  let html="";
+  list.forEach(it=>{
+    html+=`<div class="sup-card">
+      <div class="sup-q">${esc(it.question)}</div>
+      <div class="sup-a">${esc(it.answer||"(no answer recorded)")}</div>
+      <div class="sup-meta">${it.topic?`<span class="sup-badge topic">${esc(it.topic)}</span>`:""}<span>${esc(it.display_name||"Unknown")}${it.email?" \u00b7 "+esc(it.email):""}</span><span>${supDate(it.created_at)}</span></div>
+      <div class="sup-row"><label style="font-size:11.5px;color:#9a8f93">Status</label>
+        <select data-qstatus="${it.id}">${Q_STATUS.map(x=>`<option value="${x}" ${it.status===x?"selected":""}>${x}</option>`).join("")}</select>
+        <button class="sup-del" data-qdel="${it.id}">Delete</button></div>
+    </div>`;
+  });
+  return html;
+}
+function wireSupport(){
+  const root=$("support");
+  const k=root.querySelector("#supKind"); if(k){ k.value=suppKind; k.onchange=()=>{ suppKind=k.value; renderSupport(); }; }
+  const st=root.querySelector("#supStatus"); if(st){ st.value=suppStatus; st.onchange=()=>{ suppStatus=st.value; renderSupport(); }; }
+  root.querySelectorAll("[data-fbstatus]").forEach(sel=>sel.onchange=async()=>{
+    const id=sel.dataset.fbstatus, it=SUPP_F.find(x=>x.id===id), prev=it&&it.status; if(it)it.status=sel.value;
+    const { error }=await sb.from("feedback_items").update({ status:sel.value }).eq("id",id);
+    if(error){ alert("Couldn\u2019t update: "+error.message); if(it)it.status=prev; } renderSupport();
+  });
+  root.querySelectorAll("[data-fbnote]").forEach(t=>t.onblur=async()=>{
+    const id=t.dataset.fbnote, it=SUPP_F.find(x=>x.id===id); if(it)it.admin_notes=t.value;
+    await sb.from("feedback_items").update({ admin_notes:t.value }).eq("id",id);
+  });
+  root.querySelectorAll("[data-fbdel]").forEach(b=>b.onclick=async()=>{
+    if(!confirm("Delete this item?"))return;
+    const id=b.dataset.fbdel, { error }=await sb.from("feedback_items").delete().eq("id",id);
+    if(error){ alert(error.message); return; } SUPP_F=SUPP_F.filter(x=>x.id!==id); renderSupport();
+  });
+  root.querySelectorAll("[data-qstatus]").forEach(sel=>sel.onchange=async()=>{
+    const id=sel.dataset.qstatus, it=SUPP_Q.find(x=>x.id===id), prev=it&&it.status; if(it)it.status=sel.value;
+    const { error }=await sb.from("support_questions").update({ status:sel.value }).eq("id",id);
+    if(error){ alert(error.message); if(it)it.status=prev; } renderSupport();
+  });
+  root.querySelectorAll("[data-qdel]").forEach(b=>b.onclick=async()=>{
+    if(!confirm("Delete this question log?"))return;
+    const id=b.dataset.qdel, { error }=await sb.from("support_questions").delete().eq("id",id);
+    if(error){ alert(error.message); return; } SUPP_Q=SUPP_Q.filter(x=>x.id!==id); renderSupport();
+  });
+}
 let FAQS=[], faqsLoaded=false, faqQuery="";
 async function loadFaqs(force){
   if(faqsLoaded && !force) return;
