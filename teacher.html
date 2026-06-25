@@ -190,6 +190,22 @@
 .hfwrap{display:flex;flex-wrap:wrap;gap:7px}
 .hfchip{border:1px solid var(--lineDk,#e7dcdf);background:var(--card,#fff);color:var(--ink,#4a4047);border-radius:20px;padding:6px 13px;font:inherit;font-size:12.5px;cursor:pointer}
 .hfchip.on{background:#fbeaea;border-color:#dba0a0;color:#9a3a3a;font-weight:500}
+.calbar{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.calbar h3{font-family:var(--head-font,'Playfair Display',serif);color:var(--rose,#C8A0A6);font-size:20px;margin:0}
+.calnav{border:1px solid var(--lineDk,#e7dcdf);background:var(--card,#fff);border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--ink,#4a4047);font-size:15px}
+.calnav:hover{background:var(--field,#f7f1ef)}
+.calbtn{border:1px solid var(--lineDk,#e7dcdf);background:var(--card,#fff);border-radius:8px;padding:7px 13px;cursor:pointer;font:inherit;font-size:13px;color:var(--ink,#4a4047)}
+.calbtn:hover{background:var(--field,#f7f1ef)}
+.calbtn.primary{background:var(--aub,#A87C83);border-color:var(--aub,#A87C83);color:#fff}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.caldow{text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted,#9a8f93);padding:4px 0;font-weight:600}
+.calcell{min-height:88px;border:1px solid var(--line,#efe7e6);border-radius:9px;padding:5px 6px;background:var(--card,#fff);cursor:pointer;overflow:hidden}
+.calcell:hover{border-color:var(--rose,#C8A0A6)}
+.calcell.muted{background:var(--field,#faf6f5);opacity:.55}
+.calcell.today{border-color:var(--aub,#A87C83);box-shadow:inset 0 0 0 1px var(--aub,#A87C83)}
+.caldate{font-size:12px;color:var(--muted,#9a8f93);margin-bottom:3px}
+.calev{background:#f7eaec;border-left:3px solid var(--rose,#C8A0A6);border-radius:4px;padding:2px 5px;margin-bottom:3px;font-size:11px;color:var(--head,#5a4f55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.calev .t{color:var(--aub,#A87C83);font-weight:600;margin-right:3px}
 </style>
 </head>
 <body>
@@ -319,7 +335,7 @@
   <div id="tgate"></div>
   <div id="tbody" class="hidden">
     <div class="thead"><h1>Teaching Dashboard</h1><p id="tsub">Your sequences, activity, and roster.</p></div>
-    <div class="vtoggle"><button class="vtab on" data-view="activity">Activity</button><button class="vtab" data-view="roster">Roster</button></div>
+    <div class="vtoggle"><button class="vtab on" data-view="activity">Activity</button><button class="vtab" data-view="calendar">Calendar</button><button class="vtab" data-view="roster">Roster</button></div>
     <div id="view_activity">
       <div class="kpis" id="kpis"></div>
       <div class="tcard"><h2>Recent sequences</h2><div id="recap"></div></div>
@@ -331,6 +347,7 @@
       <div class="tcard"><h2>Most-used poses</h2><div id="topPoses"></div></div>
       <div class="tcard"><h2>Your practice</h2><div id="practice"></div></div>
     </div>
+    <div id="view_calendar" class="hidden"><div id="calRoot"></div></div>
     <div id="view_roster" class="hidden"><div id="roster"></div></div>
   </div>
 </div>
@@ -753,10 +770,146 @@ async function sendAllQueued(){
 function switchView(v){
   document.querySelectorAll(".vtab").forEach(b=>b.classList.toggle("on",b.dataset.view===v));
   $("view_activity").classList.toggle("hidden",v!=="activity");
+  $("view_calendar").classList.toggle("hidden",v!=="calendar");
   $("view_roster").classList.toggle("hidden",v!=="roster");
   if(v==="roster") loadStudents();
+  if(v==="calendar") loadCalendar();
 }
 document.querySelectorAll(".vtab").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+
+/* ---------- CLASS CALENDAR ---------- */
+let CAL_Y=null, CAL_M=null, CAL_CLASSES=[];
+const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MON=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function pad2(n){return (n<10?"0":"")+n;}
+function fmtTime(d){ let h=d.getHours(), m=d.getMinutes(); const ap=h>=12?"PM":"AM"; h=h%12; if(h===0)h=12; return h+(m?":"+pad2(m):"")+" "+ap; }
+async function loadCalendar(){
+  if(CAL_Y===null){ const n=new Date(); CAL_Y=n.getFullYear(); CAL_M=n.getMonth(); }
+  if(!SEQS.length){ try{ const {data}=await sb.from("sequences").select("id,name,share_token").eq("owner_id",UID); SEQS=data||[]; }catch(e){} }
+  const from=new Date(CAL_Y,CAL_M,1,0,0,0), to=new Date(CAL_Y,CAL_M+1,1,0,0,0);
+  try{
+    const {data}=await sb.from("classes").select("*").eq("teacher_id",UID).gte("starts_at",from.toISOString()).lt("starts_at",to.toISOString()).order("starts_at");
+    CAL_CLASSES=data||[];
+  }catch(e){ CAL_CLASSES=[]; }
+  renderCalendar();
+}
+function seqName(id){ const q=SEQS.find(function(x){return x.id===id;}); return q?(q.name||"Untitled"):""; }
+function renderCalendar(){
+  const root=$("calRoot"); if(!root) return;
+  const first=new Date(CAL_Y,CAL_M,1), startDow=first.getDay(), daysIn=new Date(CAL_Y,CAL_M+1,0).getDate();
+  const today=new Date(); const isToday=function(d){ return d.getFullYear()===today.getFullYear()&&d.getMonth()===today.getMonth()&&d.getDate()===today.getDate(); };
+  const byDay={}; CAL_CLASSES.forEach(function(c){ const d=new Date(c.starts_at); const k=d.getDate(); (byDay[k]=byDay[k]||[]).push(c); });
+  let cells="";
+  for(let i=0;i<startDow;i++){ const dn=new Date(CAL_Y,CAL_M,0).getDate()-startDow+1+i; cells+='<div class="calcell muted"><div class="caldate">'+dn+'</div></div>'; }
+  for(let day=1;day<=daysIn;day++){
+    const d=new Date(CAL_Y,CAL_M,day);
+    const evs=(byDay[day]||[]).map(function(c){ const t=new Date(c.starts_at); return '<div class="calev" data-cid="'+c.id+'" title="'+esc(c.title||"Class")+'"><span class="t">'+esc(fmtTime(t))+'</span>'+esc(c.title||"Class")+'</div>'; }).join("");
+    cells+='<div class="calcell'+(isToday(d)?" today":"")+'" data-day="'+day+'"><div class="caldate">'+day+'</div>'+evs+'</div>';
+  }
+  const trail=(startDow+daysIn)%7; if(trail){ for(let i=1;i<=7-trail;i++){ cells+='<div class="calcell muted"><div class="caldate">'+i+'</div></div>'; } }
+  root.innerHTML='<div class="calbar"><button class="calnav" id="calPrev">\u2039</button><h3>'+MON[CAL_M]+' '+CAL_Y+'</h3><button class="calnav" id="calNext">\u203A</button>'
+    +'<button class="calbtn" id="calToday">Today</button><div style="flex:1"></div>'
+    +'<button class="calbtn" id="calExport">\u2935 Export month (.ics)</button>'
+    +'<button class="calbtn primary" id="calAdd">+ Add class</button></div>'
+    +'<div class="calgrid">'+DOW.map(function(d){return '<div class="caldow">'+d+'</div>';}).join("")+cells+'</div>';
+  $("calPrev").onclick=function(){ CAL_M--; if(CAL_M<0){CAL_M=11;CAL_Y--;} loadCalendar(); };
+  $("calNext").onclick=function(){ CAL_M++; if(CAL_M>11){CAL_M=0;CAL_Y++;} loadCalendar(); };
+  $("calToday").onclick=function(){ const n=new Date(); CAL_Y=n.getFullYear(); CAL_M=n.getMonth(); loadCalendar(); };
+  $("calAdd").onclick=function(){ openClassEditor(null,null); };
+  $("calExport").onclick=exportMonthIcs;
+  root.querySelectorAll(".calcell[data-day]").forEach(function(cell){ cell.onclick=function(e){ if(e.target.closest(".calev"))return; openClassEditor(null,parseInt(cell.dataset.day,10)); }; });
+  root.querySelectorAll(".calev").forEach(function(ev){ ev.onclick=function(e){ e.stopPropagation(); openClassEditor(ev.dataset.cid,null); }; });
+}
+function openClassEditor(cid,prefillDay){
+  const c=cid?CAL_CLASSES.find(function(x){return x.id===cid;}):null;
+  let dateStr, timeStr="18:00";
+  if(c){ const d=new Date(c.starts_at); dateStr=d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); timeStr=pad2(d.getHours())+":"+pad2(d.getMinutes()); }
+  else { const dd=prefillDay||1; dateStr=CAL_Y+"-"+pad2(CAL_M+1)+"-"+pad2(dd); }
+  const seqOpts='<option value="">(no sequence)</option>'+SEQS.map(function(q){return '<option value="'+q.id+'"'+((c&&c.sequence_id===q.id)?" selected":"")+'>'+esc(q.name||"Untitled")+'</option>';}).join("");
+  const ov=document.createElement("div"); ov.className="ovl"; ov.id="classOvl";
+  ov.innerHTML='<div class="modal" onclick="event.stopPropagation()" style="max-width:460px">'
+    +'<h3 style="font-family:var(--head-font,\'Playfair Display\',serif);color:var(--rose,#C8A0A6);margin:0 0 12px">'+(c?"Edit class":"New class")+'</h3>'
+    +'<div class="field"><label>Title</label><input id="cl_title" value="'+esc(c?(c.title||""):"")+'" placeholder="e.g. Gentle Flow"/></div>'
+    +'<div class="row2"><div class="field"><label>Date</label><input id="cl_date" type="date" value="'+esc(dateStr)+'"/></div>'
+    +'<div class="field"><label>Time</label><input id="cl_time" type="time" value="'+esc(timeStr)+'"/></div></div>'
+    +'<div class="row2"><div class="field"><label>Duration (min)</label><input id="cl_dur" type="number" value="'+(c?(c.duration_min||60):60)+'"/></div>'
+    +'<div class="field"><label>Level</label><input id="cl_level" value="'+esc(c?(c.level||""):"")+'" placeholder="optional"/></div></div>'
+    +'<div class="field"><label>Location</label><input id="cl_loc" value="'+esc(c?(c.location||""):"")+'" placeholder="Studio A / Zoom\u2026"/></div>'
+    +'<div class="field"><label>Sequence</label><select id="cl_seq">'+seqOpts+'</select></div>'
+    +'<div class="field"><label>Notes</label><textarea id="cl_notes" rows="2">'+esc(c?(c.notes||""):"")+'</textarea></div>'
+    +'<div id="cl_err" class="err hidden"></div>'
+    +'<div style="display:flex;gap:8px;align-items:center;margin-top:6px">'
+    +'<button class="btn" id="cl_save">'+(c?"Save":"Add class")+'</button>'
+    +(c?'<button class="calbtn" id="cl_ics">\u2935 Add to calendar (.ics)</button><button class="calbtn" id="cl_del" style="color:#A03A22;border-color:#E9C9BE;margin-left:auto">Delete</button>':"")
+    +'</div></div>';
+  ov.onclick=function(){ ov.remove(); };
+  document.body.appendChild(ov);
+  $("cl_save").onclick=function(){ saveClass(cid); };
+  if(c){ $("cl_ics").onclick=function(){ downloadIcs([c]); }; $("cl_del").onclick=function(){ deleteClass(cid); }; }
+}
+function classErr(m){ const e=$("cl_err"); if(e){ e.textContent=m; e.classList.remove("hidden"); } }
+async function saveClass(cid){
+  const title=$("cl_title").value.trim()||"Class";
+  const date=$("cl_date").value, time=$("cl_time").value||"00:00";
+  if(!date){ classErr("Pick a date."); return; }
+  const starts=new Date(date+"T"+time);
+  if(isNaN(starts.getTime())){ classErr("Invalid date or time."); return; }
+  const row={ teacher_id:UID, title:title, starts_at:starts.toISOString(),
+    duration_min:parseInt($("cl_dur").value,10)||60, level:$("cl_level").value.trim()||null,
+    location:$("cl_loc").value.trim()||null, sequence_id:$("cl_seq").value||null, notes:$("cl_notes").value.trim()||null };
+  let res; if(cid){ res=await sb.from("classes").update(row).eq("id",cid); } else { res=await sb.from("classes").insert(row); }
+  if(res.error){ classErr(res.error.message); return; }
+  const ov=$("classOvl"); if(ov)ov.remove();
+  loadCalendar();
+}
+async function deleteClass(cid){
+  if(!confirm("Delete this class?")) return;
+  const {error}=await sb.from("classes").delete().eq("id",cid);
+  if(error){ classErr(error.message); return; }
+  const ov=$("classOvl"); if(ov)ov.remove();
+  loadCalendar();
+}
+function icsEsc(t){ return String(t==null?"":t).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n"); }
+function icsStamp(d){ return d.getUTCFullYear()+pad2(d.getUTCMonth()+1)+pad2(d.getUTCDate())+"T"+pad2(d.getUTCHours())+pad2(d.getUTCMinutes())+pad2(d.getUTCSeconds())+"Z"; }
+function seqLink(seqId){
+  const q=SEQS.find(function(x){return x.id===seqId;});
+  if(q&&q.share_token) return "https://purepassionyoga.com/s?t="+q.share_token;
+  return "";
+}
+function classToVevent(c){
+  const start=new Date(c.starts_at); const end=new Date(start.getTime()+(c.duration_min||60)*60000);
+  const link=c.sequence_id?seqLink(c.sequence_id):"";
+  const sname=c.sequence_id?seqName(c.sequence_id):"";
+  let desc=[];
+  if(c.level) desc.push("Level: "+c.level);
+  if(sname) desc.push("Sequence: "+sname);
+  if(link) desc.push("Sequence link: "+link);
+  if(c.notes) desc.push(c.notes);
+  let v="BEGIN:VEVENT\r\n";
+  v+="UID:ppy-"+c.id+"@purepassionyoga.com\r\n";
+  v+="DTSTAMP:"+icsStamp(new Date())+"\r\n";
+  v+="DTSTART:"+icsStamp(start)+"\r\n";
+  v+="DTEND:"+icsStamp(end)+"\r\n";
+  v+="SUMMARY:"+icsEsc(c.title||"Class")+"\r\n";
+  if(c.location) v+="LOCATION:"+icsEsc(c.location)+"\r\n";
+  if(desc.length) v+="DESCRIPTION:"+icsEsc(desc.join("\n"))+"\r\n";
+  if(link) v+="URL:"+icsEsc(link)+"\r\n";
+  v+="END:VEVENT\r\n";
+  return v;
+}
+function downloadIcs(list, fname){
+  let ics="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Pure Passion Yoga//Class Calendar//EN\r\nCALSCALE:GREGORIAN\r\n";
+  list.forEach(function(c){ ics+=classToVevent(c); });
+  ics+="END:VCALENDAR\r\n";
+  const blob=new Blob([ics],{type:"text/calendar;charset=utf-8"});
+  const url=URL.createObjectURL(blob); const a=document.createElement("a");
+  a.href=url; a.download=fname||("ppy-class-"+((list[0].title||"class").replace(/[^a-z0-9]+/gi,"-").toLowerCase())+".ics");
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function exportMonthIcs(){
+  if(!CAL_CLASSES.length){ alert("No classes this month to export."); return; }
+  downloadIcs(CAL_CLASSES, "ppy-"+MON[CAL_M].toLowerCase()+"-"+CAL_Y+".ics");
+}
 
 boot();
 try{ sb.auth.onAuthStateChange((_e,s)=>{ if(s&&$("tbody").classList.contains("hidden")) boot(); }); }catch(e){}
