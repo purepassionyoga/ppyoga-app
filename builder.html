@@ -2001,10 +2001,10 @@ window.PPY_TOUR={page:"builder",steps:[
 </script>
 
 <style id="ppyh-css">
-.ppyh-fab{position:fixed;left:20px;bottom:20px;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;z-index:99990;display:none;align-items:center;justify-content:center;color:#fff;font-size:24px;background:linear-gradient(135deg,#C8A0A6,#A87C83);box-shadow:0 8px 24px rgba(168,124,131,.45);transition:transform .15s,box-shadow .15s}
+.ppyh-fab{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;z-index:99990;display:none;align-items:center;justify-content:center;color:#fff;font-size:24px;background:linear-gradient(135deg,#C8A0A6,#A87C83);box-shadow:0 8px 24px rgba(168,124,131,.45);transition:transform .15s,box-shadow .15s}
 .ppyh-fab:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(168,124,131,.55)}
 .ppyh-fab.show{display:flex}
-.ppyh-panel{position:fixed;left:20px;bottom:86px;width:368px;max-width:calc(100vw - 32px);height:540px;max-height:calc(100vh - 120px);background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(40,28,33,.32);z-index:99991;display:none;flex-direction:column;overflow:hidden;font-family:Poppins,system-ui,-apple-system,sans-serif;color:#4a4047}
+.ppyh-panel{position:fixed;right:20px;bottom:86px;width:368px;max-width:calc(100vw - 32px);height:540px;max-height:calc(100vh - 120px);background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(40,28,33,.32);z-index:99991;display:none;flex-direction:column;overflow:hidden;font-family:Poppins,system-ui,-apple-system,sans-serif;color:#4a4047}
 .ppyh-panel.open{display:flex}
 .ppyh-head{background:linear-gradient(135deg,#C8A0A6,#A87C83);color:#fff;padding:15px 16px;display:flex;align-items:center;gap:10px}
 .ppyh-head h4{margin:0;font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:600;flex:1}
@@ -2022,6 +2022,14 @@ window.PPY_TOUR={page:"builder",steps:[
 .ppyh-msg.err{align-self:flex-start;background:#fbeae6;color:#9c4636}
 .ppyh-empty{color:#9a8f93;font-size:13px;text-align:center;padding:26px 14px;line-height:1.5}
 .ppyh-empty .e-ic{font-size:30px;display:block;margin-bottom:8px}
+.ppyh-faqcat{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#a8ad91;font-weight:600;margin:14px 0 6px}
+.ppyh-faqcat:first-child{margin-top:2px}
+.ppyh-faqq{border:1px solid #ece3e4;border-radius:10px;margin-bottom:7px;overflow:hidden}
+.ppyh-faqq summary{cursor:pointer;padding:10px 12px;font-size:13px;font-weight:500;color:#6f5b61;list-style:none}
+.ppyh-faqq summary::-webkit-details-marker{display:none}
+.ppyh-faqq[open] summary{color:#A87C83;background:#faf6f5}
+.ppyh-faqq .a{padding:9px 12px 11px;font-size:12.5px;color:#6f5b61;line-height:1.5;white-space:pre-wrap}
+.ppyh-signin{text-align:center;padding:30px 16px;color:#6f5b61;font-size:13px;line-height:1.5}
 .ppyh-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;justify-content:center}
 .ppyh-chip{font-size:11.5px;padding:6px 11px;border-radius:999px;border:1px solid #ece3e4;background:#fff;color:#6f5b61;cursor:pointer}
 .ppyh-chip:hover{border-color:#C8A0A6;color:#A87C83}
@@ -2041,7 +2049,7 @@ window.PPY_TOUR={page:"builder",steps:[
 .ppyh-ok .ok-ic{font-size:34px;display:block;margin-bottom:10px}
 .ppyh-spin{display:inline-block;animation:ppyhspin 1s linear infinite}
 @keyframes ppyhspin{to{transform:rotate(360deg)}}
-@media(max-width:480px){.ppyh-panel{right:8px;left:8px;width:auto;bottom:80px;height:calc(100vh - 100px)}.ppyh-fab{left:16px;bottom:16px}}
+@media(max-width:480px){.ppyh-panel{right:8px;left:8px;width:auto;bottom:80px;height:calc(100vh - 100px)}.ppyh-fab{right:16px;bottom:16px}}
 </style>
 <script>
 (function(){
@@ -2049,7 +2057,7 @@ window.PPY_TOUR={page:"builder",steps:[
   var URL_="https://nxjbpgnpblqepathojzr.supabase.co";
   var KEY_="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
   var FN_=URL_+"/functions/v1/ask-coach";
-  var client=null, sessionUser=null, profile=null;
+  var client=null, sessionUser=null, profile=null, hasLauncher=false, faqCache=null;
   var askHist=[];
   function esc(s){return (s||"").replace(/[&<>"]/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]);});}
   function loadSb(cb){
@@ -2067,34 +2075,62 @@ window.PPY_TOUR={page:"builder",steps:[
     fab.className="ppyh-fab"; fab.setAttribute("aria-label","Help & support"); fab.innerHTML="&#128172;";
     var panel=document.createElement("div"); panel.className="ppyh-panel";
     panel.innerHTML=
-      '<div class="ppyh-head"><div style="flex:1"><h4>Help &amp; Support</h4><p>Ask a question or send us feedback</p></div><button class="ppyh-x" id="ppyhX">&#10005;</button></div>'+
-      '<div class="ppyh-tabs"><button class="ppyh-tab on" data-t="ask">Ask</button><button class="ppyh-tab" data-t="bug">Report a bug</button><button class="ppyh-tab" data-t="req">Request</button></div>'+
+      '<div class="ppyh-head"><div style="flex:1"><h4>Help &amp; Support</h4><p>FAQs, ask a question, or send feedback</p></div><button class="ppyh-x" id="ppyhX">&#10005;</button></div>'+
+      '<div class="ppyh-tabs"><button class="ppyh-tab on" data-t="faq">FAQs</button><button class="ppyh-tab" data-t="ask">Ask</button><button class="ppyh-tab" data-t="bug">Bug</button><button class="ppyh-tab" data-t="req">Request</button></div>'+
       '<div class="ppyh-body" id="ppyhBody"></div>'+
       '<div class="ppyh-foot" id="ppyhFoot" style="display:none"><textarea class="ppyh-ta" id="ppyhAsk" rows="1" placeholder="Ask about a pose, sequencing, or how the app works..."></textarea><button class="ppyh-send" id="ppyhSend">&#10148;</button></div>';
     document.body.appendChild(fab); document.body.appendChild(panel);
-    fab.onclick=function(){ panel.classList.toggle("open"); if(panel.classList.contains("open"))renderTab("ask"); };
-    panel.querySelector("#ppyhX").onclick=function(){ panel.classList.remove("open"); };
-    panel.querySelectorAll(".ppyh-tab").forEach(function(t){ t.onclick=function(){
-      panel.querySelectorAll(".ppyh-tab").forEach(function(x){x.classList.remove("on");}); t.classList.add("on"); renderTab(t.dataset.t);
-    };});
+    window.__ppyhPanel=panel;
+    fab.onclick=function(){ if(panel.classList.contains("open"))closePanel(); else openPanel("ask"); };
+    panel.querySelector("#ppyhX").onclick=closePanel;
+    panel.querySelectorAll(".ppyh-tab").forEach(function(t){ t.onclick=function(){ renderTab(t.dataset.t); }; });
     var ta=panel.querySelector("#ppyhAsk");
     ta.addEventListener("input",function(){ ta.style.height="auto"; ta.style.height=Math.min(90,ta.scrollHeight)+"px"; });
     ta.addEventListener("keydown",function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); sendAsk(); } });
     panel.querySelector("#ppyhSend").onclick=sendAsk;
-    window.__ppyhPanel=panel;
   }
+  function openPanel(tab){ var p=window.__ppyhPanel; if(!p)return; p.classList.add("open"); renderTab(tab||"faq"); }
+  function closePanel(){ var p=window.__ppyhPanel; if(p)p.classList.remove("open"); }
   function body(){ return document.getElementById("ppyhBody"); }
   function renderTab(t){
-    var foot=document.getElementById("ppyhFoot");
-    foot.style.display = t==="ask" ? "flex" : "none";
+    var p=window.__ppyhPanel; if(!p)return;
+    p.querySelectorAll(".ppyh-tab").forEach(function(x){ x.classList.toggle("on", x.dataset.t===t); });
+    document.getElementById("ppyhFoot").style.display = (t==="ask"&&sessionUser) ? "flex" : "none";
+    if(t==="faq") return renderFAQ();
     if(t==="ask") return renderAsk();
     if(t==="bug") return renderForm("bug");
     return renderForm("req");
   }
+  function signInPrompt(action){
+    return '<div class="ppyh-signin"><span class="e-ic" style="font-size:30px;display:block;margin-bottom:8px">&#128274;</span>Please sign in to '+action+'.<div style="margin-top:12px"><a class="ppyh-btn" style="display:inline-block;text-decoration:none" href="/">Sign in</a></div></div>';
+  }
+  /* ---- FAQs ---- */
+  function renderFAQ(){
+    var b=body();
+    if(faqCache){ return paintFAQ(faqCache); }
+    b.innerHTML='<div class="ppyh-empty">Loading FAQs\u2026</div>';
+    client.from("faqs").select("category,question,answer,position").eq("is_published",true).order("category").order("position").then(function(r){
+      if(r.error||!r.data){ b.innerHTML='<div class="ppyh-empty">Couldn\u2019t load FAQs right now.</div>'; return; }
+      faqCache=r.data; paintFAQ(faqCache);
+    });
+  }
+  function paintFAQ(rows){
+    var b=body();
+    if(!rows.length){ b.innerHTML='<div class="ppyh-empty"><span class="e-ic">&#128214;</span>No FAQs yet. Have a question? Try the <b>Ask</b> tab.</div>'; return; }
+    var byCat={}; rows.forEach(function(f){ (byCat[f.category||"General"]=byCat[f.category||"General"]||[]).push(f); });
+    var html='<div class="ppyh-faq">';
+    Object.keys(byCat).forEach(function(c){
+      html+='<div class="ppyh-faqcat">'+esc(c)+'</div>';
+      byCat[c].forEach(function(f){ html+='<details class="ppyh-faqq"><summary>'+esc(f.question)+'</summary><div class="a">'+esc(f.answer)+'</div></details>'; });
+    });
+    html+='</div>'; b.innerHTML=html;
+  }
+  /* ---- Ask AI ---- */
   function renderAsk(){
     var b=body();
+    if(!sessionUser){ b.innerHTML=signInPrompt("ask the assistant a question"); return; }
     if(!askHist.length){
-      b.innerHTML='<div class="ppyh-empty"><span class="e-ic">&#127807;</span>Hi! I can help with yoga &amp; pose questions or how to use Pure Passion Yoga. What would you like to know?'+
+      b.innerHTML='<div class="ppyh-empty"><span class="e-ic">&#127807;</span>Ask me about yoga &amp; poses or how to use Pure Passion Yoga.'+
         '<div class="ppyh-chips">'+
         '<span class="ppyh-chip" data-q="What\'s a good counter-pose after backbends?">Counter-pose after backbends?</span>'+
         '<span class="ppyh-chip" data-q="How do I use the AI flow generator?">Using the AI generator</span>'+
@@ -2110,6 +2146,7 @@ window.PPY_TOUR={page:"builder",steps:[
     b.innerHTML=html; b.scrollTop=b.scrollHeight;
   }
   function sendAsk(){
+    if(!sessionUser)return;
     var inp=document.getElementById("ppyhAsk"); var q=(inp.value||"").trim();
     if(!q||window.__ppyhBusy)return;
     inp.value=""; inp.style.height="auto";
@@ -2126,8 +2163,10 @@ window.PPY_TOUR={page:"builder",steps:[
       renderAsk();
     }).catch(function(){ window.__ppyhBusy=false; askHist.push({role:"assistant",content:"Network error. Please try again.",error:true}); renderAsk(); });
   }
+  /* ---- Bug / Request ---- */
   function renderForm(mode){
     var b=body(); var isReq=mode==="req";
+    if(!sessionUser){ b.innerHTML=signInPrompt(isReq?"send a request":"report a bug"); return; }
     b.innerHTML='<div class="ppyh-form">'+
       (isReq?'<label>What would you like?</label><div class="ppyh-seg" id="ppyhSeg"><button class="on" data-k="pose_request">A new pose</button><button data-k="feature_request">A feature</button></div>':'')+
       '<label>'+(isReq?'Title':'What went wrong?')+'</label>'+
@@ -2151,7 +2190,7 @@ window.PPY_TOUR={page:"builder",steps:[
       });
     };
   }
-  function showFab(on){ var f=document.querySelector(".ppyh-fab"); if(f)f.classList.toggle("show",!!on); if(!on&&window.__ppyhPanel)window.__ppyhPanel.classList.remove("open"); }
+  function showFab(on){ if(hasLauncher)on=false; var f=document.querySelector(".ppyh-fab"); if(f)f.classList.toggle("show",!!on); if(!on&&window.__ppyhPanel&&!hasLauncher)window.__ppyhPanel.classList.remove("open"); }
   function refreshAuth(){
     client.auth.getSession().then(function(r){
       var sess=r&&r.data&&r.data.session;
@@ -2160,10 +2199,21 @@ window.PPY_TOUR={page:"builder",steps:[
       } else { sessionUser=null; showFab(false); }
     });
   }
+  function wireLauncher(){
+    var tries=0;
+    (function attempt(){
+      var lp=document.querySelector(".ppt-launch");
+      if(lp){
+        var help=null; lp.querySelectorAll("button").forEach(function(btn){ if(!btn.classList.contains("tour")) help=btn; });
+        if(help){ hasLauncher=true; help.textContent="\u2753 Help"; help.onclick=function(e){ if(e&&e.preventDefault)e.preventDefault(); openPanel("faq"); }; showFab(false); return; }
+      }
+      if(tries++<8) setTimeout(attempt,250);
+    })();
+  }
   function init(){
     loadSb(function(){
       if(!client)return;
-      build(); refreshAuth();
+      build(); wireLauncher(); refreshAuth();
       try{ client.auth.onAuthStateChange(function(){ refreshAuth(); }); }catch(e){}
     });
   }
