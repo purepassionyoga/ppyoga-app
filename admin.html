@@ -1623,6 +1623,11 @@ function renderSite(){
   const full=Array.isArray(d.library_full_tiers)?d.library_full_tiers:["teacher","ultimate"];
   const nl=d.newsletter||{}, so=d.social||{};
   const tierChecks=tiers.map(t=>`<label class="toggle" style="display:inline-flex;margin:0 14px 8px 0"><input type="checkbox" class="s_fulltier" value="${t}" ${full.includes(t)?"checked":""}/> ${t}</label>`).join("");
+  const tiersFromMin=(arr,min)=>{ if(Array.isArray(arr)&&arr.length)return arr; const i=tiers.indexOf(min); return i<0?[]:tiers.slice(i); };
+  const classesTiers=tiersFromMin(d.classes_tiers,d.classes_min_tier);
+  const challTiers=tiersFromMin(d.challenges_tiers,d.challenges_min_tier);
+  const classChecks=tiers.map(t=>`<label class="toggle" style="display:inline-flex;margin:0 14px 8px 0"><input type="checkbox" class="s_classtier" value="${t}" ${classesTiers.includes(t)?"checked":""}/> ${t}</label>`).join("");
+  const challChecks=tiers.map(t=>`<label class="toggle" style="display:inline-flex;margin:0 14px 8px 0"><input type="checkbox" class="s_challtier" value="${t}" ${challTiers.includes(t)?"checked":""}/> ${t}</label>`).join("");
   $("site").innerHTML=`<div id="siteErr" class="err hidden"></div>
    <div class="grp"><div class="gt">Features</div>
      <label class="toggle"><input type="checkbox" id="s_classes" ${d.classes_enabled?"checked":""}/> Classes — show in the site header nav</label>
@@ -1634,10 +1639,10 @@ function renderSite(){
      <div>${tierChecks}</div>
    </div>
    <div class="grp"><div class="gt">Access by tier · Classes / Challenges</div>
-     <div class="row2">
-       <div class="field"><label>Classes unlock at tier</label><select id="s_classes_tier">${opt(d.classes_min_tier)}</select></div>
-       <div class="field"><label>Challenges unlock at tier</label><select id="s_challenges_tier">${opt(d.challenges_min_tier)}</select></div>
-     </div>
+     <div class="hint" style="margin-bottom:6px">Tiers that can open <b>Classes</b>. Everyone else — including signed-out visitors — sees them locked.</div>
+     <div style="margin-bottom:16px">${classChecks}</div>
+     <div class="hint" style="margin-bottom:6px">Tiers that can open <b>Challenges</b>.</div>
+     <div>${challChecks}</div>
    </div>
    <div class="grp"><div class="gt">Sign-in providers</div>
      <label class="toggle"><input type="checkbox" id="s_google" ${d.auth_google!==false?"checked":""}/> Google sign-in</label>
@@ -1668,9 +1673,14 @@ function renderSite(){
 }
 async function saveSite(){
   const fulltiers=[...document.querySelectorAll(".s_fulltier:checked")].map(c=>c.value);
+  const tierOrder=["free","member","practitioner","teacher","premium","ultimate"];
+  const classTiers=[...document.querySelectorAll(".s_classtier:checked")].map(c=>c.value);
+  const challTiers=[...document.querySelectorAll(".s_challtier:checked")].map(c=>c.value);
+  const lowestTier=arr=>{ for(const t of tierOrder){ if(arr.includes(t))return t; } return null; };
   const social={instagram:$("s_so_instagram").value.trim(),facebook:$("s_so_facebook").value.trim(),youtube:$("s_so_youtube").value.trim(),pinterest:$("s_so_pinterest").value.trim(),tiktok:$("s_so_tiktok").value.trim(),bluesky:$("s_so_bluesky").value.trim(),threads:$("s_so_threads").value.trim(),linkedin:$("s_so_linkedin").value.trim()};
   const d={classes_enabled:$("s_classes").checked,challenges_enabled:$("s_challenges").checked,
-    classes_min_tier:$("s_classes_tier").value,challenges_min_tier:$("s_challenges_tier").value,
+    classes_tiers:classTiers,challenges_tiers:challTiers,
+    classes_min_tier:lowestTier(classTiers),challenges_min_tier:lowestTier(challTiers),
     auth_google:$("s_google").checked,auth_facebook:$("s_facebook").checked,
     library_full_tiers:fulltiers,
     newsletter:{enabled:$("s_nl_enabled").checked,heading:$("s_nl_head").value.trim(),sub:$("s_nl_sub").value.trim(),button:$("s_nl_btn").value.trim()},
