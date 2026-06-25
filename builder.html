@@ -283,6 +283,19 @@
 .vtile-l{font-size:11px;color:var(--ink,#4a4047);text-align:center;line-height:1.25;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pstyle{width:100%;margin:0 0 8px;padding:8px 10px;border:1px solid var(--lineDk,#e7dcdf);border-radius:10px;background:var(--field,#faf6f4) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23A87C83' stroke-width='1.6' stroke-linecap='round'/></svg>") no-repeat right 10px center;-webkit-appearance:none;appearance:none;color:var(--ink,#4a4047);font-family:inherit;font-size:13px;cursor:pointer}
 </style>
+<style id="sfCSS">
+.sflist{display:flex;flex-direction:column;gap:4px;overflow:auto;max-height:34vh}
+.sfrow{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line,#eee);border-radius:10px;cursor:pointer}
+.sfrow.sf-dim{opacity:.55}
+.sfrow input{flex:0 0 auto}
+.sfname{font-weight:500;color:var(--head,#4a4047)}
+.sfflags{margin-left:auto;font-size:11.5px;color:var(--muted,#9a8f93);text-align:right}
+.sfok{margin-top:14px;background:#eef3ec;border:1px solid #cdd9c6;color:#4d6b41;border-radius:10px;padding:11px 14px;font-size:13px}
+.sfwarn{margin-top:14px;background:#fbe7e4;border:1px solid #e6b8ad;color:#9a3a2a;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:600}
+.sfhit{border:1px solid var(--line,#eee);border-radius:10px;padding:9px 12px;margin-top:8px}
+.sfhit-name{font-weight:600;color:var(--head,#4a4047);font-size:13.5px}
+.sfhit-line{font-size:12.5px;color:var(--ink,#5a4f55);margin-top:2px}
+</style>
 </head>
 <body>
 <style id="ppyLoaderCSS">
@@ -418,6 +431,7 @@
         <span style="flex:1"></span>
         <button class="btn ghost" id="b_templates">📋 Templates</button>
         <button class="btn ghost" id="b_community">🌐 Community</button>
+        <button class="btn ghost" id="b_safety">🩺 Safety check</button>
         <button class="btn ghost" id="b_ai">✨ AI</button>
         <button class="btn ghost" id="b_flow">▶ Flow</button>
         <button class="btn ghost" id="b_balance">⚖ Balance</button>
@@ -495,7 +509,7 @@ window.openVarPicker=openVarPicker; window.pickVar=pickVar;
 function addCueToNote(btn){ const t=$("ie_notes"); if(!t)return; const c=btn.textContent; t.value=(t.value.trim()?t.value.trim()+" ":"")+c; t.focus(); }
 window.addCueToNote=addCueToNote;
 async function loadPoses(){
-  const{data,error}=await sb.from("poses").select("id,name,sanskrit_name,emoji,image_url,avatar_images,category,difficulty_level,teaching_cues,short_description,cue_variations,yoga_styles,body_focus").order("canonical_pose_id");
+  const{data,error}=await sb.from("poses").select("id,name,sanskrit_name,emoji,image_url,avatar_images,category,difficulty_level,teaching_cues,short_description,cue_variations,yoga_styles,body_focus,contraindication_tags").order("canonical_pose_id");
   VARS={}; // variations are now standalone poses (pose_relations); legacy picker retired
   if(error){$("plist").innerHTML='<div style="color:#A03A22;padding:8px">'+esc(error.message)+'</div>';return;}
   POSES=data||[];
@@ -1333,6 +1347,65 @@ async function loadTemplate(id){
     const p=POSES.find(x=>String(x.id)===String(it.pose_id))||{id:it.pose_id,name:it.custom_name,sanskrit_name:it.custom_sanskrit,emoji:it.emoji};
     return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored,variation_id:it.variation_id||null};});
   closeModal();renderCanvas();toast("Template loaded");
+}
+
+/* ---------- SAFETY CHECK ---------- */
+$("b_safety").onclick=openSafetyCheck;
+let SAFETY_STUDENTS=[];
+async function openSafetyCheck(){
+  const poseItems=items.filter(function(x){return x.kind!=="section";});
+  if(!poseItems.length){ toast("Add poses first."); return; }
+  if(!SESSION){ toast("Sign in first."); return; }
+  try{ const {data}=await sb.from("students").select("id,name,health_flags,status").eq("teacher_id",SESSION.user.id).order("name"); SAFETY_STUDENTS=data||[]; }
+  catch(e){ SAFETY_STUDENTS=[]; }
+  renderSafetyPicker();
+}
+function renderSafetyPicker(){
+  const studs=SAFETY_STUDENTS; let inner;
+  if(!studs.length){
+    inner='<div style="font-size:13.5px;color:var(--ink,#4a4047);line-height:1.55">No students found. Add students and set their health &amp; safety flags in your Teaching dashboard, then run a safety check here.</div>'
+      +'<div style="margin-top:16px"><button class="btn ghost" style="width:100%" onclick="closeModal()">Close</button></div>';
+  } else {
+    const rows=studs.map(function(st){
+      const has=Array.isArray(st.health_flags)&&st.health_flags.length;
+      return '<label class="sfrow'+(has?"":" sf-dim")+'"><input type="checkbox" class="sfstu" value="'+esc(st.id)+'" '+(has?"":"disabled")+'/><span class="sfname">'+esc(st.name||"Unnamed")+'</span><span class="sfflags">'+(has?esc(st.health_flags.join(", ")):"no flags set")+'</span></label>';
+    }).join("");
+    inner='<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Pick the students attending. We\u2019ll flag any pose in this sequence that\u2019s contraindicated for them.</div>'
+      +'<div class="sflist">'+rows+'</div><div id="sfResults"></div>'
+      +'<div style="display:flex;gap:8px;margin-top:14px"><button class="btn" style="flex:1" id="sfRun">Check sequence</button><button class="btn ghost" style="flex:1" onclick="closeModal()">Close</button></div>';
+  }
+  $("modalRoot").innerHTML='<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()" style="max-width:520px;max-height:84vh;display:flex;flex-direction:column;overflow:auto"><h3 class="serif" style="margin-top:0">\uD83E\uDE7A Safety check</h3>'+inner+'</div></div>';
+  $("ovl").onclick=closeModal;
+  const run=$("sfRun"); if(run) run.onclick=runSafetyCheck;
+}
+function runSafetyCheck(){
+  const ids=[].map.call(document.querySelectorAll(".sfstu:checked"),function(c){return c.value;});
+  if(!ids.length){ toast("Pick at least one student."); return; }
+  const chosen=SAFETY_STUDENTS.filter(function(st){return ids.indexOf(st.id)>=0;});
+  const poseItems=items.filter(function(x){return x.kind!=="section";});
+  const hits=[];
+  poseItems.forEach(function(it){
+    const tags=(it.pose&&it.pose.contraindication_tags)||[];
+    if(!tags.length) return;
+    const conflicts=[];
+    chosen.forEach(function(st){
+      const flags=st.health_flags||[];
+      const overlap=tags.filter(function(t){return flags.indexOf(t)>=0;});
+      if(overlap.length) conflicts.push({student:st.name||"Unnamed",conditions:overlap});
+    });
+    if(conflicts.length) hits.push({name:varName(it),conflicts:conflicts});
+  });
+  const box=$("sfResults"); if(!box) return;
+  if(!hits.length){
+    box.innerHTML='<div class="sfok">\u2713 All clear \u2014 no contraindicated poses for the selected student'+(chosen.length>1?"s":"")+'.</div>';
+    return;
+  }
+  box.innerHTML='<div class="sfwarn">\u26A0 '+hits.length+' pose'+(hits.length>1?"s":"")+' to review</div>'
+    +hits.map(function(h){
+      return '<div class="sfhit"><div class="sfhit-name">'+esc(h.name)+'</div>'
+        +h.conflicts.map(function(c){return '<div class="sfhit-line"><b>'+esc(c.student)+'</b> \u2014 '+esc(c.conditions.join(", "))+'</div>';}).join("")
+        +'</div>';
+    }).join("");
 }
 
 /* ---------- CLASS THEMES ---------- */
