@@ -323,6 +323,7 @@
     <div id="view_activity">
       <div class="kpis" id="kpis"></div>
       <div class="tcard"><h2>Recent sequences</h2><div id="recap"></div></div>
+      <div class="tcard"><h2>Sub / cover packet</h2><p class="sm" style="color:var(--muted);margin:-4px 0 12px">A printable handout for a covering teacher — the sequence with cues, safety watch-outs, props, and a roster check-in.</p><div id="subPanel"></div></div>
       <div class="tgrid">
         <div class="tcard"><h2>By level</h2><div id="byLevel"></div></div>
         <div class="tcard"><h2>By style</h2><div id="byStyle"></div></div>
@@ -340,6 +341,7 @@ const sb=supabase.createClient(SUPABASE_URL,ANON);
 const $=id=>document.getElementById(id);
 const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let UID=null;
+let SEQS=[];
 function gate(html){ $("tgate").innerHTML=html; $("tbody").classList.add("hidden"); }
 function bars(map){
   const entries=Object.entries(map).sort((a,b)=>b[1]-a[1]);
@@ -348,6 +350,124 @@ function bars(map){
   return entries.map(([k,v])=>`<div class="bar"><div class="bl">${esc(k||"\u2014")}</div><div class="bt"><div class="bf" style="width:${Math.round(v/max*100)}%"></div></div><div class="bn">${v}</div></div>`).join("");
 }
 function vbadge(v){ return v==="community"?'<span class="vbadge community">Community</span>':(v==="unlisted"?'<span class="vbadge">Unlisted</span>':'<span class="vbadge">Private</span>'); }
+/* ---------- SUB / COVER PACKET ---------- */
+function renderSubPanel(){
+  const p=$("subPanel"); if(!p) return;
+  if(!SEQS.length){ p.innerHTML='<div class="tempty">Build a sequence first to create a cover packet.</div>'; return; }
+  const opts='<option value="">Choose a sequence\u2026</option>'+SEQS.map(function(s){return '<option value="'+s.id+'">'+esc(s.name||"Untitled")+'</option>';}).join("");
+  p.innerHTML=''
+    +'<div class="row2"><div class="field"><label>Sequence</label><select id="sub_seq">'+opts+'</select></div>'
+    +'<div class="field"><label>Class title (optional)</label><input id="sub_title" placeholder="e.g. Tuesday Gentle Flow"/></div></div>'
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div class="field"><label>Date</label><input id="sub_date" type="date"/></div>'
+    +'<div class="field"><label>Time</label><input id="sub_time" placeholder="6:00 PM"/></div>'
+    +'<div class="field"><label>Location / room</label><input id="sub_location" placeholder="Studio A"/></div></div>'
+    +'<div class="field"><label>Covering teacher (optional)</label><input id="sub_cover" placeholder="Name of the teacher covering"/></div>'
+    +'<div style="display:flex;gap:16px;flex-wrap:wrap;margin:6px 0 12px;font-size:13px">'
+    +'<label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="sub_inc_safety" checked/> Safety watch-outs</label>'
+    +'<label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="sub_inc_props" checked/> Props needed</label>'
+    +'<label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="sub_inc_roster" checked/> Roster check-in</label></div>'
+    +'<div style="display:flex;gap:10px;align-items:center"><button class="btn" id="sub_go">Generate packet</button><span id="sub_msg" class="sm" style="color:var(--muted)"></span></div>';
+  $("sub_go").onclick=generateSubPacket;
+}
+async function generateSubPacket(){
+  const seqId=$("sub_seq").value, msg=$("sub_msg");
+  if(!seqId){ if(msg)msg.textContent="Pick a sequence first."; return; }
+  if(msg)msg.textContent="Building\u2026";
+  try{
+    const { data:seq } = await sb.from("sequences").select("name,level,style,duration_label,description").eq("id",seqId).single();
+    const { data:its } = await sb.from("sequence_items").select("*").eq("sequence_id",seqId).order("position");
+    const items=its||[];
+    const poseIds=[...new Set(items.filter(function(i){return i.item_type!=="section"&&i.pose_id;}).map(function(i){return i.pose_id;}))];
+    let poseMap={};
+    if(poseIds.length){ const { data:ps } = await sb.from("poses").select("id,name,sanskrit_name,difficulty_level,teaching_cues,required_props,contraindication_tags,emoji").in("id",poseIds); (ps||[]).forEach(function(p){poseMap[p.id]=p;}); }
+    let students=[]; try{ const { data:st } = await sb.from("students").select("name,health_flags,status").eq("teacher_id",UID).order("name"); students=st||[]; }catch(e){}
+    let teacherName=""; try{ const { data:pr } = await sb.from("profiles").select("display_name").eq("id",UID).single(); teacherName=(pr&&pr.display_name)||""; }catch(e){}
+    const html=buildPacketHTML({seq:seq||{},items:items,poseMap:poseMap,students:students,teacherName:teacherName,
+      title:$("sub_title").value.trim(),date:$("sub_date").value,time:$("sub_time").value.trim(),location:$("sub_location").value.trim(),cover:$("sub_cover").value.trim(),
+      incSafety:$("sub_inc_safety").checked,incProps:$("sub_inc_props").checked,incRoster:$("sub_inc_roster").checked});
+    const w=window.open("","_blank"); if(!w){ if(msg)msg.textContent="Allow pop-ups to open the packet."; return; }
+    w.document.write(html); w.document.close();
+    if(msg)msg.textContent="";
+  }catch(e){ if(msg)msg.textContent="Could not build packet."; }
+}
+function buildPacketHTML(ctx){
+  const E=esc, seq=ctx.seq||{};
+  const flagged=(ctx.students||[]).filter(function(s){return Array.isArray(s.health_flags)&&s.health_flags.length;});
+  let pn=0;
+  const rows=ctx.items.map(function(it){
+    if(it.item_type==="section") return '<tr class="sec"><td colspan="3">'+E(it.custom_name||"Section")+'</td></tr>';
+    pn++;
+    const p=ctx.poseMap[it.pose_id]||{};
+    const nm=it.custom_name||p.name||"Pose", san=it.custom_sanskrit||p.sanskrit_name||"", lvl=p.difficulty_level||"";
+    const breaths=it.custom_breaths?(it.custom_breaths+" breaths"):"", note=it.notes||"", cue=p.teaching_cues||"";
+    let watch="";
+    if(ctx.incSafety){
+      const tags=p.contraindication_tags||[], hits=[];
+      flagged.forEach(function(st){ const ov=(st.health_flags||[]).filter(function(t){return tags.indexOf(t)>=0;}); if(ov.length) hits.push(E(st.name||"Student")+" ("+E(ov.join(", "))+")"); });
+      if(hits.length) watch='<div class="watch">\u26A0 Caution for: '+hits.join("; ")+'</div>';
+    }
+    const detail=[san?'<span class="san">'+E(san)+'</span>':"",lvl?'<span class="lv">'+E(lvl)+'</span>':"",breaths?'<span class="lv">'+E(breaths)+'</span>':""].filter(Boolean).join(" ");
+    return '<tr><td class="num">'+pn+'</td><td><div class="pn">'+E(nm)+'</div>'+(detail?'<div class="meta">'+detail+'</div>':"")+(cue?'<div class="cue">'+E(cue)+'</div>':"")+watch+'</td><td class="nt">'+(note?E(note):"")+'</td></tr>';
+  }).join("");
+  let propsHTML="";
+  if(ctx.incProps){
+    const set={}; Object.keys(ctx.poseMap).forEach(function(k){ (ctx.poseMap[k].required_props||[]).forEach(function(pr){ set[pr]=true; }); });
+    const props=Object.keys(set);
+    propsHTML='<div class="sec-h">Props needed</div>'+(props.length?'<div class="chips">'+props.map(function(x){return '<span class="chip">'+E(x)+'</span>';}).join("")+'</div>':'<div class="muted">None specified for these poses.</div>');
+  }
+  let safetyHTML="";
+  if(ctx.incSafety){
+    safetyHTML='<div class="sec-h">Safety watch-outs</div>'+(flagged.length?'<ul class="safe">'+flagged.map(function(s){return '<li><b>'+E(s.name||"Student")+'</b> \u2014 '+E((s.health_flags||[]).join(", "))+'</li>';}).join("")+'</ul>':'<div class="muted">No students have health flags set.</div>');
+  }
+  let rosterHTML="";
+  if(ctx.incRoster){
+    const active=(ctx.students||[]).filter(function(s){return s.status!=="inactive";});
+    rosterHTML='<div class="sec-h">Roster check-in</div>'+(active.length?'<table class="roster"><thead><tr><th></th><th>Student</th><th>Notes</th></tr></thead><tbody>'+active.map(function(s){return '<tr><td class="ck">\u2610</td><td>'+E(s.name||"")+((Array.isArray(s.health_flags)&&s.health_flags.length)?' <span class="rflag">\u26A0</span>':"")+'</td><td></td></tr>';}).join("")+'</tbody></table>':'<div class="muted">No students in your roster yet.</div>');
+  }
+  const when=[ctx.date,ctx.time].filter(Boolean).join("  ");
+  const metaLine=[seq.level,seq.style,seq.duration_label].filter(Boolean).join("  \u00b7  ");
+  const titleTxt=ctx.title||seq.name||"Class";
+  const CSS=`*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Poppins,system-ui,sans-serif;color:#3a3a3a;padding:30px 34px;background:#fff;font-size:12.5px;line-height:1.5}
+.ph{border-bottom:2px solid #C8A0A6;padding-bottom:12px;margin-bottom:16px}
+.brand{font-family:'Playfair Display',serif;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#C8A0A6;margin-bottom:4px}
+h1{font-family:'Playfair Display',serif;color:#A87C83;font-size:25px;margin-bottom:3px}
+.sub{font-size:12px;color:#777}.byl{font-size:11.5px;color:#999;margin-top:5px}.intent{margin-top:8px;font-size:12px;color:#555;font-style:italic}
+.block{margin:14px 0}
+.sec-h{font-family:'Playfair Display',serif;color:#A87C83;font-size:15px;margin:16px 0 8px;border-bottom:1px solid #eee;padding-bottom:4px}
+.muted{color:#999;font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:#f0ebe8;color:#7a7368;border-radius:6px;padding:3px 10px;font-size:11px}
+ul.safe{list-style:none;display:flex;flex-direction:column;gap:4px}
+ul.safe li{background:#fbeaea;border-left:3px solid #dba0a0;padding:6px 10px;border-radius:4px;font-size:12px;color:#7a3a3a}
+table{width:100%;border-collapse:collapse}
+table.seq th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#a8ad91;border-bottom:2px solid #C8A0A6;padding:7px 8px}
+table.seq td{border-bottom:1px solid #f0ebe8;padding:9px 8px;vertical-align:top}table.seq tr{break-inside:avoid}
+.num{color:#bbb;width:26px;text-align:center;font-size:12px}
+.pn{font-weight:600;color:#A87C83;font-size:13px}
+.meta{font-size:11px;color:#888;margin-top:1px}.meta .san{font-style:italic;color:#8c9270}.meta .lv{margin-left:8px}
+.cue{font-size:11px;color:#666;margin-top:4px}
+.watch{font-size:11px;color:#9a3a2a;background:#fbeaea;border-radius:5px;padding:3px 8px;margin-top:5px;display:inline-block}
+.nt{font-size:11.5px;color:#555;width:32%}
+tr.sec td{background:#f6f1ef;font-family:'Playfair Display',serif;color:#A87C83;font-weight:600;padding:7px 10px;font-size:12.5px}
+table.roster th{text-align:left;font-size:10px;text-transform:uppercase;color:#a8ad91;border-bottom:1px solid #ddd;padding:6px 8px}
+table.roster td{border-bottom:1px solid #f0ebe8;padding:7px 8px;font-size:12px}
+.ck{font-size:15px;width:30px;text-align:center;color:#bbb}.rflag{color:#d08a2a}
+.foot{margin-top:22px;border-top:1px solid #eee;padding-top:10px;text-align:center;color:#bbb;font-size:9px;letter-spacing:.04em}
+@page{margin:14mm}`;
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cover packet \u2014 '+E(titleTxt)+'</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">'
+    +'<style>'+CSS+'</style></head><body>'
+    +'<div class="ph"><div class="brand">Pure Passion Yoga \u00b7 Cover Packet</div><h1>'+E(titleTxt)+'</h1>'
+    +'<div class="sub">'+[when,ctx.location,metaLine].filter(Boolean).map(E).join("  \u00b7  ")+'</div>'
+    +'<div class="byl">Prepared by '+(E(ctx.teacherName)||"your teacher")+(ctx.cover?(' \u00b7 Covering: '+E(ctx.cover)):"")+'</div>'
+    +(seq.description?'<div class="intent">'+E(seq.description)+'</div>':"")+'</div>'
+    +(safetyHTML?'<div class="block">'+safetyHTML+'</div>':"")
+    +(propsHTML?'<div class="block">'+propsHTML+'</div>':"")
+    +'<div class="sec-h">Sequence</div><table class="seq"><thead><tr><th>#</th><th>Pose &amp; cues</th><th>Notes</th></tr></thead><tbody>'+rows+'</tbody></table>'
+    +(rosterHTML?'<div class="block">'+rosterHTML+'</div>':"")
+    +'<div class="foot">\u00a9 Pure Passion Yoga \u00b7 purepassionyoga.com</div>'
+    +'<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},400);}<'+'/scr'+'ipt></body></html>';
+}
 async function boot(){
   let session=null;
   try{ const r=await sb.auth.getSession(); session=r.data.session; }catch(e){}
@@ -363,7 +483,7 @@ async function loadTeacher(){
   const { data:seqs } = await sb.from("sequences")
     .select("id,name,level,style,duration_label,visibility,likes_count,created_at,updated_at,is_template,share_token")
     .eq("owner_id",UID).order("updated_at",{ascending:false});
-  const S=seqs||[];
+  const S=seqs||[]; SEQS=S;
   const ids=S.map(s=>s.id);
   let items=[];
   if(ids.length){ const { data:its } = await sb.from("sequence_items").select("sequence_id,pose_id,item_type").in("sequence_id",ids); items=its||[]; }
@@ -378,6 +498,7 @@ async function loadTeacher(){
   $("byStyle").innerHTML=bars(countStyles(S));
   renderTopPoses(items,nameOf);
   renderPractice(practice);
+  renderSubPanel();
 }
 function countBy(arr,fn){ const m={}; arr.forEach(x=>{ const k=fn(x); m[k]=(m[k]||0)+1; }); return m; }
 function countStyles(S){ const m={}; S.forEach(s=>{ if(!s.style){ m["Unspecified"]=(m["Unspecified"]||0)+1; return; } String(s.style).split(",").forEach(x=>{ const k=x.trim(); if(k) m[k]=(m[k]||0)+1; }); }); return m; }
