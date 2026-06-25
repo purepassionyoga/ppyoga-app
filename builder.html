@@ -466,7 +466,7 @@ var VARS={};
 
 /* AUTH */
 async function init(){const{data:{session}}=await sb.auth.getSession();if(session)showApp(session);else $("login").classList.remove("hidden");}
-async function showApp(s){SESSION=s;$("login").classList.add("hidden");$("app").classList.remove("hidden");$("whoami").textContent=s.user.email;sb.from("profiles").select("is_admin").eq("id",s.user.id).single().then(function(r){IS_ADMIN=!!(r.data&&r.data.is_admin);if(IS_ADMIN){var be=$("b_email");if(be)be.hidden=false;}}).catch(function(){});await loadAvatarPref();await loadPoses();restoreDraft();renderCanvas();loadBuilderSettings();wireDraftAutosave();}
+async function showApp(s){SESSION=s;$("login").classList.add("hidden");$("app").classList.remove("hidden");$("whoami").textContent=s.user.email;sb.from("profiles").select("is_admin").eq("id",s.user.id).single().then(function(r){IS_ADMIN=!!(r.data&&r.data.is_admin);if(IS_ADMIN){var be=$("b_email");if(be)be.hidden=false;}}).catch(function(){});await loadAvatarPref();await loadPoses();await restoreDraft();renderCanvas();loadBuilderSettings();wireDraftAutosave();}
 $("signin").onclick=async()=>{
   $("loginErr").classList.add("hidden");
   const email=$("email").value.trim(),password=$("password").value;if(!email||!password)return;
@@ -723,25 +723,50 @@ function serializeItems(){
     return{k:"p",id:(it.pose&&it.pose.id)||null,notes:it.notes||"",breaths:it.breaths||"",breath_pattern:it.breath_pattern||"Natural",mirror:!!it.mirror,variation_id:it.variation_id||null};
   });
 }
+function buildDraftPayload(){
+  return { v:1, savedAt:Date.now(), currentId:currentId||null, theme:seqTheme,
+    meta:{ name:$("m_name").value, description:$("m_description").value, playlist:$("m_playlist").value,
+      level:$("m_level").value, duration:$("m_duration").value, style:$("m_style").value, tags:$("m_tags").value, share:$("m_share").checked },
+    items:serializeItems() };
+}
+let _cloudT=null, _restoring=false;
 function saveDraft(){
+  if(_restoring) return;
   try{
     const key=draftKey(); if(!key) return;
-    if(!items.length){ localStorage.removeItem(key); return; }
-    const payload={ v:1, savedAt:Date.now(), currentId:currentId||null, theme:seqTheme,
-      meta:{ name:$("m_name").value, description:$("m_description").value, playlist:$("m_playlist").value,
-        level:$("m_level").value, duration:$("m_duration").value, style:$("m_style").value, tags:$("m_tags").value, share:$("m_share").checked },
-      items:serializeItems() };
+    if(!items.length){ localStorage.removeItem(key); pushDraftDelete(); return; }
+    const payload=buildDraftPayload();
     localStorage.setItem(key, JSON.stringify(payload));
+    clearTimeout(_cloudT); _cloudT=setTimeout(function(){ pushDraftCloud(payload); }, 1200);
   }catch(e){}
 }
+async function pushDraftCloud(payload){
+  try{ if(!SESSION||!SESSION.user) return;
+    await sb.from("builder_drafts").upsert({ user_id:SESSION.user.id, draft:payload, client_saved_at:new Date(payload.savedAt).toISOString() }, { onConflict:"user_id" });
+  }catch(e){}
+}
+async function pushDraftDelete(){
+  try{ if(!SESSION||!SESSION.user) return; await sb.from("builder_drafts").delete().eq("user_id",SESSION.user.id); }catch(e){}
+}
 let _draftT; function saveDraftSoon(){ clearTimeout(_draftT); _draftT=setTimeout(saveDraft,400); }
-function clearDraft(){ try{ const key=draftKey(); if(key) localStorage.removeItem(key); }catch(e){} }
-function restoreDraft(){
+function clearDraft(){ try{ const key=draftKey(); if(key) localStorage.removeItem(key); }catch(e){} pushDraftDelete(); }
+function readLocalDraft(){
+  try{ const key=draftKey(); if(!key) return null; const raw=localStorage.getItem(key); if(!raw) return null;
+    const d=JSON.parse(raw); if(!d||!Array.isArray(d.items)||!d.items.length) return null;
+    if(d.savedAt && (Date.now()-d.savedAt) > 30*864e5){ localStorage.removeItem(key); return null; }
+    return d;
+  }catch(e){ return null; }
+}
+async function readCloudDraft(){
+  try{ if(!SESSION||!SESSION.user) return null;
+    const { data } = await sb.from("builder_drafts").select("draft").eq("user_id",SESSION.user.id).single();
+    const d=data&&data.draft; if(!d||!Array.isArray(d.items)||!d.items.length) return null;
+    return d;
+  }catch(e){ return null; }
+}
+function applyDraft(d){
+  _restoring=true;
   try{
-    const key=draftKey(); if(!key) return false;
-    const raw=localStorage.getItem(key); if(!raw) return false;
-    const d=JSON.parse(raw); if(!d||!Array.isArray(d.items)||!d.items.length) return false;
-    if(d.savedAt && (Date.now()-d.savedAt) > 30*864e5){ localStorage.removeItem(key); return false; }
     currentId=d.currentId||null;
     const m=d.meta||{};
     $("m_name").value=m.name||""; $("m_description").value=m.description||""; $("m_playlist").value=m.playlist||"";
@@ -753,10 +778,22 @@ function restoreDraft(){
       const p=POSES.find(function(q){return String(q.id)===String(x.id);})||{id:x.id,name:"(pose unavailable)",emoji:"\u26A0\uFE0F"};
       return{kind:"pose",pose:p,notes:x.notes||"",breaths:x.breaths||"",breath_pattern:x.breath_pattern||"Natural",mirror:!!x.mirror,variation_id:x.variation_id||null};
     });
-    renderCanvas();
-    toast("Picked up where you left off");
-    return true;
-  }catch(e){ return false; }
+  } finally { _restoring=false; }
+  renderCanvas();
+}
+async function restoreDraft(){
+  const local=readLocalDraft();
+  const cloud=await readCloudDraft();
+  let chosen=null, fromCloud=false;
+  if(local&&cloud){ if((cloud.savedAt||0)>(local.savedAt||0)){ chosen=cloud; fromCloud=true; } else { chosen=local; } }
+  else if(cloud){ chosen=cloud; fromCloud=true; }
+  else if(local){ chosen=local; }
+  if(!chosen) return false;
+  applyDraft(chosen);
+  try{ const key=draftKey(); if(key) localStorage.setItem(key, JSON.stringify(chosen)); }catch(e){}
+  if(!fromCloud) pushDraftCloud(chosen);
+  toast(fromCloud?"Restored your sequence from another device":"Picked up where you left off");
+  return true;
 }
 function wireDraftAutosave(){
   ["m_name","m_description","m_playlist","m_tags"].forEach(function(id){ var el=$(id); if(el) el.addEventListener("input",saveDraftSoon); });
