@@ -206,6 +206,13 @@
 .caldate{font-size:12px;color:var(--muted,#9a8f93);margin-bottom:3px}
 .calev{background:#f7eaec;border-left:3px solid var(--rose,#C8A0A6);border-radius:4px;padding:2px 5px;margin-bottom:3px;font-size:11px;color:var(--head,#5a4f55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 .calev .t{color:var(--aub,#A87C83);font-weight:600;margin-right:3px}
+.ovl{position:fixed;inset:0;background:rgba(44,34,56,.42);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+.ovl .modal{background:var(--card,#fff);border-radius:16px;width:100%;max-width:460px;padding:22px 22px 20px;box-shadow:0 18px 50px rgba(60,40,50,.25);margin:auto}
+.ovl .modal .field{margin-bottom:10px}
+.ovl .modal .field label{display:block;font-size:12px;color:var(--muted,#9a8f93);margin-bottom:4px}
+.ovl .modal .field input,.ovl .modal .field select,.ovl .modal .field textarea{width:100%;border:1px solid var(--lineDk,#e7dcdf);border-radius:9px;padding:9px 11px;font:inherit;font-size:14px;color:var(--ink,#4a4047);background:var(--field,#faf6f5)}
+.ovl .modal .field input:focus,.ovl .modal .field select:focus,.ovl .modal .field textarea:focus{outline:none;border-color:var(--rose,#C8A0A6);background:#fff}
+.ovl .modal .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 </style>
 </head>
 <body>
