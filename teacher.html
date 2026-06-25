@@ -213,6 +213,23 @@
 .ovl .modal .field input,.ovl .modal .field select,.ovl .modal .field textarea{width:100%;border:1px solid var(--lineDk,#e7dcdf);border-radius:9px;padding:9px 11px;font:inherit;font-size:14px;color:var(--ink,#4a4047);background:var(--field,#faf6f5)}
 .ovl .modal .field input:focus,.ovl .modal .field select:focus,.ovl .modal .field textarea:focus{outline:none;border-color:var(--rose,#C8A0A6);background:#fff}
 .ovl .modal .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.subrow3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:560px){.subrow3{grid-template-columns:1fr}}
+@media(max-width:620px){
+  .calgrid{gap:3px}
+  .calcell{min-height:58px;padding:3px 4px;border-radius:7px}
+  .caldate{font-size:10.5px;margin-bottom:2px}
+  .calev{font-size:9.5px;padding:1px 4px;border-left-width:2px;margin-bottom:2px}
+  .calev .t{display:none}
+  .caldow{font-size:9.5px}
+  .calbar h3{font-size:17px}
+  .calbar{gap:8px}
+  .calbtn{padding:6px 10px;font-size:12px}
+}
+@media(max-width:420px){
+  .calcell{min-height:48px}
+  .calev{font-size:9px}
+}
 </style>
 </head>
 <body>
@@ -382,7 +399,7 @@ function renderSubPanel(){
   p.innerHTML=''
     +'<div class="row2"><div class="field"><label>Sequence</label><select id="sub_seq">'+opts+'</select></div>'
     +'<div class="field"><label>Class title (optional)</label><input id="sub_title" placeholder="e.g. Tuesday Gentle Flow"/></div></div>'
-    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div class="field"><label>Date</label><input id="sub_date" type="date"/></div>'
+    +'<div class="subrow3"><div class="field"><label>Date</label><input id="sub_date" type="date"/></div>'
     +'<div class="field"><label>Time</label><input id="sub_time" placeholder="6:00 PM"/></div>'
     +'<div class="field"><label>Location / room</label><input id="sub_location" placeholder="Studio A"/></div></div>'
     +'<div class="field"><label>Covering teacher (optional)</label><input id="sub_cover" placeholder="Name of the teacher covering"/></div>'
