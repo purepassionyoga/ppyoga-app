@@ -58,6 +58,26 @@
   .cats{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
   .cat{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
   .cat.on{background:var(--rose);color:#fff;border-color:var(--rose)}
+  .chipgrp{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 4px}
+  .chip{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink,#4a4047);cursor:pointer;user-select:none;transition:.12s}
+  .chip:hover{border-color:var(--rose)}
+  .chip.on{background:var(--rose);color:#fff;border-color:var(--rose)}
+  .chip.av.on{background:var(--clayDk);border-color:var(--clayDk)}
+  .ai-lab{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--sage);margin:10px 0 2px}
+  .ai-lab span{color:var(--muted);text-transform:none;font-weight:400;letter-spacing:0}
+  .aimodal{max-width:620px}
+  .nextbox{margin:14px auto 0;max-width:1320px;padding:0 20px}
+  .nextcard{background:var(--field);border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .nextcard .nb-ico{font-size:20px}
+  .nextcard .nb-txt{flex:1;min-width:180px}
+  .nextcard .nb-h{font-weight:600;color:var(--head);font-size:14px}
+  .nextcard .nb-s{color:var(--muted);font-size:12px}
+  .nb-sugs{display:flex;flex-wrap:wrap;gap:8px;width:100%}
+  .nb-sug{display:flex;flex-direction:column;gap:3px;border:1px solid var(--line);background:var(--card);border-radius:11px;padding:9px 11px;min-width:150px;flex:1}
+  .nb-sug .s-n{font-family:var(--font-head);color:var(--rose);font-size:13px;font-weight:600}
+  .nb-sug .s-r{color:var(--muted);font-size:11px;line-height:1.35}
+  .nb-sug button{margin-top:5px;align-self:flex-start;font-size:12px;padding:3px 12px}
+  @media (max-width:860px){.nextbox{padding:0 16px}}
   .plist{overflow:auto;flex:1;margin:0 -6px;padding:0 6px}
   @media (max-width:860px){.panel{position:static;max-height:none;top:auto;z-index:auto}.plist{max-height:30vh}}
   .pitem{display:flex;gap:10px;align-items:flex-start;padding:8px;border-radius:10px;cursor:pointer}
@@ -445,6 +465,7 @@
       <div id="seqstats" class="seqstats hidden"></div>
       <div id="printHead" class="printhead"></div>
       <div id="canvas" class="canvas"></div>
+      <div id="nextbox" class="nextbox"></div>
       <div id="printFooter" class="printfoot"></div>
     </div>
   </div>
@@ -459,6 +480,7 @@ const SUPABASE_URL="https://nxjbpgnpblqepathojzr.supabase.co";
 const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
 const sb=supabase.createClient(SUPABASE_URL,ANON);
 const $=id=>document.getElementById(id);
+const $$=sel=>document.querySelectorAll(sel);
 const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const arr=v=>Array.isArray(v)?v:[];
 
@@ -802,7 +824,7 @@ function wireDraftAutosave(){
 }
 /* persist the draft after any canvas change */
 var _renderCanvas_orig=renderCanvas;
-renderCanvas=function(){ _renderCanvas_orig(); saveDraft(); };
+renderCanvas=function(){ _renderCanvas_orig(); try{updateNextBox();}catch(e){} saveDraft(); };
 
 function reset(){currentId=null;items=[];["m_name","m_description","m_playlist","m_level","m_duration","m_style","m_tags"].forEach(k=>$(k).value="");$("m_share").checked=false;renderCanvas();applyBuilderDefaults();}
 $("b_print").onclick=()=>ensureNamed(openPrintReview);
@@ -1333,47 +1355,102 @@ window.endFlow=endFlow;window.flowPrev=flowPrev;window.flowNext=flowNext;window.
 /* ---------- AI GENERATE ---------- */
 const FN_URL=SUPABASE_URL+"/functions/v1/generate-sequence";
 $("b_ai").onclick=openAI;
+const AI_STYLES=["Vinyasa","Hatha","Yin","Restorative","Power","Gentle","Prenatal"];
+const AI_LEVELS=["Beginner","Intermediate","Advanced"];
+const AI_DURS=["Open","15 min","30 min","45 min","60 min","75 min","90 min"];
+const AI_FOCUS=["Hips","Shoulders","Hamstrings","Core","Spine","Backbends","Twists","Balance","Full Body"];
+const AI_INTENT=["Energizing","Calming","Grounding","Opening","Strengthening","Restorative"];
+const AI_AVOID=["Pregnancy-Safe","No Inversions","Knee-Safe","Wrist-Friendly","Lower-Back Safe","Shoulder-Safe","Neck-Safe"];
+function chipRow(group,vals,sel,multi,extra){return `<div class="chipgrp" data-grp="${group}" data-multi="${multi?1:0}">`+vals.map(v=>`<span class="chip ${extra||''}${sel&&sel===v?' on':''}" data-v="${esc(v)}">${esc(v)}</span>`).join("")+`</div>`;}
+function wireChips(){
+  $$("#ovl .chipgrp").forEach(g=>{const multi=g.getAttribute("data-multi")==="1";
+    g.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>{
+      if(multi){
+        if(g.getAttribute("data-grp")==="focus"&&!ch.classList.contains("on")&&g.querySelectorAll(".chip.on").length>=3)return;
+        ch.classList.toggle("on");
+      }else{g.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));ch.classList.add("on");}
+    });
+  });
+}
+function chipVal(group){const g=document.querySelector(`#ovl .chipgrp[data-grp="${group}"] .chip.on`);return g?g.getAttribute("data-v"):"";}
+function chipVals(group){return Array.from(document.querySelectorAll(`#ovl .chipgrp[data-grp="${group}"] .chip.on`)).map(x=>x.getAttribute("data-v"));}
 function openAI(prefill){
-  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()">
-    <h3 class="serif">Generate with AI</h3>
-    <div class="field"><label>Describe the class you want</label><textarea id="ai_prompt" rows="3" placeholder="e.g. 45-minute energizing vinyasa focused on hip openers, peaking with pigeon"></textarea></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="field"><label>Level</label><select id="ai_level" style="width:100%">
-        <option value="">Any level</option>
-        ${["Beginner","Beginner-Intermediate","Intermediate","Intermediate-Advanced","Advanced"].map(v=>`<option value="${v}"${$("m_level").value===v?" selected":""}>${v}</option>`).join("")}
-      </select></div>
-      <div class="field"><label>Duration</label><select id="ai_duration" style="width:100%">
-        <option value="">Any length</option>
-        ${["15 min","20 min","30 min","45 min","60 min","75 min","90 min"].map(v=>`<option value="${v}"${$("m_duration").value===v?" selected":""}>${v}</option>`).join("")}
-      </select></div></div>
+  const curLvl=AI_LEVELS.find(v=>($("m_level").value||"").indexOf(v)===0)||"";
+  const curDur=AI_DURS.find(v=>v===$("m_duration").value)||"";
+  const curSty=AI_STYLES.find(v=>($("m_style").value||"").toLowerCase().indexOf(v.toLowerCase())===0)||"";
+  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal aimodal" onclick="event.stopPropagation()">
+    <h3 class="serif">\u2728 Generate flow with AI</h3>
+    <div class="ai-lab">Style</div>${chipRow("style",AI_STYLES,curSty,false)}
+    <div class="ai-lab">Level</div>${chipRow("level",AI_LEVELS,curLvl,false)}
+    <div class="ai-lab">Duration</div>${chipRow("duration",AI_DURS,curDur||"Open",false)}
+    <div class="ai-lab">Focus <span>(up to 3)</span></div>${chipRow("focus",AI_FOCUS,null,true)}
+    <div class="ai-lab">Intention <span>(optional)</span></div>${chipRow("intention",AI_INTENT,null,true)}
+    <div class="ai-lab">Keep safe for <span>(filters the pose library)</span></div>${chipRow("avoid",AI_AVOID,null,true,"av")}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+      <div class="field"><label>Total poses <span style="color:var(--muted);font-weight:400">(optional)</span></label><input id="ai_count" type="number" min="3" max="60" placeholder="Auto from duration"/></div>
+      <div class="field"><label>&nbsp;</label><div style="font-size:11px;color:var(--muted);line-height:1.4">Tip: leave blank to let the class length decide.</div></div>
+    </div>
+    <div class="field"><label>\u2728 Notes for the AI <span style="color:var(--muted);font-weight:400">(talk to it like a sub teacher \u2014 200 char)</span></label><textarea id="ai_prompt" rows="2" maxlength="200" placeholder="e.g. Susan has a low-back issue \u2014 skip deep forward folds; peak with pigeon"></textarea></div>
     <div id="ai_err" class="err hidden"></div>
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="btn ghost" style="flex:1" onclick="closeModal()">Cancel</button>
       <button class="btn" style="flex:1" id="ai_go">Generate</button></div>
     <div id="ai_status" style="color:var(--muted);font-size:13px;margin-top:8px"></div></div></div>`;
-  $("ovl").onclick=closeModal;$("ai_go").onclick=runAI;
+  $("ovl").onclick=closeModal;$("ai_go").onclick=runAI;wireChips();
   if(prefill&&$("ai_prompt"))$("ai_prompt").value=prefill;
 }
 async function runAI(){
   $("ai_err").classList.add("hidden");
+  const dur=chipVal("duration"); const durOut=(dur&&dur!=="Open")?dur:"";
   $("ai_go").disabled=true;$("ai_go").textContent="Generating\u2026";$("ai_status").innerHTML='<span class="ai-spin">\ud83c\udf38</span> Designing your sequence\u2026 this can take a few seconds.';
   try{
     const{data:{session}}=await sb.auth.getSession();
-    const res=await fetch(FN_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":ANON,"Authorization":"Bearer "+(session&&session.access_token)},
-      body:JSON.stringify({prompt:$("ai_prompt").value.trim(),level:$("ai_level").value.trim(),duration:$("ai_duration").value.trim(),poses:POSES.map(p=>p.name)})});
+    const payload={style:chipVal("style"),level:chipVal("level"),duration:durOut,
+      focus:chipVals("focus"),intention:chipVals("intention"),avoid:chipVals("avoid"),
+      count:$("ai_count").value.trim(),notes:$("ai_prompt").value.trim(),prompt:$("ai_prompt").value.trim(),poses:POSES.map(p=>p.name)};
+    const res=await fetch(FN_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":ANON,"Authorization":"Bearer "+(session&&session.access_token)},body:JSON.stringify(payload)});
     const out=await res.json();
     if(!res.ok||out.error)throw new Error(out.error||("Request failed ("+res.status+")"));
     const built=[];let missed=0;
     (out.items||[]).forEach(it=>{const p=POSES.find(x=>(x.name||"").toLowerCase()===String(it.pose||"").toLowerCase());
       if(p)built.push({kind:"pose",pose:p,notes:it.cue||"",breaths:parseInt(it.breaths)||5});else missed++;});
-    if(!built.length)throw new Error("No matching poses came back \u2014 try rephrasing.");
+    if(!built.length)throw new Error("No matching poses came back \u2014 try adjusting your options.");
     items=built;if(out.title&&!$("m_name").value.trim())$("m_name").value=out.title;
     if(out.style&&$("m_style")&&!$("m_style").value)setSel("m_style",out.style);
     if(out.description&&$("m_description")&&!$("m_description").value.trim())$("m_description").value=out.description;
-    if($("ai_level").value)setSel("m_level",$("ai_level").value);if($("ai_duration").value)setSel("m_duration",$("ai_duration").value);
+    if(chipVal("level"))setSel("m_level",chipVal("level"));if(durOut)setSel("m_duration",durOut);
     closeModal();renderCanvas();toast("Generated "+built.length+" poses"+(missed?" ("+missed+" skipped)":"")+" \u2713");
   }catch(e){const el=$("ai_err");el.textContent=e.message;el.classList.remove("hidden");$("ai_status").textContent="";}
   $("ai_go").disabled=false;$("ai_go").textContent="Generate";
+}
+/* ---------- SUGGEST NEXT POSE ---------- */
+function updateNextBox(){
+  const nb=$("nextbox");if(!nb)return;
+  const poseCount=items.filter(it=>it.kind==="pose").length;
+  if(!poseCount){nb.innerHTML="";return;}
+  nb.innerHTML=`<div class="nextcard"><div class="nb-ico">\ud83c\udf3f</div>
+    <div class="nb-txt"><div class="nb-h">Need help picking the next pose?</div>
+    <div class="nb-s">I\u2019ll suggest 3 poses that fit your flow so far.</div></div>
+    <button class="btn" id="nb_go">\u2728 Suggest next pose</button></div>`;
+  $("nb_go").onclick=suggestNext;
+}
+async function suggestNext(){
+  const nb=$("nextbox");const btn=$("nb_go");if(btn){btn.disabled=true;btn.textContent="Thinking\u2026";}
+  try{
+    const names=items.filter(it=>it.kind==="pose").map(it=>varName(it));
+    const{data:{session}}=await sb.auth.getSession();
+    const res=await fetch(FN_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":ANON,"Authorization":"Bearer "+(session&&session.access_token)},
+      body:JSON.stringify({mode:"suggest",items:names,style:$("m_style").value||"",level:$("m_level").value||"",poses:POSES.map(p=>p.name)})});
+    const out=await res.json();
+    if(!res.ok||out.error)throw new Error(out.error||"Request failed");
+    const sugs=(out.suggestions||[]).filter(s=>POSES.find(p=>(p.name||"").toLowerCase()===String(s.pose||"").toLowerCase()));
+    if(!sugs.length)throw new Error("No suggestions \u2014 try Generate instead.");
+    nb.innerHTML=`<div class="nextcard" style="flex-direction:column;align-items:stretch">
+      <div style="display:flex;align-items:center;gap:8px"><div class="nb-ico">\ud83c\udf3f</div><div class="nb-h" style="flex:1">Suggested next poses</div><button class="btn ghost" style="padding:3px 10px;font-size:12px" id="nb_x">\u2715</button></div>
+      <div class="nb-sugs">${sugs.map((sg,k)=>`<div class="nb-sug"><div class="s-n">${esc(sg.pose)}</div><div class="s-r">${esc(sg.reason||"")}</div><button class="btn" data-k="${k}">+ Add</button></div>`).join("")}</div></div>`;
+    $("nb_x").onclick=updateNextBox;
+    nb.querySelectorAll(".nb-sug button").forEach((b,k)=>b.onclick=()=>{const p=POSES.find(x=>(x.name||"").toLowerCase()===sugs[k].pose.toLowerCase());if(p){items.push({kind:"pose",pose:p,notes:"",breaths:5});renderCanvas();toast("Added "+p.name);}});
+  }catch(e){toast(e.message);if(btn){btn.disabled=false;btn.textContent="\u2728 Suggest next pose";}}
 }
 
 /* ---------- COMMUNITY BROWSE ---------- */
@@ -1404,7 +1481,7 @@ async function loadCommunity(id){
     return{kind:"pose",pose:p,notes:it.notes||"",breaths:it.custom_breaths||"",breath_pattern:it.custom_breath_pattern||"Natural",mirror:!!it.mirrored,variation_id:it.variation_id||null};});
   closeModal();renderCanvas();toast("Loaded a copy \u2014 tweak and Save to make it yours");
 }
-window.openAI=openAI;window.runAI=runAI;window.openCommunity=openCommunity;window.loadCommunity=loadCommunity;
+window.openAI=openAI;window.runAI=runAI;window.suggestNext=suggestNext;window.updateNextBox=updateNextBox;window.openCommunity=openCommunity;window.loadCommunity=loadCommunity;
 /* ---------- TEMPLATES ---------- */
 $("b_templates").onclick=openTemplates;
 async function openTemplates(){
