@@ -630,23 +630,46 @@ function substitutePose(i,pid){
 function tagsArr(){return ($("m_tags").value||"").split(",").map(s=>s.trim()).filter(Boolean);}
 $("b_save").onclick=()=>{
   const name=$("m_name").value.trim();
+  const isCommunity=$("m_share").checked;
   if(!items.length)return toast("Add at least one pose.");
-  if(!name){ remindName(false); return; }
-  if(name.toLowerCase()==="my yoga sequence"){ remindName(true); return; }
+  if(!name){ remindName("empty"); return; }
+  if(name.toLowerCase()==="my yoga sequence"){ remindName(isCommunity?"community":"placeholder"); return; }
   saveSequence();
 };
-function remindName(isPlaceholder){
+function remindName(mode){
   const focusName=()=>{ const el=$("m_name"); if(el){ el.focus(); el.select&&el.select(); } };
-  const body = isPlaceholder
-    ? `<div style="font-size:13.5px;color:var(--ink,#4a4047);line-height:1.55">“My Yoga Sequence” is just the placeholder text — not a real title. Give your sequence its own name so you can find it later.</div>
-       <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" style="flex:1" id="rn_rename">Rename it</button><button class="btn ghost" style="flex:1" id="rn_anyway">Save anyway</button></div>`
-    : `<div style="font-size:13.5px;color:var(--ink,#4a4047);line-height:1.55">Your sequence needs a name before you can save it. The faint “My Yoga Sequence” in the title box is just placeholder text, not an actual title.</div>
+  let body;
+  if(mode==="community"){
+    body=`<div style="font-size:13.5px;color:var(--ink,#4a4047);line-height:1.55">To share a sequence with the community it needs a real title — “My Yoga Sequence” is just placeholder text, not a name. Rename it to share, or keep it private for now.</div>
+       <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" style="flex:1" id="rn_rename">Rename it</button><button class="btn ghost" style="flex:1" id="rn_private">Save as private</button></div>`;
+  } else if(mode==="placeholder"){
+    body=`<div style="font-size:13.5px;color:var(--ink,#4a4047);line-height:1.55">“My Yoga Sequence” is just the placeholder text — not a real title. Give your sequence its own name so you can find it later.</div>
+       <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" style="flex:1" id="rn_rename">Rename it</button><button class="btn ghost" style="flex:1" id="rn_anyway">Save anyway</button></div>`;
+  } else {
+    body=`<div style="font-size:13.5px;color:var(--ink,#4a4047);line-height:1.55">Your sequence needs a name before you can save it. The faint “My Yoga Sequence” in the title box is just placeholder text, not an actual title.</div>
        <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" style="flex:1" id="rn_rename">Name it</button></div>`;
-  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()" style="max-width:420px">
+  }
+  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()" style="max-width:430px">
     <h3 class="serif" style="margin-top:0">Name your sequence</h3>${body}</div></div>`;
   $("ovl").onclick=closeModal;
   $("rn_rename").onclick=()=>{ closeModal(); focusName(); };
   const anyway=$("rn_anyway"); if(anyway)anyway.onclick=()=>{ closeModal(); saveSequence(); };
+  const priv=$("rn_private"); if(priv)priv.onclick=()=>{ const sh=$("m_share"); if(sh)sh.checked=false; closeModal(); toast("Saved as private"); saveSequence(); };
+}
+function ensureNamed(proceed){
+  const name=$("m_name").value.trim();
+  if(name && name.toLowerCase()!=="my yoga sequence"){ proceed(); return; }
+  const empty=!name;
+  const msg=empty
+    ? "This will use \u201cMy Yoga Sequence\u201d as the title, which is just placeholder text \u2014 not a real name. Give your sequence a title first so it reads right."
+    : "\u201cMy Yoga Sequence\u201d is the placeholder text, not a real title. Rename your sequence so it reads right here.";
+  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()" style="max-width:430px">
+    <h3 class="serif" style="margin-top:0">Name your sequence</h3>
+    <div style="font-size:13.5px;color:var(--ink,#4a4047);line-height:1.55">${msg}</div>
+    <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" style="flex:1" id="en_name">Name it</button><button class="btn ghost" style="flex:1" id="en_go">Continue anyway</button></div></div></div>`;
+  $("ovl").onclick=closeModal;
+  $("en_name").onclick=()=>{ closeModal(); const el=$("m_name"); if(el){ el.focus(); el.select&&el.select(); } };
+  $("en_go").onclick=()=>{ closeModal(); proceed(); };
 }
 async function saveSequence(){
   const name=$("m_name").value.trim();
@@ -654,7 +677,7 @@ async function saveSequence(){
   const row={name,level:$("m_level").value.trim()||null,style:$("m_style").value.trim()||null,
     duration_label:$("m_duration").value.trim()||null,description:$("m_description").value.trim()||null,
     playlist_url:$("m_playlist").value.trim()||null,tags:tagsArr(),
-    visibility:$("m_share").checked?"community":"private",theme:seqTheme,owner_id:SESSION.user.id};
+    visibility:($("m_share").checked && name.toLowerCase()!=="my yoga sequence")?"community":"private",theme:seqTheme,owner_id:SESSION.user.id};
   if(currentId)row.id=currentId;
   const{data,error}=await sb.from("sequences").upsert(row).select("id").single();
   if(error)return toast("Save failed: "+error.message);
@@ -673,9 +696,9 @@ $("b_new").onclick=()=>{if(items.length&&!confirm("Start a new sequence? Unsaved
 $("b_clear").onclick=()=>{if(items.length&&!confirm("Clear all poses from this sequence?"))return;items=[];renderCanvas();};
 function setSel(id,val){var el=$(id);if(!el)return;val=val||"";if(val&&!Array.prototype.some.call(el.options,function(o){return o.value===val;})){var o=document.createElement("option");o.value=val;o.textContent=val;el.appendChild(o);}el.value=val;}
 function reset(){currentId=null;items=[];["m_name","m_description","m_playlist","m_level","m_duration","m_style","m_tags"].forEach(k=>$(k).value="");$("m_share").checked=false;renderCanvas();applyBuilderDefaults();}
-$("b_print").onclick=openPrintReview;
+$("b_print").onclick=()=>ensureNamed(openPrintReview);
 $("b_share").onclick=shareSequence;
-$("b_email").onclick=openEmailModal;
+$("b_email").onclick=()=>ensureNamed(openEmailModal);
 function openEmailModal(){
   if(!IS_ADMIN)return;
   if(!currentId)return toast("Save your sequence first, then send.");
