@@ -306,6 +306,7 @@
       <button class="tab" data-tab="legal">Legal</button>
       <button class="tab" data-tab="faqs">Help/FAQ</button>
       <button class="tab" data-tab="fieldopts">Field options</button>
+      <button class="tab" data-tab="themes">Class themes</button>
       <button class="tab" data-tab="site">Site</button>
       <button class="tab" data-tab="billing">Billing</button>
       <button class="tab" data-tab="shop">Shop</button>
@@ -383,6 +384,7 @@
     #fieldopts .fo-toastbox.show{opacity:1;transform:translateX(-50%) translateY(0)}
     @media(max-width:760px){#fieldopts .fo-shell{grid-template-columns:1fr}#fieldopts .fo-grouplist{flex-direction:row;flex-wrap:wrap}#fieldopts .fo-groupbtn{width:auto}}
     </style>
+    <div id="themes" class="hidden"></div>
     <div id="fieldopts" class="hidden">
       <div class="fo-shell">
         <aside class="fo-sidebar">
@@ -636,6 +638,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   $("legal").classList.toggle("hidden", t.dataset.tab!=="legal");
   $("faqs").classList.toggle("hidden", t.dataset.tab!=="faqs");
   $("fieldopts").classList.toggle("hidden", t.dataset.tab!=="fieldopts");
+  $("themes").classList.toggle("hidden", t.dataset.tab!=="themes");
   $("site").classList.toggle("hidden", t.dataset.tab!=="site");
   $("billing").classList.toggle("hidden", t.dataset.tab!=="billing");
   $("shop").classList.toggle("hidden", t.dataset.tab!=="shop");
@@ -645,11 +648,99 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   if(t.dataset.tab==="legal") loadLegal();
   if(t.dataset.tab==="faqs") loadFaqs();
   if(t.dataset.tab==="fieldopts") foInit();
+  if(t.dataset.tab==="themes") loadThemes();
   if(t.dataset.tab==="site") loadSite();
   if(t.dataset.tab==="billing") loadBilling();
   if(t.dataset.tab==="shop") loadShop();
   if(t.dataset.tab==="email") loadEmail();
 });
+
+/* ---------- CLASS THEMES ---------- */
+let THEMES=[], themesLoaded=false, themeQuery="";
+async function loadThemes(force){
+  if(themesLoaded && !force) return;
+  $("themes").innerHTML='<div style="padding:18px;color:var(--muted)">Loading…</div>';
+  const { data, error } = await sb.from("class_themes").select("*").order("position").order("name");
+  if(error){ $("themes").innerHTML='<div style="padding:18px;color:#A03A22">'+esc(error.message)+'</div>'; return; }
+  THEMES=data||[]; themesLoaded=true; renderThemes();
+}
+function renderThemes(){
+  const pub=THEMES.filter(t=>t.is_active).length;
+  const q=themeQuery.trim().toLowerCase();
+  const list=THEMES.filter(t=>!q||t.name.toLowerCase().includes(q)||(t.intention||"").toLowerCase().includes(q)||(Array.isArray(t.tags)?t.tags.join(" "):"").toLowerCase().includes(q));
+  let html=`<div class="erow-top">
+    <div class="note">${pub} of ${THEMES.length} themes are active. Active themes show in the builder\u2019s \u201cBrowse class themes\u201d picker.</div>
+    <button id="themeNew" class="btn" style="padding:7px 14px">+ New theme</button>
+  </div>
+  <div class="toolbar"><input id="themeSearch" placeholder="Search themes…" value="${esc(themeQuery)}"/></div>`;
+  list.forEach(t=>{
+    const tags=Array.isArray(t.tags)?t.tags:[];
+    html+=`<div class="lrow">
+      <label class="sw"><input type="checkbox" data-tpub="${t.id}" ${t.is_active?"checked":""}><span class="sl"></span></label>
+      <div><div class="mn">${esc(t.name)}</div><div class="ms">${esc(t.intention||"")}</div><div class="ms" style="color:var(--rose,#C8A0A6)">${tags.length?("Focus: "+esc(tags.join(", "))):""}</div></div>
+      <div class="lright">
+        <span class="${t.is_active?"pill-on":"pill-off"}">${t.is_active?"Active":"Hidden"}</span>
+        <button class="btn ghost" style="padding:5px 11px" data-tedit="${t.id}">Edit</button>
+      </div>
+    </div>`;
+  });
+  if(!list.length) html+='<div style="padding:18px;color:var(--muted)">No themes match.</div>';
+  $("themes").innerHTML=html;
+  $("themeNew").onclick=()=>openThemeEditor(null);
+  $("themeSearch").oninput=e=>{ themeQuery=e.target.value; const c=e.target.selectionStart; renderThemes(); const sx=$("themeSearch"); if(sx){ sx.focus(); sx.setSelectionRange(c,c);} };
+  $("themes").querySelectorAll("[data-tpub]").forEach(c=>c.onchange=()=>toggleThemeActive(c.dataset.tpub,c.checked));
+  $("themes").querySelectorAll("[data-tedit]").forEach(b=>b.onclick=()=>openThemeEditor(b.dataset.tedit));
+}
+async function toggleThemeActive(id,checked){
+  const t=THEMES.find(x=>x.id===id); if(t)t.is_active=checked;
+  const { error }=await sb.from("class_themes").update({ is_active:checked }).eq("id",id);
+  if(error){ alert("Couldn\u2019t update: "+error.message); if(t)t.is_active=!checked; loadThemes(true); return; }
+  renderThemes();
+}
+function openThemeEditor(id){
+  const t = id ? THEMES.find(x=>x.id===id) : { name:"", intention:"", tags:[], is_active:true, position:(THEMES.reduce((m,x)=>Math.max(m,x.position||0),0)+1) };
+  const tagStr=Array.isArray(t.tags)?t.tags.join(", "):"";
+  $("edRoot").innerHTML=`<div class="ovl"><div class="ed">
+    <div class="edtop"><h2>${id?"Edit theme":"New theme"}</h2><button id="themeClose" class="btn ghost" style="margin-left:auto;padding:7px 13px">Close</button></div>
+    <div class="edbody">
+      <div class="grp">
+        <div class="field"><label>Name</label><input id="tN" value="${esc(t.name)}" placeholder="e.g. Hip Opening"/></div>
+        <div class="field"><label>Intention</label><textarea id="tI" style="min-height:80px" placeholder="One friendly sentence describing the class.">${esc(t.intention||"")}</textarea></div>
+        <div class="field"><label>Focus tags</label><input id="tT" value="${esc(tagStr)}" placeholder="comma separated, e.g. hips, hamstrings, glutes"/><div class="hint">These show as \u201cFocus: \u2026\u201d and seed the AI prompt.</div></div>
+        <div class="row2">
+          <div class="field"><label>Sort order</label><input id="tP" type="number" value="${t.position||0}"/></div>
+          <label class="toggle" style="align-self:end"><input id="tA" type="checkbox" ${t.is_active?"checked":""}/> Active</label>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button id="tSave" class="btn">Save</button>
+        ${id?`<button id="tDel" class="btn ghost" style="color:#A03A22;border-color:#E9C9BE">Delete</button>`:""}
+        <span id="tMsg" style="font-size:12px"></span>
+      </div>
+    </div>
+  </div></div>`;
+  $("themeClose").onclick=()=>{ $("edRoot").innerHTML=""; };
+  $("tSave").onclick=()=>saveTheme(id);
+  if(id) $("tDel").onclick=()=>deleteTheme(id);
+}
+async function saveTheme(id){
+  const name=$("tN").value.trim();
+  if(!name){ $("tMsg").innerHTML='<span style="color:#A03A22">Name is required.</span>'; return; }
+  const tags=$("tT").value.split(",").map(x=>x.trim()).filter(Boolean);
+  const payload={ name, intention:$("tI").value.trim(), tags, position:parseInt($("tP").value,10)||0, is_active:$("tA").checked };
+  $("tSave").disabled=true; $("tMsg").innerHTML='<span style="color:var(--muted)">Saving…</span>';
+  let res; if(id) res=await sb.from("class_themes").update(payload).eq("id",id); else res=await sb.from("class_themes").insert(payload);
+  $("tSave").disabled=false;
+  if(res.error){ $("tMsg").innerHTML='<span style="color:#A03A22">'+esc(res.error.message)+'</span>'; return; }
+  $("edRoot").innerHTML=""; loadThemes(true);
+}
+async function deleteTheme(id){
+  const t=THEMES.find(x=>x.id===id);
+  if(!confirm(`Delete \u201c${t?t.name:"this theme"}\u201d? This can\u2019t be undone.`)) return;
+  const { error }=await sb.from("class_themes").delete().eq("id",id);
+  if(error){ $("tMsg").innerHTML='<span style="color:#A03A22">'+esc(error.message)+'</span>'; return; }
+  $("edRoot").innerHTML=""; loadThemes(true);
+}
 
 /* ---------- FIELD OPTIONS ---------- */
 const FO_GROUPS=[
