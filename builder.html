@@ -425,7 +425,7 @@
         <button class="btn ghost" id="b_load">📂 Load Saved…</button>
         <button class="btn ghost" id="b_new">✦ New</button>
         <button class="btn ghost" id="b_section">＋ Section</button>
-        <button class="btn ghost" id="b_print">🖨 Print</button>
+        <button class="btn ghost" id="b_print">🖨 Print / PDF</button>
         <button class="btn ghost" id="b_share">🔗 Share</button>
         <button class="btn ghost" id="b_email" hidden>✉ Weekly email</button>
         <button class="btn ghost" id="b_clear">🧹 Clear</button>
@@ -893,7 +893,7 @@ function openPrintReview(){
     +'<div class="pm-tabs"><span class="lbl">Layout</span>'
     +'<button class="pm-tab on" data-l="list">\u2630 List</button>'
     +'<button class="pm-tab" data-l="cards">\u229e Cards</button>'
-    +'<button class="pm-tab" data-l="notes">\ud83d\udcdd Notes only</button></div>'+'<div class="pm-tabs"><span class="lbl">Print style</span>'+'<button class="pm-tab" data-s="classic">Classic</button>'+'<button class="pm-tab" data-s="minimal">Minimal</button>'+'<button class="pm-tab" data-s="botanical">Botanical</button></div></div>'
+    +'<button class="pm-tab" data-l="notes">\ud83d\udcdd Notes only</button>'+'<button class="pm-tab" data-l="handout">\ud83c\udf3f Student handout</button></div>'+'<div class="pm-tabs"><span class="lbl">Print style</span>'+'<button class="pm-tab" data-s="classic">Classic</button>'+'<button class="pm-tab" data-s="minimal">Minimal</button>'+'<button class="pm-tab" data-s="botanical">Botanical</button></div></div>'
     +'<div class="pm-list">'+rows+'</div>'
     +'<div class="pm-foot"><div class="pm-hint">Notes are saved with your sequence when you print</div>'
     +'<div style="display:flex;gap:8px"><button class="btn ghost" id="pmCancel">Cancel</button>'
@@ -950,7 +950,7 @@ function printDoc(layout){
     +'.ci{width:130px;height:130px;display:flex;align-items:center;justify-content:center;background:'+CIB+';border-radius:10px;overflow:hidden}'
     +'.cnm{font-family:'+HEADF+';font-size:14px;font-weight:600;color:'+ACC+';line-height:1.2}'
     +'.csn{font-size:10px;color:'+SEC+';font-style:italic}.cm{font-size:10px;color:#888;margin-top:2px}'
-    +'.cnotes{font-size:10px;color:#666;font-style:italic;border-top:1px solid '+LINEC+';padding-top:6px;margin-top:2px;width:100%;line-height:1.4}'+'.pcues{font-size:9.5px;color:#777;margin-top:5px;line-height:1.4;text-align:left;width:100%}'+'.pcues div{padding-left:9px;text-indent:-9px}'+'.pcues div:before{content:"\u2022 ";color:'+SEC+'}';
+    +'.cnotes{font-size:10px;color:#666;font-style:italic;border-top:1px solid '+LINEC+';padding-top:6px;margin-top:2px;width:100%;line-height:1.4}'+'.pcues{font-size:9.5px;color:#777;margin-top:5px;line-height:1.4;text-align:left;width:100%}'+'.pcues div{padding-left:9px;text-indent:-9px}'+'.pcues div:before{content:"\u2022 ";color:'+SEC+'}'+'.handoutintro{font-family:'+HEADF+';font-style:italic;color:'+SEC+';font-size:13px;text-align:center;margin:0 0 16px}';
   var body;
   if(layout==="cards"){
     body='<div class="grid">'+poseItems.map(function(it,i){ var p=it.pose;
@@ -958,6 +958,12 @@ function printDoc(layout){
         +'<div class="cnm">'+E(varName(it))+'</div><div class="csn">'+E(varSan(it))+'</div>'
         +'<div class="cm">'+E(p.difficulty_level||"")+' &nbsp;\u00b7&nbsp; '+((parseInt(it.breaths)||5))+' breaths</div>'
         +(it.notes?('<div class="cnotes">'+E(it.notes)+'</div>'):"")+cuesIt(it)+'</div>'; }).join("")+'</div>';
+  } else if(layout==="handout"){
+    body='<p class="handoutintro">Your practice for today \u2014 move at your own pace, breathe softly, and rest whenever you need.</p>'
+      +'<div class="grid">'+poseItems.map(function(it,i){
+        return '<div class="card"><div class="cn">'+(i+1)+'</div><div class="ci">'+imgIt(it,120,it.mirror)+'</div>'
+          +'<div class="cnm">'+E(varName(it))+'</div><div class="csn">'+E(varSan(it))+'</div>'
+          +'<div class="cm">'+((parseInt(it.breaths)||5))+' breaths</div>'+cuesIt(it)+'</div>'; }).join("")+'</div>';
   } else if(layout==="notes"){
     var nr=poseItems.filter(function(it){return it.notes;}).map(function(it){ return '<tr><td class="pn">'+E(varName(it))+'</td><td class="nt">'+E(it.notes)+'</td></tr>'; }).join("");
     body='<table><thead><tr><th>Pose</th><th>Notes &amp; cues</th></tr></thead><tbody>'+(nr||'<tr><td colspan="2" style="color:#999">No notes added yet.</td></tr>')+'</tbody></table>';
@@ -1408,8 +1414,18 @@ async function openTemplates(){
     <div id="tplList" style="color:var(--muted)">Loading\u2026</div>
     <button class="btn ghost" style="margin-top:14px;width:100%" onclick="closeModal()">Close</button></div></div>`;
   $("ovl").onclick=closeModal;$("tpl_save").onclick=saveAsTemplate;
-  const{data}=await sb.from("sequences").select("*").eq("owner_id",SESSION.user.id).eq("is_template",true).order("updated_at",{ascending:false});
-  $("tplList").innerHTML=(data||[]).map(s=>`<div class="savedrow" data-id="${s.id}"><div style="flex:1"><div style="font-weight:500;color:var(--head)">${esc(s.name)}</div><div style="color:var(--muted);font-size:12px">${esc(s.level||"")} ${esc(s.duration_label||"")}</div></div></div>`).join("")||'<div style="color:var(--muted)">No templates yet. Build a sequence, then save it as a template.</div>';
+  const PPY_STUDIO_ID="170d6c47-119f-429f-9887-4dfb70d223b8";
+  const row=s=>`<div class="savedrow" data-id="${s.id}"><div style="flex:1"><div style="font-weight:500;color:var(--head)">${esc(s.name)}</div><div style="color:var(--muted);font-size:12px">${esc(s.level||"")}${s.style?" \u00b7 "+esc(s.style):""}${s.duration_label?" \u00b7 "+esc(s.duration_label):""}</div></div></div>`;
+  const[starterRes,mineRes]=await Promise.all([
+    sb.from("sequences").select("*").eq("owner_id",PPY_STUDIO_ID).eq("is_template",true).order("name"),
+    sb.from("sequences").select("*").eq("owner_id",SESSION.user.id).eq("is_template",true).order("updated_at",{ascending:false})
+  ]);
+  const starters=(starterRes.data||[]),mine=(mineRes.data||[]).filter(s=>s.owner_id!==PPY_STUDIO_ID);
+  let html="";
+  if(starters.length){html+='<div style="font-family:var(--font-head);color:var(--rose);font-size:13px;letter-spacing:.04em;margin:2px 0 8px">\u2728 Pure Passion Yoga starter flows</div>'+starters.map(row).join("");}
+  html+='<div style="font-family:var(--font-head);color:var(--sage);font-size:13px;letter-spacing:.04em;margin:'+(starters.length?"16px":"2px")+' 0 8px">My templates</div>';
+  html+=mine.length?mine.map(row).join(""):'<div style="color:var(--muted);font-size:13px">No templates yet. Build a sequence, then save it as a template.</div>';
+  $("tplList").innerHTML=html;
   $("tplList").querySelectorAll(".savedrow").forEach(el=>el.onclick=()=>loadTemplate(el.dataset.id));
 }
 async function saveAsTemplate(){
