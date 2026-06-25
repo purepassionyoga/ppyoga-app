@@ -392,6 +392,7 @@
       <input id="m_name" class="titlein" placeholder="My Yoga Sequence"/>
       <div class="meta">
         <textarea id="m_description" class="full" rows="2" placeholder="Sequence description, intention, or theme… (optional)"></textarea>
+        <div class="full" style="margin-top:-2px"><button type="button" class="btn ghost" id="b_browsethemes" style="padding:5px 12px;font-size:12px">🎨 Browse class themes</button></div>
         <input id="m_playlist" class="full" placeholder="🎵 Playlist link — Spotify, YouTube, Apple Music… (optional)"/>
         <select id="m_level"><option value="">Level…</option><option value="Beginner">Beginner</option><option value="Beginner-Intermediate">Beginner-Intermediate</option><option value="Intermediate">Intermediate</option><option value="Intermediate-Advanced">Intermediate-Advanced</option><option value="Advanced">Advanced</option></select>
         <select id="m_duration"><option value="">Duration…</option><option value="5 min">5 min</option><option value="10 min">10 min</option><option value="15 min">15 min</option><option value="20 min">20 min</option><option value="25 min">25 min</option><option value="30 min">30 min</option><option value="45 min">45 min</option><option value="60 min">60 min</option><option value="90 min">90 min</option></select>
@@ -414,7 +415,6 @@
         <button class="btn ghost" id="b_ai">✨ AI</button>
         <button class="btn ghost" id="b_flow">▶ Flow</button>
         <button class="btn ghost" id="b_balance">⚖ Balance</button>
-        <button class="btn ghost" id="b_theme">🎨 Theme</button>
         <label class="cuewrap">Cues
           <select id="b_cuedepth" class="cuesel"><option value="off">Off</option><option value="short">Short</option><option value="medium">Medium</option><option value="long">Long</option></select>
         </label>
@@ -743,7 +743,7 @@ function openPrintReview(){
     +'<div class="pm-tabs"><span class="lbl">Layout</span>'
     +'<button class="pm-tab on" data-l="list">\u2630 List</button>'
     +'<button class="pm-tab" data-l="cards">\u229e Cards</button>'
-    +'<button class="pm-tab" data-l="notes">\ud83d\udcdd Notes only</button></div></div>'
+    +'<button class="pm-tab" data-l="notes">\ud83d\udcdd Notes only</button></div>'+'<div class="pm-tabs"><span class="lbl">Print style</span>'+'<button class="pm-tab" data-s="classic">Classic</button>'+'<button class="pm-tab" data-s="minimal">Minimal</button>'+'<button class="pm-tab" data-s="botanical">Botanical</button></div></div>'
     +'<div class="pm-list">'+rows+'</div>'
     +'<div class="pm-foot"><div class="pm-hint">Notes are saved with your sequence when you print</div>'
     +'<div style="display:flex;gap:8px"><button class="btn ghost" id="pmCancel">Cancel</button>'
@@ -751,7 +751,8 @@ function openPrintReview(){
   ov.addEventListener("click",function(){ ov.remove(); });
   document.body.appendChild(ov);
   var layout="list";
-  ov.querySelectorAll(".pm-tab").forEach(function(bt){ bt.onclick=function(){ ov.querySelectorAll(".pm-tab").forEach(function(x){x.classList.remove("on");}); bt.classList.add("on"); layout=bt.getAttribute("data-l"); }; });
+  ov.querySelectorAll(".pm-tab[data-l]").forEach(function(bt){ bt.onclick=function(){ ov.querySelectorAll(".pm-tab[data-l]").forEach(function(x){x.classList.remove("on");}); bt.classList.add("on"); layout=bt.getAttribute("data-l"); }; });
+  ov.querySelectorAll(".pm-tab[data-s]").forEach(function(bt){ if(bt.getAttribute("data-s")===seqTheme)bt.classList.add("on"); bt.onclick=function(){ ov.querySelectorAll(".pm-tab[data-s]").forEach(function(x){x.classList.remove("on");}); bt.classList.add("on"); applyTheme(bt.getAttribute("data-s")); }; });
   $("pmCancel").onclick=function(){ ov.remove(); };
   $("pmGo").onclick=function(){
     ov.querySelectorAll("textarea[data-idx]").forEach(function(t){ items[+t.getAttribute("data-idx")].notes=t.value; });
@@ -1170,7 +1171,7 @@ window.endFlow=endFlow;window.flowPrev=flowPrev;window.flowNext=flowNext;window.
 /* ---------- AI GENERATE ---------- */
 const FN_URL=SUPABASE_URL+"/functions/v1/generate-sequence";
 $("b_ai").onclick=openAI;
-function openAI(){
+function openAI(prefill){
   $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()">
     <h3 class="serif">Generate with AI</h3>
     <div class="field"><label>Describe the class you want</label><textarea id="ai_prompt" rows="3" placeholder="e.g. 45-minute energizing vinyasa focused on hip openers, peaking with pigeon"></textarea></div>
@@ -1189,6 +1190,7 @@ function openAI(){
       <button class="btn" style="flex:1" id="ai_go">Generate</button></div>
     <div id="ai_status" style="color:var(--muted);font-size:13px;margin-top:8px"></div></div></div>`;
   $("ovl").onclick=closeModal;$("ai_go").onclick=runAI;
+  if(prefill&&$("ai_prompt"))$("ai_prompt").value=prefill;
 }
 async function runAI(){
   $("ai_err").classList.add("hidden");
@@ -1280,21 +1282,72 @@ async function loadTemplate(id){
   closeModal();renderCanvas();toast("Template loaded");
 }
 
-/* ---------- THEME ---------- */
-$("b_theme").onclick=openTheme;
-function openTheme(){
-  const opts=[["classic","Classic","Serif headings, rose accent"],["minimal","Minimal","Clean monochrome"],["botanical","Botanical","Sage accent"]];
-  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()">
-    <h3 class="serif">Print theme</h3>
-    ${opts.map(o=>`<div class="savedrow" data-t="${o[0]}"><div style="flex:1"><div style="font-weight:500;color:var(--head)">${o[1]}${seqTheme===o[0]?" \u2713":""}</div><div style="color:var(--muted);font-size:12px">${o[2]}</div></div></div>`).join("")}
-    <div style="color:var(--muted);font-size:12px;margin-top:6px">Themes style the printed handout. Save the sequence to keep your choice.</div>
+/* ---------- CLASS THEMES ---------- */
+const CLASS_THEMES=[
+  {name:"Stress Relief",intention:"Gentle, slow-paced poses to calm the nervous system.",tags:["calming","restorative","breath"]},
+  {name:"Morning Energy",intention:"An energizing flow to awaken the body and mind.",tags:["energizing","standing","sun salutations"]},
+  {name:"Hip Opening",intention:"Deep hip openers to release tension and increase mobility.",tags:["hips","hamstrings","glutes"]},
+  {name:"Core Strength",intention:"Build core stability and overall strength.",tags:["core","balance","strength"]},
+  {name:"Back Care",intention:"Gentle poses to relieve back tension and improve posture.",tags:["spine","lower back","mobility"]},
+  {name:"Balance & Focus",intention:"Standing balances and concentration poses to steady the mind.",tags:["balance","focus","standing"]},
+  {name:"Deep Stretch",intention:"Long-held stretches for a full-body release.",tags:["flexibility","yin","hamstrings"]},
+  {name:"Heart Opening",intention:"Backbends to open the chest and lift the mood.",tags:["backbends","chest","shoulders"]},
+  {name:"Grounding",intention:"Steady, earthy poses to feel centered and present.",tags:["grounding","standing","balance"]},
+  {name:"Detox Twist",intention:"Twists to wring out, refresh, and aid digestion.",tags:["twists","digestion","spine"]},
+  {name:"Restful Wind-Down",intention:"A calming sequence to prepare the body for sleep.",tags:["restorative","calming","forward folds"]},
+  {name:"Full-Body Flow",intention:"A balanced flow that touches every major area.",tags:["full body","vinyasa","strength"]},
+  {name:"Shoulder Release",intention:"Open tight shoulders, neck, and upper back.",tags:["shoulders","neck","upper back"]},
+  {name:"Hamstring Love",intention:"Safely lengthen the back of the legs.",tags:["hamstrings","forward folds","flexibility"]},
+  {name:"Strong & Steady",intention:"A power-building standing sequence.",tags:["strength","standing","endurance"]},
+  {name:"Gentle Beginnings",intention:"Accessible foundational poses for newcomers.",tags:["beginner","gentle","foundations"]},
+  {name:"Sun Salutation Flow",intention:"Classic flowing salutations to build warmth.",tags:["vinyasa","warm-up","full body"]},
+  {name:"Forward Fold Focus",intention:"Calming folds to soothe the mind and stretch the body.",tags:["forward folds","hamstrings","calming"]},
+  {name:"Backbend Bliss",intention:"Progressive backbends to energize the spine.",tags:["backbends","chest","spine"]},
+  {name:"Hip & Heart",intention:"Pair deep hip openers with heart openers.",tags:["hips","chest","release"]},
+  {name:"Calm Anxiety",intention:"Grounding, breath-led poses to ease worry.",tags:["calming","grounding","breath"]},
+  {name:"Posture Reset",intention:"Counter desk-slump with openers and strengtheners.",tags:["posture","shoulders","spine"]},
+  {name:"Inversions Intro",intention:"A gentle introduction to going upside down.",tags:["inversions","core","balance"]},
+  {name:"Standing Strong",intention:"A warrior-rich standing sequence for the legs.",tags:["standing","strength","legs"]},
+  {name:"Mobility Flow",intention:"Joint-friendly movement to improve range of motion.",tags:["mobility","joints","warm-up"]},
+  {name:"Evening Unwind",intention:"Soft transitions to release the day.",tags:["restorative","calming","hips"]},
+  {name:"Power Core",intention:"A dynamic, core-focused challenge.",tags:["core","strength","endurance"]},
+  {name:"Open & Release",intention:"Whole-body opening for tightness relief.",tags:["flexibility","hips","shoulders"]},
+  {name:"Breath & Stillness",intention:"A meditative, pranayama-forward practice.",tags:["breath","meditation","calming"]},
+  {name:"Twist & Detox",intention:"Spinal twists to energize and cleanse.",tags:["twists","spine","core"]}
+];
+$("b_browsethemes").onclick=openThemePicker;
+function themeRows(q){
+  const ql=(q||"").toLowerCase();
+  const list=CLASS_THEMES.filter(t=>!ql||t.name.toLowerCase().includes(ql)||t.intention.toLowerCase().includes(ql)||t.tags.join(" ").toLowerCase().includes(ql));
+  if(!list.length)return '<div style="color:var(--muted);font-size:13px;padding:10px">No themes match.</div>';
+  return list.map(t=>`<div class="savedrow theme-pick" data-i="${CLASS_THEMES.indexOf(t)}" style="cursor:pointer"><div style="flex:1"><div style="font-weight:500;color:var(--head)">${esc(t.name)}</div><div style="color:var(--muted);font-size:12px">${esc(t.intention)}</div><div style="color:var(--rose,#C8A0A6);font-size:11px;margin-top:2px">Focus: ${esc(t.tags.join(", "))}</div></div></div>`).join("");
+}
+function wireThemeRows(){ $("theme_list").querySelectorAll(".theme-pick").forEach(el=>el.onclick=()=>pickTheme(+el.dataset.i)); }
+function openThemePicker(){
+  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()" style="max-width:540px;max-height:84vh;display:flex;flex-direction:column">
+    <h3 class="serif" style="margin-top:0">🎨 Class themes</h3>
+    <div style="color:var(--muted);font-size:12px;margin-bottom:10px">Pick a theme to fill your theme field — or type your own anytime.</div>
+    <input id="theme_search" placeholder="Search themes…" style="width:100%;margin-bottom:10px"/>
+    <div id="theme_list" style="overflow:auto;flex:1">${themeRows("")}</div>
     <button class="btn ghost" style="margin-top:12px;width:100%" onclick="closeModal()">Close</button></div></div>`;
+  $("ovl").onclick=closeModal; wireThemeRows();
+  $("theme_search").oninput=e=>{ $("theme_list").innerHTML=themeRows(e.target.value); wireThemeRows(); };
+}
+function pickTheme(i){
+  const t=CLASS_THEMES[i]; if(!t)return;
+  $("m_description").value=`${t.name} — ${t.intention} Focus: ${t.tags.join(", ")}.`;
+  if(typeof updatePrintHead==="function")updatePrintHead();
+  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()" style="max-width:430px">
+    <h3 class="serif" style="margin-top:0">Theme added</h3>
+    <div style="font-size:13.5px;color:var(--ink,#4a4047);margin-bottom:14px">Added <b>${esc(t.name)}</b> to your theme field. Want AI to build a starter sequence from it?</div>
+    <div style="display:flex;gap:8px"><button class="btn" style="flex:1" id="theme_gen">✨ Generate from theme</button><button class="btn ghost" style="flex:1" onclick="closeModal()">Not now</button></div></div></div>`;
   $("ovl").onclick=closeModal;
-  $("modalRoot").querySelectorAll(".savedrow").forEach(el=>el.onclick=()=>{applyTheme(el.dataset.t);closeModal();toast("Theme: "+el.dataset.t);});
+  $("theme_gen").onclick=()=>{ openAI(`${t.intention} Focus areas: ${t.tags.join(", ")}.`); };
+  toast("Theme added");
 }
 function applyTheme(t){seqTheme=t||"classic";document.body.classList.remove("theme-classic","theme-minimal","theme-botanical");document.body.classList.add("theme-"+seqTheme);}
 function updatePrintHead(){const el=$("printHead");if(!el)return;const meta=[$("m_level").value,$("m_duration").value,$("m_style").value].filter(Boolean).join(" \u00b7 ");el.innerHTML=`<h1>${esc($("m_name").value||"My Yoga Sequence")}</h1><div class="meta">${esc(meta)}</div>`+($("m_description").value?`<div class="meta" style="margin-top:6px">${esc($("m_description").value)}</div>`:"");}
-window.openTemplates=openTemplates;window.saveAsTemplate=saveAsTemplate;window.loadTemplate=loadTemplate;window.openTheme=openTheme;
+window.openTemplates=openTemplates;window.saveAsTemplate=saveAsTemplate;window.loadTemplate=loadTemplate;window.openThemePicker=openThemePicker;
 loadDesign();init();
 </script>
 
