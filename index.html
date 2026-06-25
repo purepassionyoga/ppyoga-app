@@ -102,7 +102,7 @@
      radial-gradient(420px 300px at 78% 18%,rgba(200,160,166,.30),transparent 70%),
      radial-gradient(460px 320px at 12% 0%,rgba(168,173,145,.22),transparent 70%);
      pointer-events:none;z-index:0}
-  .lp-hero-in{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr .95fr;gap:54px;align-items:center;padding:74px 0 64px}
+  .lp-hero-in{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr .95fr;gap:54px;align-items:center;padding:74px 24px 64px}
   .lp-eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--sage);font-weight:600;margin-bottom:18px}
   .lp-title{font-family:'Playfair Display',Georgia,serif;font-weight:600;color:var(--ink);font-size:clamp(34px,5vw,56px);line-height:1.06;margin:0 0 18px;letter-spacing:-.01em}
   .lp-title em{font-style:italic;color:var(--roseDeep)}
@@ -122,7 +122,7 @@
   .lp-potd .lk:hover{border-color:var(--rose)}
   @keyframes breathe{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.08);opacity:1}}
   /* features */
-  .lp-sec{padding:30px 0 8px}
+  .lp-sec{padding:30px 24px 8px}
   .lp-sec-h{font-family:'Playfair Display',serif;font-size:13px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin:0 0 20px;font-weight:600}
   .lp-feats{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;padding-bottom:18px}
   .feat[hidden]{display:none!important}
@@ -135,14 +135,14 @@
   .feat .go{display:inline-block;margin-top:14px;font-size:13px;color:var(--roseDeep);font-weight:500}
   /* why strip */
   .lp-why{background:linear-gradient(180deg,#fff,#FBF6F5);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:34px}
-  .lp-why-in{display:grid;grid-template-columns:repeat(3,1fr);gap:34px;padding:48px 0}
+  .lp-why-in{display:grid;grid-template-columns:repeat(3,1fr);gap:34px;padding:48px 24px}
   .why h4{font-family:'Playfair Display',serif;color:var(--roseDeep);font-size:18px;margin:0 0 8px;font-weight:600}
   .why p{margin:0;font-size:14px;line-height:1.62;color:var(--body)}
   @media(max-width:860px){
-    .lp-hero-in{grid-template-columns:1fr;gap:34px;padding:48px 0 44px}
+    .lp-hero-in{grid-template-columns:1fr;gap:34px;padding:48px 24px 44px}
     .lp-potd{order:-1}
     .lp-feats{grid-template-columns:1fr}
-    .lp-why-in{grid-template-columns:1fr;gap:26px;padding:40px 0}
+    .lp-why-in{grid-template-columns:1fr;gap:26px;padding:40px 24px}
   }
   @media(prefers-reduced-motion:reduce){.lp-halo::after{animation:none}.btn{transition:none}}
   /* ===== end landing ===== */
