@@ -65,7 +65,8 @@
   .chip.av.on{background:var(--clayDk);border-color:var(--clayDk)}
   .ai-lab{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--sage);margin:10px 0 2px}
   .ai-lab span{color:var(--muted);text-transform:none;font-weight:400;letter-spacing:0}
-  .aimodal{max-width:620px}
+  .aimodal{max-width:600px;padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:86vh}
+  .ai-scroll{overflow:auto;min-height:0;padding:22px}
   .nextbox{margin:14px auto 0;max-width:1320px;padding:0 20px}
   .nextcard{background:var(--field);border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .nextcard .nb-ico{font-size:20px}
@@ -1355,20 +1356,17 @@ window.endFlow=endFlow;window.flowPrev=flowPrev;window.flowNext=flowNext;window.
 /* ---------- AI GENERATE ---------- */
 const FN_URL=SUPABASE_URL+"/functions/v1/generate-sequence";
 $("b_ai").onclick=openAI;
-const AI_STYLES=["Vinyasa","Hatha","Yin","Restorative","Power","Gentle","Prenatal"];
+const AI_STYLES=["Vinyasa","Hatha","Power","Ashtanga","Slow Flow","Yin","Restorative","Gentle","Chair","Prenatal","Kundalini","Hot","Iyengar","Meditative"];
 const AI_LEVELS=["Beginner","Intermediate","Advanced"];
-const AI_DURS=["Open","15 min","30 min","45 min","60 min","75 min","90 min"];
+const AI_DURS=["Open","5 min","10 min","15 min","20 min","30 min","45 min","60 min","75 min","90 min"];
 const AI_FOCUS=["Hips","Shoulders","Hamstrings","Core","Spine","Backbends","Twists","Balance","Full Body"];
 const AI_INTENT=["Energizing","Calming","Grounding","Opening","Strengthening","Restorative"];
-const AI_AVOID=["Pregnancy-Safe","No Inversions","Knee-Safe","Wrist-Friendly","Lower-Back Safe","Shoulder-Safe","Neck-Safe"];
-function chipRow(group,vals,sel,multi,extra){return `<div class="chipgrp" data-grp="${group}" data-multi="${multi?1:0}">`+vals.map(v=>`<span class="chip ${extra||''}${sel&&sel===v?' on':''}" data-v="${esc(v)}">${esc(v)}</span>`).join("")+`</div>`;}
+const AI_AVOID=[["Pregnancy","Pregnancy-Safe"],["Lower Back","Lower-Back Safe"],["Knee","Knee-Safe"],["Wrist","Wrist-Friendly"],["Shoulder","Shoulder-Safe"],["Neck","Neck-Safe"],["Inversions","No Inversions"]];
+function chipRow(group,vals,sel,multi,extra){return `<div class="chipgrp" data-grp="${group}" data-multi="${multi?1:0}">`+vals.map(v=>{const lab=Array.isArray(v)?v[0]:v,val=Array.isArray(v)?v[1]:v;return `<span class="chip ${extra||''}${sel&&sel===val?' on':''}" data-v="${esc(val)}">${esc(lab)}</span>`;}).join("")+`</div>`;}
 function wireChips(){
   $$("#ovl .chipgrp").forEach(g=>{const multi=g.getAttribute("data-multi")==="1";
     g.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>{
-      if(multi){
-        if(g.getAttribute("data-grp")==="focus"&&!ch.classList.contains("on")&&g.querySelectorAll(".chip.on").length>=3)return;
-        ch.classList.toggle("on");
-      }else{g.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));ch.classList.add("on");}
+      if(multi){ch.classList.toggle("on");}else{g.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));ch.classList.add("on");}
     });
   });
 }
@@ -1378,12 +1376,12 @@ function openAI(prefill){
   const curLvl=AI_LEVELS.find(v=>($("m_level").value||"").indexOf(v)===0)||"";
   const curDur=AI_DURS.find(v=>v===$("m_duration").value)||"";
   const curSty=AI_STYLES.find(v=>($("m_style").value||"").toLowerCase().indexOf(v.toLowerCase())===0)||"";
-  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal aimodal" onclick="event.stopPropagation()">
+  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal aimodal" onclick="event.stopPropagation()"><div class="ai-scroll">
     <h3 class="serif">\u2728 Generate flow with AI</h3>
     <div class="ai-lab">Style</div>${chipRow("style",AI_STYLES,curSty,false)}
     <div class="ai-lab">Level</div>${chipRow("level",AI_LEVELS,curLvl,false)}
     <div class="ai-lab">Duration</div>${chipRow("duration",AI_DURS,curDur||"Open",false)}
-    <div class="ai-lab">Focus <span>(up to 3)</span></div>${chipRow("focus",AI_FOCUS,null,true)}
+    <div class="ai-lab">Focus</div>${chipRow("focus",AI_FOCUS,null,true)}
     <div class="ai-lab">Intention <span>(optional)</span></div>${chipRow("intention",AI_INTENT,null,true)}
     <div class="ai-lab">Keep safe for <span>(filters the pose library)</span></div>${chipRow("avoid",AI_AVOID,null,true,"av")}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
@@ -1395,7 +1393,7 @@ function openAI(prefill){
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="btn ghost" style="flex:1" onclick="closeModal()">Cancel</button>
       <button class="btn" style="flex:1" id="ai_go">Generate</button></div>
-    <div id="ai_status" style="color:var(--muted);font-size:13px;margin-top:8px"></div></div></div>`;
+    <div id="ai_status" style="color:var(--muted);font-size:13px;margin-top:8px"></div></div></div></div>`;
   $("ovl").onclick=closeModal;$("ai_go").onclick=runAI;wireChips();
   if(prefill&&$("ai_prompt"))$("ai_prompt").value=prefill;
 }
