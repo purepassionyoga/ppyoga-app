@@ -486,7 +486,7 @@ const $$=sel=>document.querySelectorAll(sel);
 const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const arr=v=>Array.isArray(v)?v:[];
 
-let SESSION=null, POSES=[], catFilter="", styleFilter="", items=[], currentId=null, DRAG=null, _ph=null, seqTheme="classic", IS_ADMIN=false, FAVS=new Set(), AVATARS_ON=false, AVATAR_ID=null, OUTFIT=null, CUE_DEPTH="off";
+let SESSION=null, POSES=[], catFilter="", styleFilter="", items=[], currentId=null, DRAG=null, _ph=null, _srcEl=null, seqTheme="classic", IS_ADMIN=false, FAVS=new Set(), AVATARS_ON=false, AVATAR_ID=null, OUTFIT=null, CUE_DEPTH="off";
 var VARS={};
 
 /* AUTH */
@@ -627,7 +627,9 @@ function renderCanvas(){
 function removeItem(i){items.splice(i,1);renderCanvas();}
 function toggleMirror(i){if(items[i]){items[i].mirror=!items[i].mirror;renderCanvas();}}
 window.toggleMirror=toggleMirror;
+function _mkPh(){ const d=document.createElement("div"); d.className="seqcard placeholder"; return d; }
 function _clearPh(){ if(_ph&&_ph.parentNode)_ph.parentNode.removeChild(_ph); _ph=null; }
+function _resetDrag(){ if(_srcEl){ _srcEl.style.display=""; _srcEl.classList.remove("drag"); _srcEl=null; } _clearPh(); }
 function _dragAfter(grid,x,y){
   const els=Array.prototype.slice.call(grid.querySelectorAll(".seqcard:not(.drag):not(.placeholder)"));
   let best={dist:Infinity,el:null,after:false};
@@ -646,39 +648,49 @@ function _liveDrag(e){
   e.preventDefault();
   const grid=$("seqgrid"); if(!grid)return;
   try{ e.dataTransfer.dropEffect = DRAG.kind==="new"?"copy":"move"; }catch(_){}
-  let node;
-  if(DRAG.kind==="move"){ node=grid.querySelector(".seqcard.drag"); if(!node)return; }
-  else { if(!_ph){ _ph=document.createElement("div"); _ph.className="seqcard placeholder"; } node=_ph; }
+  // for a move, hide the source card so its old slot collapses (handled by the placeholder)
+  if(DRAG.kind==="move"&&_srcEl&&_srcEl.style.display!=="none"){ _srcEl.style.display="none"; _srcEl.classList.add("drag"); }
+  if(!_ph){ _ph=_mkPh(); }
   const ref=_dragAfter(grid,e.clientX,e.clientY);
-  if(!ref.el){ grid.appendChild(node); }
-  else if(ref.after){ ref.el.after(node); }
-  else { ref.el.before(node); }
+  if(!ref.el){ grid.appendChild(_ph); }
+  else if(ref.after){ ref.el.after(_ph); }
+  else { ref.el.before(_ph); }
+}
+function _phIndex(grid){
+  // count real cards (skip placeholder and the hidden source) before the placeholder
+  let idx=0; const kids=grid.children;
+  for(let k=0;k<kids.length;k++){
+    const el=kids[k]; if(el===_ph)return idx;
+    if(el.classList.contains("placeholder")||el.classList.contains("drag"))continue;
+    idx++;
+  }
+  return idx;
 }
 function _commitDrag(){
   if(!DRAG)return;
   const grid=$("seqgrid");
   if(DRAG.kind==="new"){
-    let idx=items.length;
-    if(grid&&_ph&&_ph.parentNode===grid){
-      idx=0; const kids=grid.children;
-      for(let k=0;k<kids.length;k++){ if(kids[k]===_ph)break; if(!kids[k].classList.contains("placeholder"))idx++; }
-    }
-    const id=DRAG.id; _clearPh(); DRAG=null; addAt(idx,id); return;
+    const idx=(grid&&_ph&&_ph.parentNode===grid)?_phIndex(grid):items.length;
+    const id=DRAG.id; _resetDrag(); DRAG=null; addAt(idx,id); return;
   }
-  if(DRAG.kind==="move"&&grid){
-    const order=Array.prototype.slice.call(grid.querySelectorAll(".seqcard:not(.placeholder)"));
-    const next=[]; order.forEach(el=>{ const oi=+el.dataset.i; if(items[oi])next.push(items[oi]); });
-    _clearPh(); DRAG=null;
-    if(next.length===items.length)items=next;
-    renderCanvas(); return;
+  if(DRAG.kind==="move"&&grid&&_ph&&_ph.parentNode===grid){
+    const idx=_phIndex(grid);
+    const moved=items.splice(DRAG.from,1)[0];
+    items.splice(idx,0,moved);
+    _resetDrag(); DRAG=null; renderCanvas(); return;
   }
-  _clearPh(); DRAG=null;
+  _resetDrag(); DRAG=null; renderCanvas();
 }
 function wireCanvasDnD(){
   document.querySelectorAll("#seqgrid .seqcard").forEach(card=>{
     const i=+card.dataset.i;const h=card.querySelector(".sc-handle");
-    const startDrag=e=>{DRAG={kind:"move",from:i};setTimeout(()=>card.classList.add("drag"),0);try{e.dataTransfer.setData("text/plain","move");e.dataTransfer.effectAllowed="move";}catch(_){}};
-    const endDrag=()=>{card.classList.remove("drag");};
+    const startDrag=e=>{
+      DRAG={kind:"move",from:i}; _srcEl=card;
+      try{e.dataTransfer.setData("text/plain","move");e.dataTransfer.effectAllowed="move";}catch(_){}
+      // hide source AFTER the browser snapshots the drag image, dropping a placeholder in its slot
+      setTimeout(()=>{ if(DRAG&&DRAG.kind==="move"&&_srcEl===card){ if(!_ph)_ph=_mkPh(); if(!_ph.parentNode&&card.parentNode){card.parentNode.insertBefore(_ph,card);} card.style.display="none"; card.classList.add("drag"); } },0);
+    };
+    const endDrag=()=>{ _resetDrag(); };
     if(h){ h.ondragstart=startDrag; h.ondragend=endDrag; }
     else { card.ondragstart=e=>{ if(e.target.closest&&e.target.closest("button,input,select,textarea,a")){e.preventDefault();return;} startDrag(e); }; card.ondragend=endDrag; }
   });
@@ -1200,7 +1212,7 @@ let tt;function toast(m){const t=$("toast");t.textContent=m;t.classList.add("sho
 window.setItem=(i,f,v)=>{items[i][f]=v;};window.removeItem=removeItem;window.closeModal=closeModal;window.editItem=editItem;window.saveItem=saveItem;window.substitutePose=substitutePose;
 $("canvas").addEventListener("dragover",_liveDrag);
 $("canvas").addEventListener("drop",e=>{if(!DRAG)return;e.preventDefault();e.stopPropagation();_commitDrag();});
-document.addEventListener("dragend",function(){ _clearPh(); document.querySelectorAll(".seqcard.drag").forEach(c=>c.classList.remove("drag")); DRAG=null; });
+document.addEventListener("dragend",function(){ _resetDrag(); document.querySelectorAll(".seqcard").forEach(c=>{ if(c.style.display==="none")c.style.display=""; c.classList.remove("drag"); }); DRAG=null; });
 function darken(hex,f){const m=hex.replace('#','');const n=m.length===3?m.split('').map(c=>c+c).join(''):m;const r=Math.round(parseInt(n.slice(0,2),16)*f),g=Math.round(parseInt(n.slice(2,4),16)*f),b=Math.round(parseInt(n.slice(4,6),16)*f);return '#'+[r,g,b].map(x=>Math.min(255,x).toString(16).padStart(2,'0')).join('');}
 function applyDesign(d){
   if(!d)return;const r=document.documentElement.style;
