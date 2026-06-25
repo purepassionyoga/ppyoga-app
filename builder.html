@@ -628,10 +628,28 @@ function substitutePose(i,pid){
 
 /* SAVE / LOAD */
 function tagsArr(){return ($("m_tags").value||"").split(",").map(s=>s.trim()).filter(Boolean);}
-$("b_save").onclick=async()=>{
+$("b_save").onclick=()=>{
   const name=$("m_name").value.trim();
-  if(!name)return toast("Give your sequence a name first.");
   if(!items.length)return toast("Add at least one pose.");
+  if(!name){ remindName(false); return; }
+  if(name.toLowerCase()==="my yoga sequence"){ remindName(true); return; }
+  saveSequence();
+};
+function remindName(isPlaceholder){
+  const focusName=()=>{ const el=$("m_name"); if(el){ el.focus(); el.select&&el.select(); } };
+  const body = isPlaceholder
+    ? `<div style="font-size:13.5px;color:var(--ink,#4a4047);line-height:1.55">“My Yoga Sequence” is just the placeholder text — not a real title. Give your sequence its own name so you can find it later.</div>
+       <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" style="flex:1" id="rn_rename">Rename it</button><button class="btn ghost" style="flex:1" id="rn_anyway">Save anyway</button></div>`
+    : `<div style="font-size:13.5px;color:var(--ink,#4a4047);line-height:1.55">Your sequence needs a name before you can save it. The faint “My Yoga Sequence” in the title box is just placeholder text, not an actual title.</div>
+       <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" style="flex:1" id="rn_rename">Name it</button></div>`;
+  $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()" style="max-width:420px">
+    <h3 class="serif" style="margin-top:0">Name your sequence</h3>${body}</div></div>`;
+  $("ovl").onclick=closeModal;
+  $("rn_rename").onclick=()=>{ closeModal(); focusName(); };
+  const anyway=$("rn_anyway"); if(anyway)anyway.onclick=()=>{ closeModal(); saveSequence(); };
+}
+async function saveSequence(){
+  const name=$("m_name").value.trim();
   if(currentId){await snapshotExisting(currentId);}
   const row={name,level:$("m_level").value.trim()||null,style:$("m_style").value.trim()||null,
     duration_label:$("m_duration").value.trim()||null,description:$("m_description").value.trim()||null,
@@ -650,7 +668,7 @@ $("b_save").onclick=async()=>{
     emoji:it.kind==="pose"?it.pose.emoji:null,level:it.kind==="pose"?it.pose.difficulty_level:null,mirrored:it.kind==="pose"?!!it.mirror:false,variation_id:it.kind==="pose"?(it.variation_id||null):null}));
   if(rows.length){const r=await sb.from("sequence_items").insert(rows);if(r.error)return toast("Saved sequence, but poses failed: "+r.error.message);}
   toast("Saved ✓");
-};
+}
 $("b_new").onclick=()=>{if(items.length&&!confirm("Start a new sequence? Unsaved changes will be lost."))return;reset();};
 $("b_clear").onclick=()=>{if(items.length&&!confirm("Clear all poses from this sequence?"))return;items=[];renderCanvas();};
 function setSel(id,val){var el=$(id);if(!el)return;val=val||"";if(val&&!Array.prototype.some.call(el.options,function(o){return o.value===val;})){var o=document.createElement("option");o.value=val;o.textContent=val;el.appendChild(o);}el.value=val;}
