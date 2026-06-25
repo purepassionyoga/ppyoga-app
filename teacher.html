@@ -187,6 +187,9 @@
 @media (max-width:820px){.ppy-nav{display:none}.ppy-right .hide-sm{display:none}.ppy-burger{display:inline-flex}.ppy-mobile.open{display:block}}
 /* ===== end header ===== */
 .ppy-header{position:static}
+.hfwrap{display:flex;flex-wrap:wrap;gap:7px}
+.hfchip{border:1px solid var(--lineDk,#e7dcdf);background:var(--card,#fff);color:var(--ink,#4a4047);border-radius:20px;padding:6px 13px;font:inherit;font-size:12.5px;cursor:pointer}
+.hfchip.on{background:#fbeaea;border-color:#dba0a0;color:#9a3a3a;font-weight:500}
 </style>
 </head>
 <body>
@@ -412,6 +415,11 @@ function renderPractice(p){
 /* ---------- STUDENTS ---------- */
 let STUD=[], ME=null, MYSEQS=[], STUD_FILTER={q:"",status:""};
 let SIGNATURE="", SIGNAME_PH="Your name", QUEUED=0;
+let CONTRA_OPTS=[];
+async function loadContraOpts(){
+  if(CONTRA_OPTS.length)return;
+  try{ const {data}=await sb.from("pose_field_options").select("value,label,is_active,sort_order").eq("field_key","contraindication_tags").order("sort_order").order("value"); CONTRA_OPTS=(data||[]).filter(o=>o.is_active!==false); }catch(e){ CONTRA_OPTS=[]; }
+}
 async function loadStudents(){
   if(!ME){ try{ const {data:{user}}=await sb.auth.getUser(); ME=user?user.id:null; }catch(e){} }
   try{ const {data:seqs}=await sb.from("sequences").select("id,name").eq("owner_id",ME).order("updated_at",{ascending:false}); MYSEQS=seqs||[]; }catch(e){ MYSEQS=[]; }
@@ -474,9 +482,11 @@ function renderStudents(){
   document.querySelectorAll("#roster .srow").forEach(r=>r.onclick=()=>openStudent(r.dataset.sid));
 }
 async function openStudent(sid){
-  let s = sid ? Object.assign({}, STUD.find(x=>x.id===sid)) : {id:null,name:"",email:"",phone:"",status:"active",tags:[],joined_on:new Date().toISOString().slice(0,10),notes:"",member_id:null};
+  let s = sid ? Object.assign({}, STUD.find(x=>x.id===sid)) : {id:null,name:"",email:"",phone:"",status:"active",tags:[],joined_on:new Date().toISOString().slice(0,10),notes:"",member_id:null,health_flags:[]};
+  await loadContraOpts();
   let notes=[], rems=[];
   if(s.id){
+    try{ const {data:hf}=await sb.from("students").select("health_flags").eq("id",s.id).single(); if(hf) s.health_flags=hf.health_flags||[]; }catch(e){}
     try{ const {data}=await sb.from("student_notes").select("*").eq("student_id",s.id).order("created_at",{ascending:false}); notes=data||[]; }catch(e){}
     try{ const {data}=await sb.from("student_reminders").select("*").eq("student_id",s.id).order("created_at",{ascending:false}); rems=data||[]; }catch(e){}
   }
@@ -510,6 +520,7 @@ async function openStudent(sid){
     +'<div class="field"><label>Link to app member (by email)</label><div style="display:flex;gap:8px"><input id="se_link" placeholder="member@email.com"/><button class="btn ghost" id="se_linkbtn">Link</button></div>'
     +'<div class="hint" id="se_linkmsg">'+(s.member_id?("Linked to "+esc(s.member_name||s.member_email||"member")):"Optional \u2014 connects this student to their account for practice stats.")+'</div></div>'
     +'<div class="field"><label>General notes</label><textarea id="se_notes" rows="3">'+esc(s.notes||"")+'</textarea></div>'
+    +'<div class="field"><label>Health &amp; safety flags</label><div class="hint" style="margin-bottom:8px">Used by the builder\u2019s Safety Check to warn when a sequence includes a pose that\u2019s contraindicated for this student.</div><div id="se_hflags" class="hfwrap">'+(CONTRA_OPTS.length?CONTRA_OPTS.map(function(opt){var v=opt.value;var on=(s.health_flags||[]).indexOf(v)>=0;return '<button type="button" class="hfchip'+(on?" on":"")+'" data-hf="'+esc(v)+'">'+esc(opt.label||v)+'</button>';}).join(""):'<span class="hint">No contraindication options defined yet.</span>')+'</div></div>'
     +'<div style="display:flex;gap:10px"><button class="btn" id="se_save">'+(s.id?"Save changes":"Add student")+'</button>'+(s.id?'<button class="btn ghost" id="se_del">Delete</button>':"")+'</div></div>'
     +memberPanel
     +(s.id?('<div class="grp"><div class="gt">1:1 notes</div><div id="se_noteslist">'+notesHtml+'</div>'
@@ -529,6 +540,7 @@ async function openStudent(sid){
   let LINKED = s.member_id || null;
   $("stu_back").onclick=()=>renderStudents();
   $("se_save").onclick=()=>saveStudent(s.id, LINKED);
+  document.querySelectorAll("#se_hflags .hfchip").forEach(function(c){ c.onclick=function(){ c.classList.toggle("on"); }; });
   const del=$("se_del"); if(del) del.onclick=()=>deleteStudent(s.id);
   $("se_linkbtn").onclick=async()=>{
     const em=$("se_link").value.trim(); if(!em)return;
@@ -551,7 +563,8 @@ function emailResult(error,data,sid,okMsg){
 async function saveStudent(id, linked){
   const row={ name:$("se_name").value.trim(), email:$("se_email").value.trim()||null, phone:$("se_phone").value.trim()||null,
     status:$("se_status").value, tags:$("se_tags").value.split(",").map(x=>x.trim()).filter(Boolean),
-    joined_on:$("se_joined").value||null, notes:$("se_notes").value, member_id:linked||null };
+    joined_on:$("se_joined").value||null, notes:$("se_notes").value, member_id:linked||null,
+    health_flags:[].map.call(document.querySelectorAll("#se_hflags .hfchip.on"),function(c){return c.dataset.hf;}) };
   if(!row.name && !row.email){ stuErr("Add at least a name or email."); return; }
   let res;
   if(id){ res=await sb.from("students").update(row).eq("id",id); }
