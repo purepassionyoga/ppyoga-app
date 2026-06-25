@@ -1283,38 +1283,13 @@ async function loadTemplate(id){
 }
 
 /* ---------- CLASS THEMES ---------- */
-const CLASS_THEMES=[
-  {name:"Stress Relief",intention:"Gentle, slow-paced poses to calm the nervous system.",tags:["calming","restorative","breath"]},
-  {name:"Morning Energy",intention:"An energizing flow to awaken the body and mind.",tags:["energizing","standing","sun salutations"]},
-  {name:"Hip Opening",intention:"Deep hip openers to release tension and increase mobility.",tags:["hips","hamstrings","glutes"]},
-  {name:"Core Strength",intention:"Build core stability and overall strength.",tags:["core","balance","strength"]},
-  {name:"Back Care",intention:"Gentle poses to relieve back tension and improve posture.",tags:["spine","lower back","mobility"]},
-  {name:"Balance & Focus",intention:"Standing balances and concentration poses to steady the mind.",tags:["balance","focus","standing"]},
-  {name:"Deep Stretch",intention:"Long-held stretches for a full-body release.",tags:["flexibility","yin","hamstrings"]},
-  {name:"Heart Opening",intention:"Backbends to open the chest and lift the mood.",tags:["backbends","chest","shoulders"]},
-  {name:"Grounding",intention:"Steady, earthy poses to feel centered and present.",tags:["grounding","standing","balance"]},
-  {name:"Detox Twist",intention:"Twists to wring out, refresh, and aid digestion.",tags:["twists","digestion","spine"]},
-  {name:"Restful Wind-Down",intention:"A calming sequence to prepare the body for sleep.",tags:["restorative","calming","forward folds"]},
-  {name:"Full-Body Flow",intention:"A balanced flow that touches every major area.",tags:["full body","vinyasa","strength"]},
-  {name:"Shoulder Release",intention:"Open tight shoulders, neck, and upper back.",tags:["shoulders","neck","upper back"]},
-  {name:"Hamstring Love",intention:"Safely lengthen the back of the legs.",tags:["hamstrings","forward folds","flexibility"]},
-  {name:"Strong & Steady",intention:"A power-building standing sequence.",tags:["strength","standing","endurance"]},
-  {name:"Gentle Beginnings",intention:"Accessible foundational poses for newcomers.",tags:["beginner","gentle","foundations"]},
-  {name:"Sun Salutation Flow",intention:"Classic flowing salutations to build warmth.",tags:["vinyasa","warm-up","full body"]},
-  {name:"Forward Fold Focus",intention:"Calming folds to soothe the mind and stretch the body.",tags:["forward folds","hamstrings","calming"]},
-  {name:"Backbend Bliss",intention:"Progressive backbends to energize the spine.",tags:["backbends","chest","spine"]},
-  {name:"Hip & Heart",intention:"Pair deep hip openers with heart openers.",tags:["hips","chest","release"]},
-  {name:"Calm Anxiety",intention:"Grounding, breath-led poses to ease worry.",tags:["calming","grounding","breath"]},
-  {name:"Posture Reset",intention:"Counter desk-slump with openers and strengtheners.",tags:["posture","shoulders","spine"]},
-  {name:"Inversions Intro",intention:"A gentle introduction to going upside down.",tags:["inversions","core","balance"]},
-  {name:"Standing Strong",intention:"A warrior-rich standing sequence for the legs.",tags:["standing","strength","legs"]},
-  {name:"Mobility Flow",intention:"Joint-friendly movement to improve range of motion.",tags:["mobility","joints","warm-up"]},
-  {name:"Evening Unwind",intention:"Soft transitions to release the day.",tags:["restorative","calming","hips"]},
-  {name:"Power Core",intention:"A dynamic, core-focused challenge.",tags:["core","strength","endurance"]},
-  {name:"Open & Release",intention:"Whole-body opening for tightness relief.",tags:["flexibility","hips","shoulders"]},
-  {name:"Breath & Stillness",intention:"A meditative, pranayama-forward practice.",tags:["breath","meditation","calming"]},
-  {name:"Twist & Detox",intention:"Spinal twists to energize and cleanse.",tags:["twists","spine","core"]}
-];
+let CLASS_THEMES=[];
+async function loadClassThemes(){
+  try{
+    const { data } = await sb.from("class_themes").select("name,intention,tags,position,is_active").order("position").order("name");
+    CLASS_THEMES=(data||[]).filter(t=>t.is_active!==false).map(t=>({name:t.name,intention:t.intention||"",tags:Array.isArray(t.tags)?t.tags:[]}));
+  }catch(e){ CLASS_THEMES=[]; }
+}
 $("b_browsethemes").onclick=openThemePicker;
 function themeRows(q){
   const ql=(q||"").toLowerCase();
@@ -1324,6 +1299,7 @@ function themeRows(q){
 }
 function wireThemeRows(){ $("theme_list").querySelectorAll(".theme-pick").forEach(el=>el.onclick=()=>pickTheme(+el.dataset.i)); }
 function openThemePicker(){
+  if(!CLASS_THEMES.length){ toast("Loading themes\u2026"); loadClassThemes().then(()=>{ if(CLASS_THEMES.length)openThemePicker(); }); return; }
   $("modalRoot").innerHTML=`<div class="ovl" id="ovl"><div class="modal" onclick="event.stopPropagation()" style="max-width:540px;max-height:84vh;display:flex;flex-direction:column">
     <h3 class="serif" style="margin-top:0">🎨 Class themes</h3>
     <div style="color:var(--muted);font-size:12px;margin-bottom:10px">Pick a theme to fill your theme field — or type your own anytime.</div>
@@ -1348,7 +1324,7 @@ function pickTheme(i){
 function applyTheme(t){seqTheme=t||"classic";document.body.classList.remove("theme-classic","theme-minimal","theme-botanical");document.body.classList.add("theme-"+seqTheme);}
 function updatePrintHead(){const el=$("printHead");if(!el)return;const meta=[$("m_level").value,$("m_duration").value,$("m_style").value].filter(Boolean).join(" \u00b7 ");el.innerHTML=`<h1>${esc($("m_name").value||"My Yoga Sequence")}</h1><div class="meta">${esc(meta)}</div>`+($("m_description").value?`<div class="meta" style="margin-top:6px">${esc($("m_description").value)}</div>`:"");}
 window.openTemplates=openTemplates;window.saveAsTemplate=saveAsTemplate;window.loadTemplate=loadTemplate;window.openThemePicker=openThemePicker;
-loadDesign();init();
+loadClassThemes();loadDesign();init();
 </script>
 
 <script>
