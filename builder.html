@@ -125,6 +125,7 @@
   .seqcard{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:9px 9px 10px;display:flex;flex-direction:column;text-align:center;position:relative}
   .seqcard.over{border-color:var(--rose);box-shadow:0 0 0 2px rgba(194,132,143,.25)}
   .seqcard.drag{opacity:.4}
+  .seqcard.placeholder{opacity:1;border:2px dashed var(--rose);background:rgba(200,160,166,.12);min-height:118px;box-shadow:none;transition:none}
   .seqcard.section{grid-column:1/-1;flex-direction:row;align-items:center;gap:10px;text-align:left;background:var(--field);border-style:dashed;border-color:var(--rose)}
   .seqcard.section input{flex:1;border:none;background:none;outline:none;font-family:var(--font-head);font-style:italic;color:var(--clayDk);font-size:16px}
   .sc-top{display:flex;align-items:center;justify-content:space-between}
@@ -485,7 +486,7 @@ const $$=sel=>document.querySelectorAll(sel);
 const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const arr=v=>Array.isArray(v)?v:[];
 
-let SESSION=null, POSES=[], catFilter="", styleFilter="", items=[], currentId=null, DRAG=null, seqTheme="classic", IS_ADMIN=false, FAVS=new Set(), AVATARS_ON=false, AVATAR_ID=null, OUTFIT=null, CUE_DEPTH="off";
+let SESSION=null, POSES=[], catFilter="", styleFilter="", items=[], currentId=null, DRAG=null, _ph=null, seqTheme="classic", IS_ADMIN=false, FAVS=new Set(), AVATARS_ON=false, AVATAR_ID=null, OUTFIT=null, CUE_DEPTH="off";
 var VARS={};
 
 /* AUTH */
@@ -626,22 +627,60 @@ function renderCanvas(){
 function removeItem(i){items.splice(i,1);renderCanvas();}
 function toggleMirror(i){if(items[i]){items[i].mirror=!items[i].mirror;renderCanvas();}}
 window.toggleMirror=toggleMirror;
-function handleDrop(target){
+function _clearPh(){ if(_ph&&_ph.parentNode)_ph.parentNode.removeChild(_ph); _ph=null; }
+function _dragAfter(grid,x,y){
+  const els=Array.prototype.slice.call(grid.querySelectorAll(".seqcard:not(.drag):not(.placeholder)"));
+  let best={dist:Infinity,el:null,after:false};
+  for(const el of els){
+    const r=el.getBoundingClientRect();
+    const full=r.width>grid.clientWidth*0.8;
+    const cx=r.left+r.width/2, cy=r.top+r.height/2;
+    const d=Math.hypot(x-cx,y-cy);
+    if(d<best.dist)best={dist:d,el:el,after: full ? (y>cy) : (x>cx)};
+  }
+  return best;
+}
+// live reorder: shift cards (move) or a placeholder (new) under the cursor before drop
+function _liveDrag(e){
   if(!DRAG)return;
-  if(DRAG.kind==="new"){addAt(target,DRAG.id);}
-  else if(DRAG.kind==="move"){const f=DRAG.from;if(f!==target){const[m]=items.splice(f,1);items.splice(target,0,m);renderCanvas();}}
-  DRAG=null;
+  e.preventDefault();
+  const grid=$("seqgrid"); if(!grid)return;
+  try{ e.dataTransfer.dropEffect = DRAG.kind==="new"?"copy":"move"; }catch(_){}
+  let node;
+  if(DRAG.kind==="move"){ node=grid.querySelector(".seqcard.drag"); if(!node)return; }
+  else { if(!_ph){ _ph=document.createElement("div"); _ph.className="seqcard placeholder"; } node=_ph; }
+  const ref=_dragAfter(grid,e.clientX,e.clientY);
+  if(!ref.el){ grid.appendChild(node); }
+  else if(ref.after){ ref.el.after(node); }
+  else { ref.el.before(node); }
+}
+function _commitDrag(){
+  if(!DRAG)return;
+  const grid=$("seqgrid");
+  if(DRAG.kind==="new"){
+    let idx=items.length;
+    if(grid&&_ph&&_ph.parentNode===grid){
+      idx=0; const kids=grid.children;
+      for(let k=0;k<kids.length;k++){ if(kids[k]===_ph)break; if(!kids[k].classList.contains("placeholder"))idx++; }
+    }
+    const id=DRAG.id; _clearPh(); DRAG=null; addAt(idx,id); return;
+  }
+  if(DRAG.kind==="move"&&grid){
+    const order=Array.prototype.slice.call(grid.querySelectorAll(".seqcard:not(.placeholder)"));
+    const next=[]; order.forEach(el=>{ const oi=+el.dataset.i; if(items[oi])next.push(items[oi]); });
+    _clearPh(); DRAG=null;
+    if(next.length===items.length)items=next;
+    renderCanvas(); return;
+  }
+  _clearPh(); DRAG=null;
 }
 function wireCanvasDnD(){
   document.querySelectorAll("#seqgrid .seqcard").forEach(card=>{
     const i=+card.dataset.i;const h=card.querySelector(".sc-handle");
-    const startDrag=e=>{DRAG={kind:"move",from:i};card.classList.add("drag");try{e.dataTransfer.setData("text/plain","move");e.dataTransfer.effectAllowed="move";}catch(_){}};
+    const startDrag=e=>{DRAG={kind:"move",from:i};setTimeout(()=>card.classList.add("drag"),0);try{e.dataTransfer.setData("text/plain","move");e.dataTransfer.effectAllowed="move";}catch(_){}};
     const endDrag=()=>{card.classList.remove("drag");};
     if(h){ h.ondragstart=startDrag; h.ondragend=endDrag; }
     else { card.ondragstart=e=>{ if(e.target.closest&&e.target.closest("button,input,select,textarea,a")){e.preventDefault();return;} startDrag(e); }; card.ondragend=endDrag; }
-    card.ondragover=e=>{if(DRAG){e.preventDefault();card.classList.add("over");}};
-    card.ondragleave=()=>card.classList.remove("over");
-    card.ondrop=e=>{if(!DRAG)return;e.preventDefault();e.stopPropagation();card.classList.remove("over");handleDrop(i);};
   });
 }
 function editItem(i){
@@ -1159,8 +1198,9 @@ async function loadSeq(id){
 document.querySelectorAll(".btn.soon").forEach(b=>b.onclick=()=>toast(b.dataset.soon+" — coming in the next update."));
 let tt;function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),2400);}
 window.setItem=(i,f,v)=>{items[i][f]=v;};window.removeItem=removeItem;window.closeModal=closeModal;window.editItem=editItem;window.saveItem=saveItem;window.substitutePose=substitutePose;
-$("canvas").addEventListener("dragover",e=>{if(DRAG)e.preventDefault();});
-$("canvas").addEventListener("drop",e=>{if(!DRAG)return;e.preventDefault();handleDrop(items.length);});
+$("canvas").addEventListener("dragover",_liveDrag);
+$("canvas").addEventListener("drop",e=>{if(!DRAG)return;e.preventDefault();e.stopPropagation();_commitDrag();});
+document.addEventListener("dragend",function(){ _clearPh(); document.querySelectorAll(".seqcard.drag").forEach(c=>c.classList.remove("drag")); DRAG=null; });
 function darken(hex,f){const m=hex.replace('#','');const n=m.length===3?m.split('').map(c=>c+c).join(''):m;const r=Math.round(parseInt(n.slice(0,2),16)*f),g=Math.round(parseInt(n.slice(2,4),16)*f),b=Math.round(parseInt(n.slice(4,6),16)*f);return '#'+[r,g,b].map(x=>Math.min(255,x).toString(16).padStart(2,'0')).join('');}
 function applyDesign(d){
   if(!d)return;const r=document.documentElement.style;
