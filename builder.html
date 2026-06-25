@@ -194,6 +194,12 @@
   .pm-info{flex:1;min-width:0}
   .pm-name{font-family:var(--font-head);color:var(--rose);font-size:15px;font-weight:600}
   .pm-san{font-size:11px;color:var(--sage);font-style:italic;margin-bottom:6px}
+  .pmtheme-minimal .pm-name{color:#222;font-family:var(--font-body)}
+  .pmtheme-minimal .pm-san{color:#9a9a9a}
+  .pmtheme-minimal .pm-title{color:#222;font-family:var(--font-body)}
+  .pmtheme-botanical .pm-name{color:#7E8466}
+  .pmtheme-botanical .pm-san{color:#9aa07e}
+  .pmtheme-botanical .pm-title{color:#6f7657}
   .pm-note{width:100%;padding:8px 10px;border:1px solid var(--lineDk);border-radius:8px;background:var(--field);font:inherit;font-size:13px;color:var(--ink);outline:none;resize:vertical}
   .pm-note:focus{border-color:var(--rose)}
   .pm-foot{padding:14px 26px 20px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
@@ -778,7 +784,7 @@ function openPrintReview(){
       +'<div class="pm-info"><div class="pm-name">'+esc(p.name)+'</div><div class="pm-san">'+esc(p.sanskrit_name||"")+'</div>'
       +'<textarea class="pm-note" rows="2" data-idx="'+x.idx+'" placeholder="Add instructor notes, cues, or transitions\u2026">'+esc(x.it.notes||"")+'</textarea></div></div>';
   }).join("");
-  ov.innerHTML='<div class="modal printmodal" onclick="event.stopPropagation()">'
+  ov.innerHTML='<div class="modal printmodal pmtheme-'+seqTheme+'" onclick="event.stopPropagation()">'
     +'<div class="pm-head"><div class="pm-title">\ud83d\udda8\ufe0f Review &amp; Print</div>'
     +'<div class="pm-sub">Add or edit your notes for each pose before printing</div>'
     +'<div class="pm-tabs"><span class="lbl">Layout</span>'
@@ -793,7 +799,7 @@ function openPrintReview(){
   document.body.appendChild(ov);
   var layout="list";
   ov.querySelectorAll(".pm-tab[data-l]").forEach(function(bt){ bt.onclick=function(){ ov.querySelectorAll(".pm-tab[data-l]").forEach(function(x){x.classList.remove("on");}); bt.classList.add("on"); layout=bt.getAttribute("data-l"); }; });
-  ov.querySelectorAll(".pm-tab[data-s]").forEach(function(bt){ if(bt.getAttribute("data-s")===seqTheme)bt.classList.add("on"); bt.onclick=function(){ ov.querySelectorAll(".pm-tab[data-s]").forEach(function(x){x.classList.remove("on");}); bt.classList.add("on"); applyTheme(bt.getAttribute("data-s")); }; });
+  ov.querySelectorAll(".pm-tab[data-s]").forEach(function(bt){ if(bt.getAttribute("data-s")===seqTheme)bt.classList.add("on"); bt.onclick=function(){ ov.querySelectorAll(".pm-tab[data-s]").forEach(function(x){x.classList.remove("on");}); bt.classList.add("on"); applyTheme(bt.getAttribute("data-s")); var _pm=ov.querySelector(".printmodal"); if(_pm)_pm.className="modal printmodal pmtheme-"+bt.getAttribute("data-s"); }; });
   $("pmCancel").onclick=function(){ ov.remove(); };
   $("pmGo").onclick=function(){
     ov.querySelectorAll("textarea[data-idx]").forEach(function(t){ items[+t.getAttribute("data-idx")].notes=t.value; });
@@ -812,31 +818,36 @@ function printDoc(layout){
   function cuesHTML(p){ var cl=cueList(p,CUE_DEPTH); if(!cl.length)return""; return '<div class="pcues">'+cl.map(function(c){return '<div>'+E(c)+'</div>';}).join("")+'</div>'; }
   function imgIt(it,sz,mir){ var _u=varImg(it); return _u?('<img src="'+E(_u)+'" style="width:'+sz+'px;height:'+sz+'px;object-fit:contain'+(mir?';transform:scaleX(-1)':'')+'">'):('<span style="font-size:'+Math.round(sz*0.5)+'px">'+((it.pose&&it.pose.emoji)||"\ud83e\uddd8")+'</span>'); }
   function cuesIt(it){ var cl=varCueList(it,CUE_DEPTH); if(!cl.length)return""; return '<div class="pcues">'+cl.map(function(c){return '<div>'+E(c)+'</div>';}).join("")+'</div>'; }
+  var TH=(typeof seqTheme!=="undefined"&&seqTheme)||"classic";
+  var ACC,HEADCOL,SEC,HEADF,BRANDF,ROWT,LINEC,BORDC,CARDB,CIB;
+  if(TH==="minimal"){ ACC="#2a2a2a";HEADCOL="#1c1c1c";SEC="#9a9a9a";HEADF="Poppins,system-ui,sans-serif";BRANDF="Poppins,system-ui,sans-serif";ROWT="#f6f6f6";LINEC="#e3e3e3";BORDC="#222";CARDB="#dcdcdc";CIB="#f6f6f6"; }
+  else if(TH==="botanical"){ ACC="#7E8466";HEADCOL="#6f7657";SEC="#9aa07e";HEADF="'Playfair Display',serif";BRANDF="'Playfair Display',serif";ROWT="#f4f6ef";LINEC="#e4e8da";BORDC="#a8ad91";CARDB="#dde2cf";CIB="#f1f4ea"; }
+  else { ACC=ROSE;HEADCOL=ROSE;SEC=SAGE;HEADF="'Playfair Display',serif";BRANDF="'Playfair Display',serif";ROWT="#fdf8f7";LINEC="#f0ebe8";BORDC=ROSE;CARDB="rgba(0,0,0,.08)";CIB="#fdf8f7"; }
   var CSS='*{box-sizing:border-box;margin:0;padding:0}'
     +'body{font-family:Poppins,system-ui,sans-serif;padding:30px 34px;color:#3a3a3a;background:#fff}'
-    +'.phead{margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid '+ROSE+'}'
-    +'.brand{font-family:\'Playfair Display\',serif;font-size:11px;color:'+ROSE+';letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}'
-    +'h1{font-family:\'Playfair Display\',serif;font-size:26px;color:'+ROSE+';margin-bottom:4px}'
+    +'.phead{margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid '+BORDC+'}'
+    +'.brand{font-family:'+BRANDF+';font-size:11px;color:'+ACC+';letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}'
+    +'h1{font-family:'+HEADF+';font-size:26px;color:'+HEADCOL+';margin-bottom:4px}'
     +'.meta{font-size:12px;color:#7a7a7a}'
     +'.styles{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}'
-    +'.styles span{font-size:10px;padding:2px 8px;border-radius:5px;background:#f0ebe8;color:'+SAGE+'}'
-    +'.footer{margin-top:22px;font-size:9px;color:#bbb;text-align:center;border-top:1px solid #e8e0de;padding-top:12px;letter-spacing:.04em}'
+    +'.styles span{font-size:10px;padding:2px 8px;border-radius:5px;background:'+ROWT+';color:'+SEC+'}'
+    +'.footer{margin-top:22px;font-size:9px;color:#bbb;text-align:center;border-top:1px solid '+LINEC+';padding-top:12px;letter-spacing:.04em}'
     +'table{width:100%;border-collapse:collapse}'
-    +'th{text-align:left;font-size:10px;font-weight:500;color:'+SAGE+';letter-spacing:.06em;text-transform:uppercase;padding:8px;border-bottom:2px solid '+ROSE+'}'
-    +'td{padding:9px 8px;border-bottom:1px solid #f0ebe8;vertical-align:top;font-size:12px}'
+    +'th{text-align:left;font-size:10px;font-weight:500;color:'+SEC+';letter-spacing:.06em;text-transform:uppercase;padding:8px;border-bottom:2px solid '+BORDC+'}'
+    +'td{padding:9px 8px;border-bottom:1px solid '+LINEC+';vertical-align:top;font-size:12px}'
     +'tr{break-inside:avoid;page-break-inside:avoid}'
-    +'tr:nth-child(even) td{background:#fdf8f7}'
+    +'tr:nth-child(even) td{background:'+ROWT+'}'
     +'.num{text-align:center;color:#bbb;font-size:11px;width:24px}.im{text-align:center;width:44px}'
-    +'.san{display:block;color:'+SAGE+';font-style:italic;font-size:11px}'
+    +'.san{display:block;color:'+SEC+';font-style:italic;font-size:11px}'
     +'.lv{font-size:11px;color:#888}.hold{font-size:11px;white-space:nowrap}.nts{color:#666;font-size:11px}'
-    +'.pn{font-weight:600;color:'+ROSE+';font-size:13px;white-space:nowrap}.nt{font-size:12px;line-height:1.6}'
+    +'.pn{font-weight:600;color:'+ACC+';font-size:13px;white-space:nowrap}.nt{font-size:12px;line-height:1.6}'
     +'.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}'
-    +'.card{border:1.5px solid rgba(0,0,0,.08);border-radius:14px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;position:relative;break-inside:avoid;page-break-inside:avoid}'
+    +'.card{border:1.5px solid '+CARDB+';border-radius:14px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;position:relative;break-inside:avoid;page-break-inside:avoid}'
     +'.cn{position:absolute;top:8px;left:11px;font-size:10px;color:#bbb;font-weight:600}'
-    +'.ci{width:130px;height:130px;display:flex;align-items:center;justify-content:center;background:#fdf8f7;border-radius:10px;overflow:hidden}'
-    +'.cnm{font-family:\'Playfair Display\',serif;font-size:14px;font-weight:600;color:'+ROSE+';line-height:1.2}'
-    +'.csn{font-size:10px;color:'+SAGE+';font-style:italic}.cm{font-size:10px;color:#888;margin-top:2px}'
-    +'.cnotes{font-size:10px;color:#666;font-style:italic;border-top:1px solid #f0ebe8;padding-top:6px;margin-top:2px;width:100%;line-height:1.4}'+'.pcues{font-size:9.5px;color:#777;margin-top:5px;line-height:1.4;text-align:left;width:100%}'+'.pcues div{padding-left:9px;text-indent:-9px}'+'.pcues div:before{content:"\u2022 ";color:'+SAGE+'}';
+    +'.ci{width:130px;height:130px;display:flex;align-items:center;justify-content:center;background:'+CIB+';border-radius:10px;overflow:hidden}'
+    +'.cnm{font-family:'+HEADF+';font-size:14px;font-weight:600;color:'+ACC+';line-height:1.2}'
+    +'.csn{font-size:10px;color:'+SEC+';font-style:italic}.cm{font-size:10px;color:#888;margin-top:2px}'
+    +'.cnotes{font-size:10px;color:#666;font-style:italic;border-top:1px solid '+LINEC+';padding-top:6px;margin-top:2px;width:100%;line-height:1.4}'+'.pcues{font-size:9.5px;color:#777;margin-top:5px;line-height:1.4;text-align:left;width:100%}'+'.pcues div{padding-left:9px;text-indent:-9px}'+'.pcues div:before{content:"\u2022 ";color:'+SEC+'}';
   var body;
   if(layout==="cards"){
     body='<div class="grid">'+poseItems.map(function(it,i){ var p=it.pose;
