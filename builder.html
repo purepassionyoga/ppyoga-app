@@ -1173,7 +1173,8 @@ function flowStep(){
 }
 function tickStart(){updateFlowCount();flowTimer=setInterval(()=>{if(flowPaused)return;flowRemain--;if(flowRemain<=0){clearInterval(flowTimer);if(flowChime)chimeFlow();flowIdx++;flowStep();return;}updateFlowCount();},1000);}
 function updateFlowCount(){const c=document.getElementById("flowCount");if(c)c.textContent=flowRemain;}
-function flowCueText(it){ if(!it)return""; if(it.kind==="section")return it.title||""; const p=it.pose||{}; let s=(varName(it)||"")+(it.notes?". "+it.notes:""); const cl=varCueList(it,CUE_DEPTH); if(cl.length) s+=". "+cl.join(". "); return s; }
+function ttsName(n){ const map={I:"One",II:"Two",III:"Three",IV:"Four",V:"Five"}; return String(n||"").replace(/\b(IV|III|II|I|V)\b/g,function(m){return map[m]||m;}); }
+function flowCueText(it){ if(!it)return""; if(it.kind==="section")return ttsName(it.title||""); let s=ttsName(varName(it)||"")+(it.notes?". "+it.notes:""); const cl=varCueList(it,CUE_DEPTH); if(cl.length) s+=". "+cl.join(". "); return s; }
 function flowToggle(){
   flowPaused=!flowPaused;
   const b=document.getElementById("flowPause");if(b)b.textContent=flowPaused?"▶ Play":"❚❚ Pause";
