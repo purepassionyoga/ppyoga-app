@@ -368,6 +368,15 @@
       <div class="stats" id="statsGrid"></div>
     </div>
 
+    <!-- INSTRUCTOR PORTAL (linked instructors only) -->
+    <div class="card" id="instrCard" style="margin-top:16px;display:none">
+      <div class="ch">Instructor 🌿</div>
+      <div class="cb">
+        <p style="margin:0 0 12px;color:var(--muted,#9a8f93);font-size:14px">You teach at Pure Passion Yoga. Track your classes, views, watch time and earnings in your instructor portal.</p>
+        <a class="btn" href="/instructor" style="text-decoration:none">Open instructor portal →</a>
+      </div>
+    </div>
+
     <div class="grid2">
       <!-- PRACTICE -->
       <div class="card">
@@ -523,6 +532,7 @@ async function boot(session){
   await syncSignupOptIn(session);
   renderNewsSub();
   loadFavorites(); loadPractice(); loadBadges(); loadSequences();
+  checkInstructor();
 }
 function buildStaticBits(){
   $("emojiPick").innerHTML=EMOJIS.map(e=>`<button data-e="${esc(e)}">${e}</button>`).join("");
@@ -531,6 +541,11 @@ function buildStaticBits(){
 }
 
 let AVATARS=[],AVATARS_ON=false,AVATAR_ID=null,OUTFIT=null,COMING_SOON="More coming soon",SAMPLE_POSE=null;
+async function checkInstructor(){
+  try{ const { data } = await sb.from("instructor_pay").select("instructor_id").limit(1);
+    if(data && data.length){ const c=$("instrCard"); if(c)c.style.display=""; }
+  }catch(e){}
+}
 async function loadProfile(){
   const { data, error } = await sb.from("profiles").select("*").eq("id",UID).single();
   if(error){ /* profile row may lag right after signup */ PROFILE={ id:UID, email:EMAIL, tier:"free" }; }
