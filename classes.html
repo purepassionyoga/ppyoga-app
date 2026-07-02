@@ -466,8 +466,8 @@ function startTracker(box, v, cls, resumeFrom){
       }catch(e){} };
     if(window.Vimeo&&window.Vimeo.Player)setup(); else { const t=document.createElement("script"); t.src="https://player.vimeo.com/api/player.js"; t.onload=setup; document.head.appendChild(t); }
   } else if(v.type==="bunny"){
-    const ifr=document.createElement("iframe"); ifr.src="https://iframe.mediadelivery.net/embed/"+v.lib+"/"+v.guid+"?autoplay=false&preload=true"; ifr.allow="autoplay; fullscreen; picture-in-picture; encrypted-media"; ifr.setAttribute("allowfullscreen",""); box.appendChild(ifr);
-    const setup=()=>{ try{
+    const ifr=document.createElement("iframe"); ifr.allow="autoplay; fullscreen; picture-in-picture; encrypted-media"; ifr.setAttribute("allowfullscreen",""); box.appendChild(ifr);
+    const attach=function(){ try{
         const pl=new playerjs.Player(ifr); st.seek=function(t){try{pl.setCurrentTime(t);}catch(e){}};
         let pos=0,playing=false,dur=0;
         const toNum=function(x){ return (typeof x==="string")?parseFloat(x):x; };
@@ -483,7 +483,11 @@ function startTracker(box, v, cls, resumeFrom){
         },1000);
         st.stop=function(){clearInterval(iv);};
       }catch(e){} };
-    if(window.playerjs&&window.playerjs.Player)setup(); else { const t=document.createElement("script"); t.src="https://cdn.embed.ly/player-0.1.0.min.js"; t.onload=setup; document.head.appendChild(t); }
+    const loadPlayer=function(){ if(window.playerjs&&window.playerjs.Player)attach(); else { const t=document.createElement("script"); t.src="https://cdn.embed.ly/player-0.1.0.min.js"; t.onload=attach; document.head.appendChild(t); } };
+    const fallback="https://iframe.mediadelivery.net/embed/"+v.lib+"/"+v.guid;
+    const go=function(u){ const sep=u.indexOf("?")>=0?"&":"?"; ifr.src=u+sep+"preload=true"; loadPlayer(); };
+    fetch(SB+"/functions/v1/bunny-sign",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+(TOKEN||KEY),"Content-Type":"application/json"},body:JSON.stringify({type:"class",id:cls.id})})
+      .then(function(r){return r.ok?r.json():null;}).then(function(j){ go((j&&j.url)?j.url:fallback); }).catch(function(){ go(fallback); });
   } else {
     const ifr=document.createElement("iframe"); ifr.src=v.type==="iframe"?v.url:"about:blank"; ifr.allow="autoplay; fullscreen"; ifr.setAttribute("allowfullscreen",""); box.appendChild(ifr);
   }
