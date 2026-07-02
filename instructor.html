@@ -77,7 +77,7 @@ async function init(){
     sb.from("instructors").select("id,name,image_url,bio").eq("id",p.instructor_id).maybeSingle(),
     sb.from("app_settings").select("value").eq("key","royalties").maybeSingle(),
     sb.from("online_classes").select("id,title,duration_label,class_theme,difficulty_level,status").eq("instructor_id",p.instructor_id),
-    sb.from("class_views").select("class_id,watched_seconds,duration_seconds,created_at").eq("instructor_id",p.instructor_id)
+    sb.from("class_views").select("class_id,watched_seconds,duration_seconds,created_at,self_view").eq("instructor_id",p.instructor_id)
   ]);
   if(setr&&setr.data&&setr.data.value)SET=Object.assign(SET,setr.data.value);
   CTX={ pay:p, instr:ins.data||{name:"Instructor"}, classes:cls.data||[], views:views.data||[] };
@@ -95,7 +95,7 @@ function renderNotLinked(email){
 function renderMessage(t,m){ $("app").innerHTML=`<div class="center"><div class="ic">🌿</div><h1>${esc(t)}</h1><div class="muted">${esc(m||"")}</div></div>`; }
 
 function rollup(){
-  const views=CTX.views.filter(v=>inPeriod(v.created_at));
+  const views=CTX.views.filter(v=>inPeriod(v.created_at) && !v.self_view);
   const per={}; let tViews=0,tSecs=0;
   views.forEach(v=>{ const c=per[v.class_id]=per[v.class_id]||{plays:0,views:0,secs:0,psum:0,pc:0}; c.plays++; c.secs+=v.watched_seconds; if(isView(v)){c.views++;tViews++;} tSecs+=v.watched_seconds; if(v.duration_seconds){c.psum+=Math.min(100,v.watched_seconds/v.duration_seconds*100);c.pc++;} });
   return {per,tViews,tSecs};
@@ -130,7 +130,7 @@ function render(){
     html+=`<tr><td><span class="name">${esc(c.title)}</span>${c.status!=="published"?' <span class="pill">'+esc(c.status)+'</span>':""}</td><td>${esc(c.difficulty_level||"—")}</td><td>${d.plays}</td><td>${d.views}</td><td>${(d.secs/3600).toFixed(1)}</td><td>${d.pc?Math.round(d.psum/d.pc)+"%":"—"}</td></tr>`;
   });
   html+=`</tbody></table>
-    <p class="muted" style="font-size:12px;margin-top:14px">A “view” counts after ${esc(SET.view_threshold_value)} ${SET.view_threshold_type==="percent"?"% watched":"seconds"}. Estimated earnings are provisional and may be finalized by the studio.</p>`;
+    <p class="muted" style="font-size:12px;margin-top:14px">A “view” counts after ${esc(SET.view_threshold_value)} ${SET.view_threshold_type==="percent"?"% watched":"seconds"} of genuine watch time (skipping ahead doesn’t count), and your own views aren’t counted. Estimated earnings are provisional and may be finalized by the studio.</p>`;
   $("app").innerHTML=html;
   $("per").onchange=e=>{ PERIOD=e.target.value; render(); };
 }
