@@ -432,9 +432,8 @@ function unlockLabel(d){
   if(!DONE.has(prev.day_number))return "complete Day "+prev.day_number+" to unlock";
   return "unlocks at midnight";                // prev done today -> opens at next local midnight
 }
-async function markComplete(d,btn){
-  if(!ENR||!UID)return;
-  if(btn){btn.disabled=true;btn.textContent="Saving\u2026";}
+async function completeDay(d){
+  if(!ENR||!UID||DONE.has(d.day_number))return false;
   const today=todayStr();
   try{
     await fetch(SB+"/rest/v1/challenge_day_progress",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({enrollment_id:ENR.id,day_number:d.day_number,completed_on:today})});
@@ -442,7 +441,13 @@ async function markComplete(d,btn){
     if(DAYS.length && DAYS.every(x=>DONE.has(x.day_number)) && ENR.status!=="completed"){
       try{ await fetch(SB+"/rest/v1/challenge_enrollments?id=eq."+ENR.id,{method:"PATCH",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify({status:"completed"})}); ENR.status="completed"; }catch(e){}
     }
-  }catch(e){ if(btn){btn.disabled=false;btn.textContent="Mark day complete";} return; }
+    return true;
+  }catch(e){ return false; }
+}
+async function markComplete(d,btn){
+  if(btn){btn.disabled=true;btn.textContent="Saving\u2026";}
+  const ok=await completeDay(d);
+  if(!ok && !DONE.has(d.day_number)){ if(btn){btn.disabled=false;btn.textContent="Mark day complete";} return; }
   $("modalRoot").innerHTML=""; renderDetail();
 }
 function renderDetail(){
@@ -531,12 +536,23 @@ function openDay(dayId){
   $("clvX").onclick=close; $("clvOvl").onclick=e=>{if(e.target.id==="clvOvl")close();};
   const dn=$("chDone"); if(dn&&!isDone)dn.onclick=()=>markComplete(d,dn);
   startTracker($("clvVideo"),v,d,resumeFrom);
+  if(TRK)TRK.onFinish=async()=>{ const ok=await completeDay(d); if(ok||DONE.has(d.day_number)){ const b=$("chDone"); if(b){b.disabled=true;b.textContent="\u2713 Completed";} } };
   const ilk=document.querySelector("#clvMeta .cl-inslink"); if(ilk)ilk.onclick=(e)=>{e.preventDefault();openInstructor(ilk.dataset.ins);};
   const rs=$("clvRestart"); if(rs)rs.onclick=(e)=>{ e.preventDefault(); if(TRK&&TRK.seek){TRK.seek(0);TRK.lastPos=0;} saveResume(d.id,0,TRK?TRK.dur:0); };
 }
 function startTracker(box,v,day,resumeFrom){
-  const st={secs:0,lastPos:resumeFrom||0,lastT:performance.now(),dur:0,playing:false,day:day,recorded:false,stop:null,seek:function(){}}; TRK=st;
-  function tick(pos,playing,dur){ const now=performance.now(),wall=(now-st.lastT)/1000; st.lastT=now; if(dur&&!st.dur)st.dur=dur; if(playing&&st.playing){ const ct=pos-st.lastPos,credit=Math.max(0,Math.min(ct,wall)); if(credit>0&&credit<3600)st.secs+=credit; } st.lastPos=pos; st.playing=playing; }
+  const st={secs:0,lastPos:resumeFrom||0,lastT:performance.now(),dur:0,playing:false,day:day,recorded:false,stop:null,seek:function(){},noSkip:true,maxpos:resumeFrom||0,finished:false,onFinish:null}; TRK=st;
+  function tick(pos,playing,dur){
+    const now=performance.now(),wall=(now-st.lastT)/1000; st.lastT=now; if(dur&&!st.dur)st.dur=dur;
+    if(st.noSkip){
+      if(pos>st.maxpos+Math.max(3,wall+1.5)){ try{ if(st.seek)st.seek(st.maxpos); }catch(e){} pos=st.maxpos; }
+      else if(pos>st.maxpos){ st.maxpos=pos; }
+    }
+    if(playing&&st.playing){ const ct=pos-st.lastPos,credit=Math.max(0,Math.min(ct,wall)); if(credit>0&&credit<3600)st.secs+=credit; }
+    st.lastPos=pos; st.playing=playing;
+    const D=dur||st.dur;
+    if(D>0 && pos>=D-Math.min(15,D*0.1) && !st.finished){ st.finished=true; if(st.onFinish)try{st.onFinish();}catch(e){} }
+  }
   if(v.type==="file"){ const vid=document.createElement("video"); vid.src=v.url; vid.controls=true; vid.playsInline=true; box.appendChild(vid); st.seek=function(t){try{vid.currentTime=t;}catch(e){}};
     vid.addEventListener("loadedmetadata",function(){ if(resumeFrom>0&&resumeFrom<(vid.duration||1e9)-5){try{vid.currentTime=resumeFrom;}catch(e){}} });
     const iv=setInterval(()=>tick(vid.currentTime||0,!vid.paused&&!vid.ended,vid.duration||0),1000); st.stop=()=>clearInterval(iv);
