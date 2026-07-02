@@ -241,7 +241,7 @@
           <a class="btn ghost" href="/profile">Create your account</a>
         </div>
       </div>
-      <div class="lp-potd">
+      <div class="lp-potd" id="lpPotd">
         <div class="ey">Pose of the day</div>
         <div class="lp-halo"><div class="lp-fig" id="potdFig">🧘</div></div>
         <div class="nm" id="potdName">A daily pose</div>
@@ -467,13 +467,28 @@
         if($("heroCtas")) $("heroCtas").innerHTML='<a class="btn primary" href="/library">Browse poses</a><a class="btn ghost" href="/builder">Build a sequence</a>';
       }).catch(function(){});
   }
+  /* Shared Pose-of-the-Day picker — MUST stay byte-identical to the copy in the pose library
+     so both surfaces always show the same pose. Rolls at 00:00 UTC. */
+  function ppyPickPOTD(list,lib){
+    lib=lib||{};
+    if(lib.potd_enabled===false) return null;
+    var pool=(list||[]).slice().filter(function(p){return p && (p.status===undefined||p.status==="published");});
+    pool.sort(function(a,b){var ia=String(a&&a.id!=null?a.id:(a&&a.slug)||""),ib=String(b&&b.id!=null?b.id:(b&&b.slug)||"");return ia<ib?-1:ia>ib?1:0;});
+    if(!pool.length) return null;
+    if(lib.potd_slug){var pin=pool.find(function(x){return String((x&&x.slug)||"").toLowerCase()===String(lib.potd_slug).toLowerCase();});if(pin)return pin;}
+    return pool[Math.floor(Date.now()/86400000)%pool.length];
+  }
   Promise.all([
-    fetch(SB+"/rest/v1/poses?select=name,sanskrit_name,emoji,image_url&status=eq.published&order=sort_order",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}}).then(function(r){return r.ok?r.json():[];}).catch(function(){return[];}),
-    fetch(SB+"/rest/v1/app_settings?select=value&key=eq.site",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}}).then(function(r){return r.ok?r.json():[];}).catch(function(){return[];})
+    fetch(SB+"/rest/v1/poses?select=id,slug,name,sanskrit_name,emoji,image_url&status=eq.published",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}}).then(function(r){return r.ok?r.json():[];}).catch(function(){return[];}),
+    fetch(SB+"/rest/v1/app_settings?select=key,value&key=in.(site,library)",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}}).then(function(r){return r.ok?r.json():[];}).catch(function(){return[];})
   ]).then(function(res){
-    var poses=res[0]||[], site=(res[1]&&res[1][0]&&res[1][0].value)||{};
-    if(poses.length){
-      var p=poses[Math.floor(Date.now()/86400000)%poses.length];
+    var poses=res[0]||[], rows=res[1]||[], site={}, lib={};
+    rows.forEach(function(row){ if(row.key==="site")site=row.value||{}; if(row.key==="library")lib=row.value||{}; });
+    var p=ppyPickPOTD(poses,lib);
+    var card=$("lpPotd");
+    if(!p){ if(card)card.style.display="none"; }
+    else {
+      if(card)card.style.display="";
       if($("potdFig")) $("potdFig").innerHTML=p.image_url?'<img src="'+p.image_url+'" alt="'+(p.name||"")+'">':(p.emoji||"🧘");
       if($("potdName")) $("potdName").textContent=p.name||"";
       if($("potdSans")) $("potdSans").textContent=p.sanskrit_name||"";
