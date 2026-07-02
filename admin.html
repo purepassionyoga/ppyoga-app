@@ -363,6 +363,12 @@
     #edRoot .stu-pickwrap{max-height:320px;overflow:auto;border:1px solid var(--line,#ece3e4);border-radius:10px;padding:6px}
     #edRoot .stu-picrow{display:flex;gap:9px;align-items:center;padding:8px 9px;border-radius:8px;font-size:13px;cursor:pointer}
     #edRoot .stu-picrow:hover{background:#faf6f5}
+    #edRoot .stu-credgrp{margin-bottom:6px}
+    #edRoot .stu-credh{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted,#9a8f93);margin:7px 0 4px}
+    #edRoot .stu-badgerow{display:flex;flex-wrap:wrap;gap:8px}
+    #edRoot .stu-badge{position:relative;display:inline-block}
+    #edRoot .stu-badge img{width:64px;height:64px;object-fit:contain;border:1px solid var(--line,#ece3e4);border-radius:8px;background:#fff}
+    #edRoot .stu-badgex{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:none;background:#A03A22;color:#fff;font-size:11px;line-height:1;cursor:pointer;padding:0}
     </style>
     <div id="emailtab" class="hidden"></div>
     <div id="advanced" class="hidden"></div>
@@ -1482,6 +1488,47 @@ function wireUploads(){
     };
   });
 }
+const YA_CRED_GROUPS=[
+  ["Teacher (RYT / E-RYT)",["RYT 200","RYT 300","RYT 500","E-RYT 200","E-RYT 500"]],
+  ["Multistyle",["RYT 200 Multistyle","RYT 300 Multistyle","RYT 500 Multistyle","E-RYT 200 Multistyle","E-RYT 500 Multistyle"]],
+  ["Continuing education",["YACEP"]],
+  ["Specialty & advanced",["RCYT \u2014 Children's","RPYT \u2014 Prenatal","Postnatal Yoga","Yin Yoga Teacher","Ayurveda Yoga Teacher"]],
+  ["Specialty",["Restorative Yoga","Meditation Teacher","Yoga Therapy","Kids Yoga Teacher","Chair Yoga Teacher","Trauma-Informed Yoga"]],
+  ["Alliance & professional",["Yoga Alliance Member","Yoga Alliance Professional","Yoga Alliance Ambassador","Yoga Alliance Volunteer"]],
+  ["School (RYS)",["RYS 200","RYS 300","RYS 500","Registered Yoga School","Premier Yoga School"]]
+];
+function stuCreds(selected){
+  const sel=Array.isArray(selected)?selected:[];
+  return `<div class="field"><label>Credentials <span style="color:var(--muted);font-weight:400">(tap to select \u2014 shown as badges on their profile)</span></label>
+    <div id="iCreds">`+YA_CRED_GROUPS.map(g=>`<div class="stu-credgrp"><div class="stu-credh">${esc(g[0])}</div><div class="stu-tchips">`+g[1].map(c=>`<span class="stu-tchip${sel.indexOf(c)>=0?" on":""}" data-cred="${esc(c)}">${esc(c)}</span>`).join("")+`</div></div>`).join("")+`</div></div>`;
+}
+function getCreds(){ return Array.prototype.slice.call(document.querySelectorAll("#edRoot #iCreds .stu-tchip.on")).map(c=>c.dataset.cred); }
+function wireCreds(){ document.querySelectorAll("#edRoot #iCreds .stu-tchip").forEach(c=>c.onclick=()=>c.classList.toggle("on")); }
+function badgeThumb(url){ return `<span class="stu-badge" data-url="${esc(url)}"><img src="${esc(url)}" alt=""/><button type="button" class="stu-badgex" title="Remove">\u2715</button></span>`; }
+function stuBadges(urls){
+  const u=Array.isArray(urls)?urls:[];
+  return `<div class="field"><label>Badge images <span style="color:var(--muted);font-weight:400">(optional \u2014 upload official Yoga Alliance badge PNGs)</span></label>
+    <div class="stu-badgerow" id="iBadges">`+u.map(url=>badgeThumb(url)).join("")+`</div>
+    <button type="button" class="btn ghost" id="iBadgeUp" style="padding:7px 12px;margin-top:6px">\u2b06 Upload badge</button></div>`;
+}
+function getBadges(){ return Array.prototype.slice.call(document.querySelectorAll("#edRoot #iBadges .stu-badge")).map(b=>b.dataset.url); }
+function wireBadges(){
+  document.querySelectorAll("#edRoot #iBadges .stu-badgex").forEach(b=>b.onclick=()=>{ const p=b.closest(".stu-badge"); if(p)p.remove(); });
+  const up=$("iBadgeUp"); if(up)up.onclick=()=>{
+    const file=document.createElement("input"); file.type="file"; file.accept="image/*";
+    file.onchange=async()=>{ const fl=file.files&&file.files[0]; if(!fl)return; if(fl.size>8*1024*1024){stuErr("Image is over 8MB \u2014 please use a smaller file.");return;}
+      up.disabled=true; const orig=up.textContent; up.textContent="Uploading\u2026";
+      try{ const ext=((fl.name.split(".").pop()||"png").toLowerCase().replace(/[^a-z0-9]/g,""))||"png";
+        const path="badges/"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"."+ext;
+        const upr=await sb.storage.from("studio-media").upload(path,fl,{upsert:true,contentType:fl.type||"image/png"}); if(upr.error)throw upr.error;
+        const pub=sb.storage.from("studio-media").getPublicUrl(path);
+        $("iBadges").insertAdjacentHTML("beforeend",badgeThumb(pub.data.publicUrl)); wireBadges();
+      }catch(e){ stuErr("Upload failed: "+(e.message||e)); }
+      up.disabled=false; up.textContent=orig;
+    };
+    file.click();
+  };
+}
 // multi-select access tiers
 function stuTierChips(id,selected){
   const sel=Array.isArray(selected)&&selected.length?selected:[];
@@ -1573,6 +1620,8 @@ function editInstr(id){
       ${stuF("Name","iName",x.name)}
       ${stuTA("Bio","iBio",x.bio,"A short intro shown on their classes.",90)}
       ${stuImg("Photo","iImg",x.image_url,"instructors")}
+      ${stuCreds(x.credentials)}
+      ${stuBadges(x.badge_urls)}
     </div>
     <div style="display:flex;gap:10px;align-items:center">
       <button class="btn" data-save>Save</button>
@@ -1580,10 +1629,10 @@ function editInstr(id){
       <span id="stuMsg" style="font-size:12px"></span>
     </div></div>
   </div></div>`;
-  wireUploads();
+  wireUploads(); wireCreds(); wireBadges();
   stuWire({
     save:async()=>{ const name=$("iName").value.trim(); if(!name)return stuErr("Name is required.");
-      const payload={name,bio:$("iBio").value.trim(),image_url:$("iImg").value.trim()};
+      const payload={name,bio:$("iBio").value.trim(),image_url:$("iImg").value.trim(),credentials:getCreds(),badge_urls:getBadges()};
       return id?sb.from("instructors").update(payload).eq("id",id):sb.from("instructors").insert(payload); },
     del:id?()=>delRow("instructors",id,"instructor"):null
   });
