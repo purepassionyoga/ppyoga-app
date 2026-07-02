@@ -497,7 +497,7 @@ function startTracker(box, v, cls, resumeFrom){
         st.stop=function(){clearInterval(iv);};
       }catch(e){} };
     const loadPlayer=function(){ if(window.playerjs&&window.playerjs.Player)attach(); else { const t=document.createElement("script"); t.src="https://cdn.embed.ly/player-0.1.0.min.js"; t.onload=attach; document.head.appendChild(t); } };
-    const go=function(u){ const sep=u.indexOf("?")>=0?"&":"?"; ifr.src=u+sep+"preload=true"; loadPlayer(); };
+    const go=function(u){ const sep=u.indexOf("?")>=0?"&":"?"; ifr.src=u+sep+"autoplay=false&preload=true"; loadPlayer(); };
     bunnySign("class",cls.id,v).then(go);
   } else {
     const ifr=document.createElement("iframe"); ifr.src=v.type==="iframe"?v.url:"about:blank"; ifr.allow="autoplay; fullscreen"; ifr.setAttribute("allowfullscreen",""); box.appendChild(ifr);
