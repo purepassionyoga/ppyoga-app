@@ -330,7 +330,7 @@ const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;
 const arr=v=>Array.isArray(v)?v:[];
 
 let CH=[], INSTR={}, SITE={}, UID=null, TOKEN=null, EMAIL=null, TIER="free", IS_ADMIN=false;
-let CUR=null, DAYS=[], ENR=null, DONE=new Set(), TRK=null, RESUME={};
+let CUR=null, DAYS=[], ENR=null, DONE=new Set(), DONE_DATE={}, TRK=null, RESUME={};
 let CFch={instr:"",days:"",level:""}, CH_INSTR={};
 async function loadResume(){ if(!UID)return; try{ const r=await fetch(SB+"/rest/v1/resume_positions?select=content_id,position_seconds,duration_seconds&user_id=eq."+UID+"&content_type=eq.challenge_day",{headers:{apikey:KEY,Authorization:"Bearer "+TOKEN}}); (await r.json()||[]).forEach(x=>RESUME[x.content_id]={pos:x.position_seconds,dur:x.duration_seconds}); }catch(e){} }
 function saveResume(id,pos,dur){ if(!UID||!id||(pos||0)<2)return; try{ fetch(SB+"/rest/v1/resume_positions",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({user_id:UID,content_type:"challenge_day",content_id:id,position_seconds:Math.round(pos),duration_seconds:dur?Math.round(dur):null,updated_at:new Date().toISOString()}),keepalive:true}); }catch(e){} RESUME[id]={pos:Math.round(pos),dur:dur?Math.round(dur):null}; }
@@ -406,13 +406,45 @@ async function openChallenge(id){
     fetch(SB+"/rest/v1/video_challenge_days?select=*&challenge_id=eq."+id+"&order=day_number",{headers:h()}),
     fetch(SB+"/rest/v1/challenge_enrollments?select=*&video_challenge_id=eq."+id+"&user_id=eq."+UID,{headers:{apikey:KEY,Authorization:"Bearer "+TOKEN}})
   ]);
-  DAYS=await daysR.json()||[]; const en=await enrR.json()||[]; ENR=en[0]||null; DONE=new Set();
+  DAYS=await daysR.json()||[]; const en=await enrR.json()||[]; ENR=en[0]||null; DONE=new Set(); DONE_DATE={};
   if(DAYS.some(d=>/mediadelivery\.net/.test(d.video_url||"")))preloadPlayerJs();
-  if(ENR){ const dp=await fetch(SB+"/rest/v1/challenge_day_progress?select=day_number&enrollment_id=eq."+ENR.id,{headers:{apikey:KEY,Authorization:"Bearer "+TOKEN}}); (await dp.json()||[]).forEach(x=>DONE.add(x.day_number)); }
+  if(ENR){ const dp=await fetch(SB+"/rest/v1/challenge_day_progress?select=day_number,completed_on,created_at&enrollment_id=eq."+ENR.id,{headers:{apikey:KEY,Authorization:"Bearer "+TOKEN}}); (await dp.json()||[]).forEach(x=>{ DONE.add(x.day_number); DONE_DATE[x.day_number]=x.completed_on||localDate(x.created_at); }); }
   renderDetail();
 }
-function dayUnlocked(d){ if(IS_ADMIN||!ENR)return IS_ADMIN?true:false; const start=new Date(ENR.enrolled_at).getTime(); const openAt=start+(d.unlock_delay_days||0)*86400000; return Date.now()>=openAt; }
-function unlockLabel(d){ if(!ENR)return ""; const start=new Date(ENR.enrolled_at).getTime(); const openAt=start+(d.unlock_delay_days||0)*86400000; const days=Math.ceil((openAt-Date.now())/86400000); return days>0?("unlocks in "+days+" day"+(days>1?"s":"")):""; }
+function localDate(x){ const dt=x?new Date(x):new Date(); const y=dt.getFullYear(),m=String(dt.getMonth()+1).padStart(2,"0"),d=String(dt.getDate()).padStart(2,"0"); return y+"-"+m+"-"+d; }
+function todayStr(){ return localDate(); }
+function prevDay(d){ const p=DAYS.filter(x=>x.day_number<d.day_number).sort((a,b)=>b.day_number-a.day_number); return p[0]||null; }
+// A day unlocks once the previous day is completed AND the calendar has rolled to the next day (local midnight).
+function dayUnlocked(d){
+  if(IS_ADMIN)return true;
+  if(!ENR)return false;
+  const prev=prevDay(d);
+  if(!prev)return true;                       // first day: available on enrollment
+  if(!DONE.has(prev.day_number))return false;  // must finish the previous day first
+  const cd=DONE_DATE[prev.day_number];
+  if(!cd)return true;                          // completed but no date on record -> allow
+  return todayStr()>cd;                        // unlocks at midnight after completion day
+}
+function unlockLabel(d){
+  if(!ENR)return "";
+  const prev=prevDay(d);
+  if(!prev)return "";
+  if(!DONE.has(prev.day_number))return "complete Day "+prev.day_number+" to unlock";
+  return "unlocks at midnight";                // prev done today -> opens at next local midnight
+}
+async function markComplete(d,btn){
+  if(!ENR||!UID)return;
+  if(btn){btn.disabled=true;btn.textContent="Saving\u2026";}
+  const today=todayStr();
+  try{
+    await fetch(SB+"/rest/v1/challenge_day_progress",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({enrollment_id:ENR.id,day_number:d.day_number,completed_on:today})});
+    DONE.add(d.day_number); DONE_DATE[d.day_number]=today;
+    if(DAYS.length && DAYS.every(x=>DONE.has(x.day_number)) && ENR.status!=="completed"){
+      try{ await fetch(SB+"/rest/v1/challenge_enrollments?id=eq."+ENR.id,{method:"PATCH",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify({status:"completed"})}); ENR.status="completed"; }catch(e){}
+    }
+  }catch(e){ if(btn){btn.disabled=false;btn.textContent="Mark day complete";} return; }
+  $("modalRoot").innerHTML=""; renderDetail();
+}
 function renderDetail(){
   const c=CUR, ins=INSTR; const total=DAYS.length||c.total_days||0; const done=DONE.size;
   const pct=total?Math.round(done/total*100):0;
@@ -443,7 +475,7 @@ function renderDetail(){
 async function enroll(){
   try{
     const r=await fetch(SB+"/rest/v1/challenge_enrollments",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"return=representation"},body:JSON.stringify({user_id:UID,challenge_kind:"video",video_challenge_id:CUR.id,status:"active"})});
-    const j=await r.json(); ENR=(j&&j[0])||null; DONE=new Set(); renderDetail();
+    const j=await r.json(); ENR=(j&&j[0])||null; DONE=new Set(); DONE_DATE={}; renderDetail();
   }catch(e){ alert("Couldn’t start the challenge. Please try again."); }
 }
 function gate(title,msg,href,cta){
