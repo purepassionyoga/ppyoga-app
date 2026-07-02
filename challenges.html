@@ -312,7 +312,11 @@ const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;
 const arr=v=>Array.isArray(v)?v:[];
 
 let CH=[], INSTR={}, SITE={}, UID=null, TOKEN=null, EMAIL=null, TIER="free", IS_ADMIN=false;
-let CUR=null, DAYS=[], ENR=null, DONE=new Set(), TRK=null;
+let CUR=null, DAYS=[], ENR=null, DONE=new Set(), TRK=null, RESUME={};
+async function loadResume(){ if(!UID)return; try{ const r=await fetch(SB+"/rest/v1/resume_positions?select=content_id,position_seconds,duration_seconds&user_id=eq."+UID+"&content_type=eq.challenge_day",{headers:{apikey:KEY,Authorization:"Bearer "+TOKEN}}); (await r.json()||[]).forEach(x=>RESUME[x.content_id]={pos:x.position_seconds,dur:x.duration_seconds}); }catch(e){} }
+function saveResume(id,pos,dur){ if(!UID||!id||(pos||0)<3)return; try{ fetch(SB+"/rest/v1/resume_positions",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({user_id:UID,content_type:"challenge_day",content_id:id,position_seconds:Math.round(pos),duration_seconds:dur?Math.round(dur):null,updated_at:new Date().toISOString()}),keepalive:true}); }catch(e){} RESUME[id]={pos:Math.round(pos),dur:dur?Math.round(dur):null}; }
+function fmtTime(x){ x=Math.max(0,Math.round(x||0)); const m=Math.floor(x/60),ss=x%60; return m+":"+(ss<10?"0":"")+ss; }
+function dayResume(d){ const r=RESUME[d.id]; if(!r||!r.pos||r.pos<5)return""; if(r.dur&&r.pos>=r.dur-15)return""; const pct=r.dur?Math.min(100,Math.round(r.pos/r.dur*100)):0; return pct?(" · "+pct+"% watched"):" · in progress"; }
 
 function $(id){return document.getElementById(id);}
 function h(){ return {apikey:KEY,Authorization:"Bearer "+(TOKEN||KEY)}; }
@@ -331,6 +335,7 @@ async function load(){
     const site=await siteR.json(); SITE=(site&&site[0]&&site[0].value)||{};
     (await insR.json()||[]).forEach(i=>INSTR[i.id]=i);
     CH=await chR.json()||[];
+    await loadResume();
     $("chState").style.display="none"; renderList();
   }catch(e){ $("chState").innerHTML="Couldn’t load challenges right now. Please refresh."; }
 }
@@ -384,7 +389,7 @@ function renderDetail(){
     const unlocked=dayUnlocked(d), isDone=DONE.has(d.day_number);
     html+=`<div class="ch-day${unlocked?"":" locked"}">
       <div class="ch-daynum">${isDone?"✓":d.day_number}</div>
-      <div class="ch-dinfo"><div class="ch-dt">${esc(d.title)}</div><div class="ch-dm">${esc(d.duration_label||"")}${!unlocked?" · "+esc(unlockLabel(d)):""}</div></div>
+      <div class="ch-dinfo"><div class="ch-dt">${esc(d.title)}</div><div class="ch-dm">${esc(d.duration_label||"")}${!unlocked?" · "+esc(unlockLabel(d)):(isDone?"":esc(dayResume(d)))}</div></div>
       <div class="ch-dact">${unlocked?`<button class="btn ghost sm" data-day="${d.id}">${isDone?"Rewatch":"Watch"}</button>`:'🔒'}</div>
     </div>`;
   });
@@ -416,53 +421,38 @@ function parseVideo(url){ url=(url||"").trim(); let m;
   if(url)return {type:"iframe",url:url}; return {type:"none"}; }
 function openDay(dayId){
   const d=DAYS.find(x=>x.id===dayId); if(!d)return; const v=parseVideo(d.video_url); const isDone=DONE.has(d.day_number);
-  $("modalRoot").innerHTML=`<div class="clv-ovl" id="clvOvl"><div class="clv-modal">
-    <div class="clv-head"><h3>Day ${d.day_number}: ${esc(d.title)}</h3><button class="clv-x" id="clvX">✕</button></div>
-    <div class="clv-body"><div class="clv-video" id="clvVideo"></div>
-      <div class="clv-meta">${esc(d.lesson_description||"")}</div>
-      ${d.reflection_prompt?`<div class="ch-reflect">💭 ${esc(d.reflection_prompt)}</div>`:""}
-      <div style="display:flex;gap:8px;margin-top:14px;align-items:center">
-        <button class="btn" id="chDone" ${isDone?"disabled":""}>${isDone?"✓ Completed":"Mark day complete"}</button>
-        ${d.worksheet_url?`<a class="btn ghost" href="${esc(d.worksheet_url)}" target="_blank" rel="noopener">Worksheet</a>`:""}
-      </div></div></div></div>`;
-  const close=()=>{ recordDay(d); $("modalRoot").innerHTML=""; };
+  const r=RESUME[d.id]; let resumeFrom=0; if(r&&r.pos>5&&(!r.dur||r.pos<r.dur-15))resumeFrom=r.pos;
+  $("modalRoot").innerHTML='<div class="clv-ovl" id="clvOvl"><div class="clv-modal"><div class="clv-head"><h3>Day '+d.day_number+': '+esc(d.title)+'</h3><button class="clv-x" id="clvX">✕</button></div><div class="clv-body"><div class="clv-video" id="clvVideo"></div><div class="clv-meta" id="clvMeta">'+esc(d.lesson_description||"")+(resumeFrom>0?' · <span style="color:var(--ppy-accentDk,#A87C83)">Resuming from '+fmtTime(resumeFrom)+'</span> · <a href="#" id="clvRestart" style="color:var(--ppy-muted,#9a8f93)">start over</a>':"")+'</div>'+(d.reflection_prompt?'<div class="ch-reflect">💭 '+esc(d.reflection_prompt)+'</div>':"")+'<div style="display:flex;gap:8px;margin-top:14px;align-items:center"><button class="btn" id="chDone" '+(isDone?"disabled":"")+'>'+(isDone?"✓ Completed":"Mark day complete")+'</button>'+(d.worksheet_url?'<a class="btn ghost" href="'+esc(d.worksheet_url)+'" target="_blank" rel="noopener">Worksheet</a>':"")+'</div></div></div></div>';
+  const close=()=>{ if(TRK)saveResume(d.id,TRK.lastPos,TRK.dur); recordDay(d); $("modalRoot").innerHTML=""; renderDetail(); };
   $("clvX").onclick=close; $("clvOvl").onclick=e=>{if(e.target.id==="clvOvl")close();};
   const dn=$("chDone"); if(dn&&!isDone)dn.onclick=()=>markComplete(d,dn);
-  startTracker($("clvVideo"),v,d);
+  startTracker($("clvVideo"),v,d,resumeFrom);
+  const rs=$("clvRestart"); if(rs)rs.onclick=(e)=>{ e.preventDefault(); if(TRK&&TRK.seek){TRK.seek(0);TRK.lastPos=0;} saveResume(d.id,0,TRK?TRK.dur:0); };
 }
-function startTracker(box,v,day){
-  const st={secs:0,lastPos:0,lastT:performance.now(),dur:0,playing:false,day:day,recorded:false,stop:null}; TRK=st;
-  function tick(pos,playing,dur){ const now=performance.now(),wall=(now-st.lastT)/1000; st.lastT=now; if(dur&&!st.dur)st.dur=dur;
-    if(playing&&st.playing){ const ct=pos-st.lastPos,credit=Math.max(0,Math.min(ct,wall)); if(credit>0&&credit<3600)st.secs+=credit; } st.lastPos=pos; st.playing=playing; }
-  if(v.type==="file"){ const vid=document.createElement("video"); vid.src=v.url; vid.controls=true; vid.playsInline=true; box.appendChild(vid);
+function startTracker(box,v,day,resumeFrom){
+  const st={secs:0,lastPos:resumeFrom||0,lastT:performance.now(),dur:0,playing:false,day:day,recorded:false,stop:null,seek:function(){}}; TRK=st;
+  function tick(pos,playing,dur){ const now=performance.now(),wall=(now-st.lastT)/1000; st.lastT=now; if(dur&&!st.dur)st.dur=dur; if(playing&&st.playing){ const ct=pos-st.lastPos,credit=Math.max(0,Math.min(ct,wall)); if(credit>0&&credit<3600)st.secs+=credit; } st.lastPos=pos; st.playing=playing; }
+  if(v.type==="file"){ const vid=document.createElement("video"); vid.src=v.url; vid.controls=true; vid.playsInline=true; box.appendChild(vid); st.seek=function(t){try{vid.currentTime=t;}catch(e){}};
+    vid.addEventListener("loadedmetadata",function(){ if(resumeFrom>0&&resumeFrom<(vid.duration||1e9)-5){try{vid.currentTime=resumeFrom;}catch(e){}} });
     const iv=setInterval(()=>tick(vid.currentTime||0,!vid.paused&&!vid.ended,vid.duration||0),1000); st.stop=()=>clearInterval(iv);
-  } else if(v.type==="youtube"){ const pid="ytp_"+Date.now(); const d=document.createElement("div"); d.id=pid; box.appendChild(d);
-    const mk=()=>{try{st.yt=new YT.Player(pid,{videoId:v.id,playerVars:{rel:0,modestbranding:1,playsinline:1}});}catch(e){}};
+  } else if(v.type==="youtube"){ const pid="ytp_"+Date.now(); const dv=document.createElement("div"); dv.id=pid; box.appendChild(dv);
+    const mk=()=>{try{st.yt=new YT.Player(pid,{videoId:v.id,playerVars:{rel:0,modestbranding:1,playsinline:1},events:{onReady:function(e){ st.seek=function(t){try{e.target.seekTo(t,true);}catch(_){}}; if(resumeFrom>0){try{e.target.seekTo(resumeFrom,true);}catch(_){}} }}});}catch(e){}};
     if(window.YT&&window.YT.Player)mk(); else { if(!document.getElementById("ytapi")){const t=document.createElement("script");t.id="ytapi";t.src="https://www.youtube.com/iframe_api";document.head.appendChild(t);} const prev=window.onYouTubeIframeAPIReady; window.onYouTubeIframeAPIReady=function(){if(prev)try{prev();}catch(e){}mk();}; }
     const iv=setInterval(()=>{try{if(st.yt&&st.yt.getPlayerState)tick(st.yt.getCurrentTime()||0,st.yt.getPlayerState()===1,st.yt.getDuration()||0);}catch(e){}},1000);
     st.stop=()=>{clearInterval(iv);try{st.yt&&st.yt.destroy&&st.yt.destroy();}catch(e){}};
   } else if(v.type==="vimeo"){ const ifr=document.createElement("iframe"); ifr.src="https://player.vimeo.com/video/"+v.id; ifr.allow="autoplay; fullscreen; picture-in-picture"; ifr.setAttribute("allowfullscreen",""); box.appendChild(ifr);
-    const setup=()=>{try{const pl=new Vimeo.Player(ifr);let pos=0,playing=false,dur=0;pl.on("timeupdate",dd=>{pos=dd.seconds;dur=dd.duration;});pl.on("play",()=>playing=true);pl.on("pause",()=>playing=false);pl.on("ended",()=>playing=false);const iv=setInterval(()=>tick(pos,playing,dur),1000);st.stop=()=>clearInterval(iv);}catch(e){}};
+    const setup=()=>{try{const pl=new Vimeo.Player(ifr);st.seek=function(t){try{pl.setCurrentTime(t);}catch(e){}};let pos=0,playing=false,dur=0;pl.ready().then(function(){if(resumeFrom>0){try{pl.setCurrentTime(resumeFrom);}catch(e){}}});pl.on("timeupdate",dd=>{pos=dd.seconds;dur=dd.duration;});pl.on("play",()=>playing=true);pl.on("pause",()=>playing=false);pl.on("ended",()=>playing=false);const iv=setInterval(()=>tick(pos,playing,dur),1000);st.stop=()=>clearInterval(iv);}catch(e){}};
     if(window.Vimeo&&window.Vimeo.Player)setup(); else {const t=document.createElement("script");t.src="https://player.vimeo.com/api/player.js";t.onload=setup;document.head.appendChild(t);}
   } else { const ifr=document.createElement("iframe"); ifr.src=v.type==="iframe"?v.url:"about:blank"; ifr.allow="autoplay; fullscreen"; ifr.setAttribute("allowfullscreen",""); box.appendChild(ifr); }
+  st.saveIv=setInterval(()=>{ if(st.lastPos>3)saveResume(day.id,st.lastPos,st.dur); },10000);
+  const _os=st.stop; st.stop=function(){ try{_os&&_os();}catch(e){} try{clearInterval(st.saveIv);}catch(e){} };
 }
 function recordDay(day){
   const st=TRK; if(!st||st.recorded||!UID)return; st.recorded=true; try{if(st.stop)st.stop();}catch(e){}
   const secs=Math.round(st.secs); if(secs<1)return;
   try{ fetch(SB+"/rest/v1/video_progress",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({user_id:UID,challenge_day_id:day.id,watched_seconds:secs}),keepalive:true}); }catch(e){}
 }
-async function markComplete(day,btn){
-  if(!ENR)return; btn.disabled=true; btn.textContent="Saving…";
-  try{
-    await fetch(SB+"/rest/v1/challenge_day_progress",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify({enrollment_id:ENR.id,day_number:day.day_number})});
-    await fetch(SB+"/rest/v1/video_progress",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({user_id:UID,challenge_day_id:day.id,completed:true,completed_at:new Date().toISOString()})});
-    DONE.add(day.day_number); btn.textContent="✓ Completed";
-    const total=DAYS.length||CUR.total_days||0;
-    if(total&&DONE.size>=total){ await fetch(SB+"/rest/v1/challenge_enrollments?id=eq."+ENR.id,{method:"PATCH",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify({status:"completed",completed_at:new Date().toISOString()})}); ENR.status="completed"; }
-    setTimeout(()=>{ $("modalRoot").innerHTML=""; renderDetail(); },700);
-  }catch(e){ btn.disabled=false; btn.textContent="Try again"; }
-}
-window.addEventListener("pagehide",()=>{ if(TRK&&TRK.day)recordDay(TRK.day); });
+window.addEventListener("pagehide",()=>{ if(TRK&&TRK.day){ saveResume(TRK.day.id,TRK.lastPos,TRK.dur); recordDay(TRK.day); } });
 load();
 
 </script>
