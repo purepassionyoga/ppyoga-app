@@ -72,18 +72,20 @@ async function init(){
 
   // pay row (RLS returns it only if this login's email matches an instructor's portal_email)
   const pay=await sb.from("instructor_pay").select("*").limit(1);
-  const p=(pay.data||[])[0];
+  let p=(pay.data||[])[0];
   if(pay.error){ return renderMessage("Something went wrong", pay.error.message); }
   if(!p){ return renderNotLinked(session.user.email); }
+  if(new URLSearchParams(location.search).get("payout")){ try{ await sb.functions.invoke("connect-refresh",{}); const rr=await sb.from("instructor_pay").select("*").limit(1); if(rr.data&&rr.data[0])p=rr.data[0]; }catch(e){} }
 
-  const [ins,setr,cls,views]=await Promise.all([
+  const [ins,setr,cls,views,pyR]=await Promise.all([
     sb.from("instructors").select("id,name,image_url,bio").eq("id",p.instructor_id).maybeSingle(),
     sb.from("app_settings").select("value").eq("key","royalties").maybeSingle(),
     sb.from("online_classes").select("id,title,duration_label,class_theme,difficulty_level,status").eq("instructor_id",p.instructor_id),
-    sb.from("class_views").select("class_id,watched_seconds,duration_seconds,created_at,self_view").eq("instructor_id",p.instructor_id)
+    sb.from("class_views").select("class_id,watched_seconds,duration_seconds,created_at,self_view").eq("instructor_id",p.instructor_id),
+    sb.from("payouts").select("*").order("created_at",{ascending:false})
   ]);
   if(setr&&setr.data&&setr.data.value)SET=Object.assign(SET,setr.data.value);
-  CTX={ pay:p, instr:ins.data||{name:"Instructor"}, classes:cls.data||[], views:views.data||[] };
+  CTX={ pay:p, instr:ins.data||{name:"Instructor"}, classes:cls.data||[], views:views.data||[], payouts:(pyR&&pyR.data)||[] };
   render();
 }
 function renderSignedOut(){
@@ -127,6 +129,7 @@ function render(){
       <div class="stat pay"><div class="k">Estimated earnings</div><div class="v">${esc(est.label)}</div></div>
     </div>
     <div class="note" style="margin-bottom:22px"><b>Your pay:</b> ${esc(modelLabels[CTX.pay.pay_model]||CTX.pay.pay_model)}${CTX.pay.pay_model!=="rev_share"?` · rate ${money(+CTX.pay.pay_rate||0)}`:""}<div class="model-note">${esc(est.note)}</div></div>
+    ${payoutSection()}
     <table><thead><tr><th>Class</th><th>Level</th><th>Plays</th><th>Views</th><th>Watch h</th><th>Avg progress</th><th>Completion</th></tr></thead><tbody>`;
   if(!CTX.classes.length) html+='<tr><td colspan="6" class="muted" style="padding:18px">No published classes yet.</td></tr>';
   CTX.classes.forEach(c=>{ const d=per[c.id]||{plays:0,views:0,secs:0,psum:0,pc:0,fin:0}; const avg=d.pc?Math.round(d.psum/d.pc):0, comp=d.pc?Math.round((d.fin||0)/d.pc*100):null;
@@ -136,6 +139,27 @@ function render(){
     <p class="muted" style="font-size:12px;margin-top:14px">A “view” counts after ${esc(SET.view_threshold_value)} ${SET.view_threshold_type==="percent"?"% watched":"seconds"} of genuine watch time (skipping ahead doesn’t count), and your own views aren’t counted. Estimated earnings are provisional and may be finalized by the studio.</p>`;
   $("app").innerHTML=html;
   $("per").onchange=e=>{ PERIOD=e.target.value; render(); };
+  if($("setupPay"))$("setupPay").onclick=()=>setupPayouts($("setupPay"));
+}
+function payoutSection(){
+  const pe=CTX.pay.stripe_payouts_enabled, acct=CTX.pay.stripe_account_id;
+  let head;
+  if(pe) head='<span style="color:#2E7D6B">✓ Your payout account is connected.</span> Your earnings are sent to your bank by Stripe.';
+  else if(acct) head='Your payout setup is <b>incomplete</b>. <button class="btn" id="setupPay" style="margin-left:8px">Finish setup</button>';
+  else head='Connect a bank account to receive your earnings — handled securely by Stripe. <button class="btn" id="setupPay" style="margin-left:8px">Set up payouts</button>';
+  let hist="";
+  if(CTX.payouts&&CTX.payouts.length){
+    hist='<div style="margin-top:14px;overflow-x:auto"><table><thead><tr><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>'+
+      CTX.payouts.map(p=>'<tr><td>'+String(p.paid_at||p.created_at||"").slice(0,10)+'</td><td class="name">'+money(p.amount)+'</td><td>'+esc(p.status)+'</td></tr>').join("")+'</tbody></table></div>';
+  }
+  return '<div class="note" style="margin-bottom:22px"><b>Payouts:</b> '+head+hist+'</div>';
+}
+async function setupPayouts(btn){
+  btn.disabled=true; btn.textContent="Opening Stripe…";
+  try{ const {data,error}=await sb.functions.invoke("connect-onboard",{body:{return_url:location.origin}});
+    if(error||!data||!data.url){ btn.disabled=false; btn.textContent="Try again"; alert((error&&error.message)||(data&&data.error)||"Couldn’t start payout setup."); return; }
+    location.href=data.url;
+  }catch(e){ btn.disabled=false; btn.textContent="Try again"; alert(e.message||String(e)); }
 }
 init().catch(e=>renderMessage("Something went wrong", e.message||String(e)));
 </script>
