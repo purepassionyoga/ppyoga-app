@@ -2887,7 +2887,7 @@ init();
     .then(function(rows){
       var p=(rows&&rows[0])||{};
       if(p.tier){ var t=$("ppyTier"); if(t){ t.textContent=p.tier; t.hidden=false; } }
-      if(p.is_admin){ var a=$("ppyAdmin"); if(a) a.hidden=false; var am=$("ppyAdminM"); if(am) am.hidden=false; }
+      if(p.is_admin){ var a=$("ppyAdmin"); if(a) a.hidden=false; var am=$("ppyAdminM"); if(am) am.hidden=false; document.querySelectorAll("[data-nav='classes'],[data-nav='challenges']").forEach(function(e){e.hidden=false;}); }
     }).catch(function(){});
 })();
 </script>
