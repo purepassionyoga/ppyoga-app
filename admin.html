@@ -345,6 +345,9 @@
     #royalties .roy-card{background:#faf6f5;border:1px solid var(--line,#ece3e4);border-radius:12px;padding:14px 16px;margin-bottom:14px}
     #royalties .payout{font-weight:600;color:#A87C83}
     #royalties .ms{font-size:11px;color:var(--muted)}
+    #royalties .roy-bar{display:inline-block;width:84px;height:7px;border-radius:999px;background:#efe4e6;overflow:hidden;vertical-align:middle}
+    #royalties .roy-bar span{display:block;height:100%;background:#C8A0A6}
+    #royalties .roy-bl{font-size:11px;color:var(--muted);margin-left:6px}
     </style>
     <style id="stuCSS">
     #studio .stu-seg{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
@@ -1288,9 +1291,9 @@ function royRollups(){
   const views=ROY_views.filter(v=>royInPeriod(v.created_at) && !v.self_view);
   const perClass={}, perInstr={};
   views.forEach(v=>{
-    const c=perClass[v.class_id]=perClass[v.class_id]||{plays:0,views:0,secs:0,psum:0,pc:0};
+    const c=perClass[v.class_id]=perClass[v.class_id]||{plays:0,views:0,secs:0,psum:0,pc:0,fin:0};
     c.plays++; c.secs+=v.watched_seconds; if(royIsView(v))c.views++;
-    if(v.duration_seconds){ c.psum+=Math.min(100,v.watched_seconds/v.duration_seconds*100); c.pc++; }
+    if(v.duration_seconds){ c.psum+=Math.min(100,v.watched_seconds/v.duration_seconds*100); c.pc++; if(v.watched_seconds/v.duration_seconds>=0.9)c.fin++; }
     if(v.instructor_id){ const it=perInstr[v.instructor_id]=perInstr[v.instructor_id]||{views:0,secs:0}; if(royIsView(v))it.views++; it.secs+=v.watched_seconds; }
   });
   const totalMin=Object.keys(perInstr).reduce((m,k)=>m+perInstr[k].secs/60,0);
@@ -1359,12 +1362,13 @@ function renderRoyalties(){
   <div class="ms" style="margin-top:6px">Rate meaning: per-view = $ per billable view · per-minute = $ per watch-minute · flat = $ per class they’ve produced · rev-share = split of the monthly pool by watch time. Instructors’ own views never count, and only genuine watch time (no skipping/fast-forward) is credited.</div>
 
   <div style="font-weight:600;margin:20px 0 4px">By class</div>
-  <table><thead><tr><th>Class</th><th>Instructor</th><th>Plays</th><th>Views</th><th>Watch h</th><th>Avg % watched</th></tr></thead><tbody>`;
+  <div class="ms" style="margin-bottom:2px">Progress = how far members get on average · Completion = share of views that reached the end.</div>
+  <table><thead><tr><th>Class</th><th>Instructor</th><th>Plays</th><th>Views</th><th>Watch h</th><th>Avg progress</th><th>Completion</th></tr></thead><tbody>`;
   const classesWithData=ROY_classes.filter(c=>perClass[c.id]);
   if(!classesWithData.length) html+='<tr><td colspan="6" style="color:var(--muted);padding:16px">No views recorded in this period yet.</td></tr>';
   classesWithData.sort((a,b)=>(perClass[b.id].views)-(perClass[a.id].views)).forEach(c=>{
-    const d=perClass[c.id], ins=instrById(c.instructor_id);
-    html+=`<tr><td>${esc(c.title)}</td><td>${esc(ins?ins.name:"—")}</td><td>${d.plays}</td><td>${d.views}</td><td>${(d.secs/3600).toFixed(1)}</td><td>${d.pc?Math.round(d.psum/d.pc)+"%":"—"}</td></tr>`;
+    const d=perClass[c.id], ins=instrById(c.instructor_id); const avg=d.pc?Math.round(d.psum/d.pc):0; const comp=d.pc?Math.round((d.fin||0)/d.pc*100):null;
+    html+=`<tr><td>${esc(c.title)}</td><td>${esc(ins?ins.name:"—")}</td><td>${d.plays}</td><td>${d.views}</td><td>${(d.secs/3600).toFixed(1)}</td><td>${d.pc?'<span class="roy-bar"><span style="width:'+avg+'%"></span></span><span class="roy-bl">'+avg+'%</span>':"—"}</td><td>${comp==null?"—":comp+"%"}</td></tr>`;
   });
   html+=`</tbody></table>`;
   $("royalties").innerHTML=html;
