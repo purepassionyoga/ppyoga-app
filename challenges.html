@@ -317,11 +317,12 @@ let CH=[], INSTR={}, SITE={}, UID=null, TOKEN=null, EMAIL=null, TIER="free", IS_
 let CUR=null, DAYS=[], ENR=null, DONE=new Set(), TRK=null, RESUME={};
 let CFch={instr:"",days:"",level:""}, CH_INSTR={};
 async function loadResume(){ if(!UID)return; try{ const r=await fetch(SB+"/rest/v1/resume_positions?select=content_id,position_seconds,duration_seconds&user_id=eq."+UID+"&content_type=eq.challenge_day",{headers:{apikey:KEY,Authorization:"Bearer "+TOKEN}}); (await r.json()||[]).forEach(x=>RESUME[x.content_id]={pos:x.position_seconds,dur:x.duration_seconds}); }catch(e){} }
-function saveResume(id,pos,dur){ if(!UID||!id||(pos||0)<3)return; try{ fetch(SB+"/rest/v1/resume_positions",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({user_id:UID,content_type:"challenge_day",content_id:id,position_seconds:Math.round(pos),duration_seconds:dur?Math.round(dur):null,updated_at:new Date().toISOString()}),keepalive:true}); }catch(e){} RESUME[id]={pos:Math.round(pos),dur:dur?Math.round(dur):null}; }
+function saveResume(id,pos,dur){ if(!UID||!id||(pos||0)<2)return; try{ fetch(SB+"/rest/v1/resume_positions",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({user_id:UID,content_type:"challenge_day",content_id:id,position_seconds:Math.round(pos),duration_seconds:dur?Math.round(dur):null,updated_at:new Date().toISOString()}),keepalive:true}); }catch(e){} RESUME[id]={pos:Math.round(pos),dur:dur?Math.round(dur):null}; }
 function fmtTime(x){ x=Math.max(0,Math.round(x||0)); const m=Math.floor(x/60),ss=x%60; return m+":"+(ss<10?"0":"")+ss; }
 function isFinished(r){ return !!(r&&r.dur&&r.pos>=r.dur-Math.min(20,r.dur*0.1)); }
-function resumeStart(r){ if(!r||!r.pos||r.pos<10||!r.dur)return 0; if(isFinished(r))return 0; return Math.min(r.pos, r.dur-2); }
-function dayResume(d){ const r=RESUME[d.id]; if(!r||!r.pos||r.pos<5)return""; if(isFinished(r))return""; const pct=r.dur?Math.min(100,Math.round(r.pos/r.dur*100)):0; return pct?(" · "+pct+"% watched"):" · in progress"; }
+function resumeStart(r){ if(!r||!r.pos||r.pos<3||!r.dur)return 0; if(isFinished(r))return 0; return Math.min(r.pos, r.dur-2); }
+function inProgress(r){ if(!r||!r.pos||r.pos<2)return false; if(isFinished(r))return false; return true; }
+function dayResume(d){ const r=RESUME[d.id]; if(!inProgress(r))return""; const pct=r.dur?Math.min(100,Math.round(r.pos/r.dur*100)):0; return pct?(" · "+pct+"% watched"):" · in progress"; }
 
 function $(id){return document.getElementById(id);}
 function h(){ return {apikey:KEY,Authorization:"Bearer "+(TOKEN||KEY)}; }
