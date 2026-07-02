@@ -351,6 +351,7 @@ async function load(){
     const site=await siteR.json(); SITE=(site&&site[0]&&site[0].value)||{};
     (await insR.json()||[]).forEach(i=>INSTR[i.id]=i);
     CLASSES=await clsR.json()||[];
+    if(CLASSES.some(c=>/mediadelivery\.net/.test(c.video_url||"")))preloadPlayerJs();
     await loadResume("class");
     $("clState").style.display="none";
     buildFilters(); render();
@@ -380,7 +381,7 @@ function renderResume(){ const el=$("clResume"); if(!el)return;
   const items=CLASSES.filter(c=>{const r=RESUME[c.id];return inProgress(r)&&canWatch(c);}).sort((a,b)=>String(RESUME[b.id].upd||"").localeCompare(String(RESUME[a.id].upd||""))).slice(0,10);
   if(!items.length){ el.innerHTML=""; return; }
   el.innerHTML='<div class="cl-cw-h">Continue watching</div><div class="cl-cw-row">'+items.map(c=>{const r=RESUME[c.id],pct=r.dur?Math.min(100,Math.round(r.pos/r.dur*100)):8;return '<div class="cl-cw-card" data-id="'+c.id+'"><div class="cl-cw-thumb" style="background-image:url(\''+esc(c.thumbnail_url||"")+'\')"><div class="cl-progbar"><span style="width:'+(pct||8)+'%"></span></div></div><div class="cl-cw-n">'+esc(c.title)+'</div></div>';}).join("")+'</div>';
-  el.querySelectorAll(".cl-cw-card").forEach(x=>x.onclick=()=>openClass(x.dataset.id));
+  el.querySelectorAll(".cl-cw-card").forEach(x=>{x.onclick=()=>openClass(x.dataset.id);x.onmouseenter=()=>prefetchClass(x.dataset.id);});
 }
 function render(){
   renderResume();
@@ -403,7 +404,7 @@ function render(){
         <div class="cl-badges">${c.difficulty_level?'<span class="cl-badge">'+esc(c.difficulty_level)+'</span>':""}${c.class_theme?'<span class="cl-badge">'+esc(c.class_theme)+'</span>':""}</div>
       </div></div>`;
   }).join("");
-  $("clGrid").querySelectorAll(".cl-card").forEach(el=>el.onclick=()=>openClass(el.dataset.id));
+  $("clGrid").querySelectorAll(".cl-card").forEach(el=>{el.onclick=()=>openClass(el.dataset.id);el.onmouseenter=()=>prefetchClass(el.dataset.id);});
 }
 function openClass(id){
   const c=CLASSES.find(x=>x.id===id); if(!c)return;
@@ -433,6 +434,18 @@ function parseVideo(url){
   if(url)return {type:"iframe",url:url};
   return {type:"none"};
 }
+const BUNNY_CACHE={};
+function bunnySign(type,id,v){
+  const key=type+":"+id, now=Date.now(); const c=BUNNY_CACHE[key];
+  if(c && (now-c.ts < 3*60*60*1000)) return c.p;
+  const fallback="https://iframe.mediadelivery.net/embed/"+v.lib+"/"+v.guid;
+  const p=fetch(SB+"/functions/v1/bunny-sign",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+(TOKEN||KEY),"Content-Type":"application/json"},body:JSON.stringify({type:type,id:id})})
+    .then(function(r){return r.ok?r.json():null;}).then(function(j){ return (j&&j.url)?j.url:fallback; }).catch(function(){ return fallback; });
+  BUNNY_CACHE[key]={p:p,ts:now}; return p;
+}
+function prefetchClass(id){ const c=CLASSES.find(x=>x.id===id); if(!c)return; const v=parseVideo(c.video_url); if(v.type==="bunny")bunnySign("class",id,v); }
+let PJ_LOADED=false;
+function preloadPlayerJs(){ if(PJ_LOADED||window.playerjs)return; PJ_LOADED=true; const t=document.createElement("script"); t.src="https://cdn.embed.ly/player-0.1.0.min.js"; t.async=true; document.head.appendChild(t); }
 function openPlayer(c){
   const v=parseVideo(c.video_url), ins=INSTR[c.instructor_id];
   const r=RESUME[c.id]; let resumeFrom=resumeStart(r);
@@ -484,10 +497,8 @@ function startTracker(box, v, cls, resumeFrom){
         st.stop=function(){clearInterval(iv);};
       }catch(e){} };
     const loadPlayer=function(){ if(window.playerjs&&window.playerjs.Player)attach(); else { const t=document.createElement("script"); t.src="https://cdn.embed.ly/player-0.1.0.min.js"; t.onload=attach; document.head.appendChild(t); } };
-    const fallback="https://iframe.mediadelivery.net/embed/"+v.lib+"/"+v.guid;
     const go=function(u){ const sep=u.indexOf("?")>=0?"&":"?"; ifr.src=u+sep+"preload=true"; loadPlayer(); };
-    fetch(SB+"/functions/v1/bunny-sign",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+(TOKEN||KEY),"Content-Type":"application/json"},body:JSON.stringify({type:"class",id:cls.id})})
-      .then(function(r){return r.ok?r.json():null;}).then(function(j){ go((j&&j.url)?j.url:fallback); }).catch(function(){ go(fallback); });
+    bunnySign("class",cls.id,v).then(go);
   } else {
     const ifr=document.createElement("iframe"); ifr.src=v.type==="iframe"?v.url:"about:blank"; ifr.allow="autoplay; fullscreen"; ifr.setAttribute("allowfullscreen",""); box.appendChild(ifr);
   }
