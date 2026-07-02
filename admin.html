@@ -1263,7 +1263,7 @@ function slugifyL(t){ return (t||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").re
 /* ================= ROYALTIES & VIDEO ANALYTICS ================= */
 let ROY_loaded=false, ROY_period="month",
     ROY_set={currency:"USD",view_threshold_type:"seconds",view_threshold_value:30,pool_monthly:0},
-    ROY_instr=[], ROY_pay={}, ROY_classes=[], ROY_views=[];
+    ROY_instr=[], ROY_pay={}, ROY_classes=[], ROY_views=[], ROY_payouts=[];
 const PAY_MODELS=[["per_view","Per view"],["per_minute","Per watch-minute"],["rev_share","Revenue share (pool)"],["flat_per_class","Flat per class"]];
 function royMoney(n){ const c=ROY_set.currency||"USD"; try{ return new Intl.NumberFormat(undefined,{style:"currency",currency:c}).format(n||0); }catch(e){ return "$"+(Number(n)||0).toFixed(2); } }
 function royPeriodStart(){ const n=new Date(); if(ROY_period==="month")return new Date(n.getFullYear(),n.getMonth(),1); if(ROY_period==="lastmonth")return new Date(n.getFullYear(),n.getMonth()-1,1); if(ROY_period==="30d"){ const d=new Date(n); d.setDate(d.getDate()-30); return d; } return null; }
@@ -1275,16 +1275,17 @@ function instrById(id){ return ROY_instr.find(i=>i.id===id); }
 async function loadRoyalties(force){
   if(ROY_loaded && !force) return;
   $("royalties").innerHTML='<div style="padding:18px;color:var(--muted)">Loading…</div>';
-  const [setr,instr,pay,cls,views]=await Promise.all([
+  const [setr,instr,pay,cls,views,pyR]=await Promise.all([
     sb.from("app_settings").select("value").eq("key","royalties").maybeSingle(),
     sb.from("instructors").select("*").order("name"),
     sb.from("instructor_pay").select("*"),
     sb.from("online_classes").select("id,title,instructor_id,duration_label,status"),
-    sb.from("class_views").select("class_id,instructor_id,watched_seconds,duration_seconds,created_at,self_view")
+    sb.from("class_views").select("class_id,instructor_id,watched_seconds,duration_seconds,created_at,self_view"),
+    sb.from("payouts").select("*").order("created_at",{ascending:false})
   ]);
   if(setr&&setr.data&&setr.data.value)ROY_set=Object.assign({currency:"USD",view_threshold_type:"seconds",view_threshold_value:30,pool_monthly:0},setr.data.value);
   ROY_instr=instr.data||[]; ROY_classes=cls.data||[]; ROY_views=views.data||[];
-  ROY_pay={}; (pay.data||[]).forEach(p=>{ROY_pay[p.instructor_id]=p;});
+  ROY_pay={}; (pay.data||[]).forEach(p=>{ROY_pay[p.instructor_id]=p;}); ROY_payouts=(pyR&&pyR.data)||[];
   ROY_loaded=true; renderRoyalties();
 }
 function royRollups(){
@@ -1311,6 +1312,7 @@ function royPayout(id,perInstr,totalMin){
 }
 function renderRoyalties(){
   const {perClass,perInstr,totalMin}=royRollups();
+  const owedAll=computeOwedAll();
   const totalPayout=ROY_instr.reduce((m,i)=>m+royPayout(i.id,perInstr,totalMin),0);
   const totViews=Object.keys(perInstr).reduce((m,k)=>m+perInstr[k].views,0);
   let html=`<div class="erow-top">
@@ -1360,6 +1362,7 @@ function renderRoyalties(){
   });
   html+=`</tbody></table>
   <div class="ms" style="margin-top:6px">Rate meaning: per-view = $ per billable view · per-minute = $ per watch-minute · flat = $ per class they’ve produced · rev-share = split of the monthly pool by watch time. Instructors’ own views never count, and only genuine watch time (no skipping/fast-forward) is credited.</div>
+  ${payoutCard(owedAll)}
 
   <div style="font-weight:600;margin:20px 0 4px">By class</div>
   <div class="ms" style="margin-bottom:2px">Progress = how far members get on average · Completion = share of views that reached the end.</div>
@@ -1375,7 +1378,49 @@ function renderRoyalties(){
   $("royPeriod").onchange=e=>{ ROY_period=e.target.value; renderRoyalties(); };
   $("roySaveSet").onclick=saveRoyaltySettings;
   $("royalties").querySelectorAll("[data-saveinstr]").forEach(b=>b.onclick=()=>saveInstrPay(b.dataset.saveinstr));
+  if($("roySavePay"))$("roySavePay").onclick=savePayoutSettings;
+  if($("royRunAll"))$("royRunAll").onclick=runAllPayouts;
+  $("royalties").querySelectorAll("[data-pay]").forEach(b=>b.onclick=()=>payInstructor(b.dataset.pay));
+  $("royalties").querySelectorAll("[data-refresh]").forEach(b=>b.onclick=()=>refreshStatus(b.dataset.refresh));
 }
+function computeOwedAll(){
+  const per={}; let totalMin=0;
+  ROY_views.forEach(v=>{ if(v.self_view||!v.instructor_id)return; const a=per[v.instructor_id]=per[v.instructor_id]||{views:0,secs:0}; if(royIsView(v))a.views++; a.secs+=v.watched_seconds; totalMin+=v.watched_seconds/60; });
+  const cc={}; ROY_classes.forEach(c=>{cc[c.instructor_id]=(cc[c.instructor_id]||0)+1;});
+  const paidBy={}; (ROY_payouts||[]).forEach(p=>{ if(p.status==="paid"||p.status==="processing"||p.status==="pending")paidBy[p.instructor_id]=(paidBy[p.instructor_id]||0)+Number(p.amount); });
+  const owed={};
+  ROY_instr.forEach(i=>{ const p=ROY_pay[i.id]||{pay_model:"per_view",pay_rate:0}; const a=per[i.id]||{views:0,secs:0}; const min=a.secs/60,rate=+p.pay_rate||0; let earned=0;
+    if(p.pay_model==="per_view")earned=a.views*rate; else if(p.pay_model==="per_minute")earned=min*rate; else if(p.pay_model==="flat_per_class")earned=(cc[i.id]||0)*rate; else if(p.pay_model==="rev_share")earned=totalMin>0?(min/totalMin)*(+ROY_set.pool_monthly||0):0;
+    owed[i.id]=Math.max(0,Math.round((earned-(paidBy[i.id]||0))*100)/100);
+  });
+  return owed;
+}
+function payoutCard(owedAll){
+  const cur=ROY_set.currency||"USD";
+  let rows="";
+  ROY_instr.forEach(i=>{ const p=ROY_pay[i.id]||{}; const owed=owedAll[i.id]||0;
+    const status=p.stripe_account_id?(p.stripe_payouts_enabled?'<span style="color:#5a8a52">\u2713 Ready</span>':'<span style="color:#B98A1F">Onboarding incomplete</span>'):'<span style="color:var(--muted)">Not set up</span>';
+    const canPay=p.stripe_account_id&&p.stripe_payouts_enabled&&owed>0;
+    rows+='<tr><td>'+esc(i.name)+'</td><td>'+status+'</td><td class="payout">'+royMoney(owed)+'</td><td style="white-space:nowrap">'+(canPay?'<button class="btn" style="padding:5px 11px" data-pay="'+i.id+'">Pay '+royMoney(owed)+'</button> ':"")+(p.stripe_account_id?'<button class="btn ghost" style="padding:5px 11px" data-refresh="'+i.id+'">Refresh</button>':"")+'</td></tr>';
+  });
+  let hist="";
+  (ROY_payouts||[]).slice(0,20).forEach(p=>{ const nm=(ROY_instr.find(x=>x.id===p.instructor_id)||{}).name||"\u2014"; hist+='<tr><td>'+esc(nm)+'</td><td>'+royMoney(p.amount)+'</td><td>'+esc(p.status)+'</td><td>'+String(p.paid_at||p.created_at||"").slice(0,10)+'</td><td style="font-size:11px;color:var(--muted)">'+esc(p.stripe_transfer_id||p.note||"")+'</td></tr>'; });
+  return '<div class="roy-card" style="margin-top:16px"><div style="font-weight:600;margin-bottom:10px">Payouts \u00b7 Stripe Connect</div>'
+    +'<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:end;margin-bottom:12px">'
+    +'<div><div class="ms">Payout mode</div><select id="royMode"><option value="manual"'+(ROY_set.payout_mode!=="auto"?" selected":"")+'>Manual \u2014 I release each payout</option><option value="auto"'+(ROY_set.payout_mode==="auto"?" selected":"")+'>Automatic \u2014 pay eligible on schedule</option></select></div>'
+    +'<div><div class="ms">Minimum payout ('+esc(cur)+')</div><input id="royMin" type="number" value="'+esc(ROY_set.payout_minimum!=null?ROY_set.payout_minimum:0)+'" style="width:110px"/></div>'
+    +'<button class="btn" id="roySavePay" style="padding:8px 14px">Save</button>'
+    +'<button class="btn ghost" id="royRunAll" style="padding:8px 14px">Run payouts now</button>'
+    +'<span id="royPayMsg" style="font-size:12px"></span></div>'
+    +'<table><thead><tr><th>Instructor</th><th>Payout account</th><th>Balance owed</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="4" style="color:var(--muted);padding:12px">No instructors.</td></tr>')+'</tbody></table>'
+    +'<div class="ms" style="margin-top:6px">Balance owed = all-time earned minus everything already paid. Instructors connect their own bank via Stripe from their portal \u2014 no bank details are stored here.</div>'
+    +(hist?'<div style="font-weight:600;margin:14px 0 4px">Payout history</div><table><thead><tr><th>Instructor</th><th>Amount</th><th>Status</th><th>Date</th><th>Reference</th></tr></thead><tbody>'+hist+'</tbody></table>':"")
+    +'</div>';
+}
+async function savePayoutSettings(){ ROY_set.payout_mode=$("royMode").value; ROY_set.payout_minimum=parseFloat($("royMin").value)||0; const m=$("royPayMsg"); if(m)m.innerHTML='<span style="color:var(--muted)">Saving\u2026</span>'; const {error}=await sb.from("app_settings").update({value:ROY_set}).eq("key","royalties"); if(error){ if(m)m.innerHTML='<span style="color:#A03A22">'+esc(error.message)+'</span>'; return; } if(m)m.innerHTML='<span style="color:#5a8a52">Saved \u2713</span>'; }
+async function payInstructor(id){ const nm=(ROY_instr.find(x=>x.id===id)||{}).name||"this instructor"; if(!confirm("Send payout to "+nm+" now via Stripe?"))return; const m=$("royPayMsg"); if(m)m.innerHTML='<span style="color:var(--muted)">Processing payout\u2026</span>'; const {data,error}=await sb.functions.invoke("run-payouts",{body:{action:"single",instructor_id:id}}); if(error){ if(m)m.innerHTML='<span style="color:#A03A22">'+esc(error.message)+'</span>'; return; } const r=(data&&data.results&&data.results[0])||{}; if(r.error){ if(m)m.innerHTML='<span style="color:#A03A22">'+esc(r.error)+'</span>'; return; } if(r.skipped){ if(m)m.innerHTML='<span style="color:#B98A1F">Skipped: '+esc(r.skipped)+'</span>'; return; } if(m)m.innerHTML='<span style="color:#5a8a52">Paid \u2713</span>'; loadRoyalties(true); }
+async function runAllPayouts(){ if(!confirm("Pay all eligible instructors now via Stripe?"))return; const m=$("royPayMsg"); if(m)m.innerHTML='<span style="color:var(--muted)">Processing\u2026</span>'; const {data,error}=await sb.functions.invoke("run-payouts",{body:{action:"all"}}); if(error){ if(m)m.innerHTML='<span style="color:#A03A22">'+esc(error.message)+'</span>'; return; } const res=(data&&data.results)||[]; const paid=res.filter(x=>x.paid).length; if(m)m.innerHTML='<span style="color:#5a8a52">Done \u2014 '+paid+' payout(s) sent.</span>'; loadRoyalties(true); }
+async function refreshStatus(id){ const m=$("royPayMsg"); if(m)m.innerHTML='<span style="color:var(--muted)">Refreshing\u2026</span>'; await sb.functions.invoke("connect-refresh",{body:{instructor_id:id}}); loadRoyalties(true); }
 async function saveRoyaltySettings(){
   ROY_set.view_threshold_value=parseFloat($("royThVal").value)||0;
   ROY_set.view_threshold_type=$("royThType").value;
