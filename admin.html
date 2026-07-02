@@ -340,6 +340,15 @@
     #studio .stu-seg button{border:1px solid var(--line,#ece3e4);background:#fff;color:#6f5b61;border-radius:10px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer}
     #studio .stu-seg button.on{background:#C8A0A6;color:#fff;border-color:#C8A0A6}
     #studio .lrow{display:flex;gap:12px;align-items:center}
+    #edRoot .stu-imgrow{display:flex;gap:8px;align-items:center}
+    #edRoot .stu-imgprev{margin-top:8px}
+    #edRoot .stu-imgprev img{max-width:170px;max-height:96px;border-radius:8px;border:1px solid var(--line,#ece3e4);object-fit:cover;display:block}
+    #edRoot .stu-tchips{display:flex;flex-wrap:wrap;gap:6px}
+    #edRoot .stu-tchip{font-size:12px;padding:5px 12px;border-radius:999px;border:1px solid var(--line,#ece3e4);background:#fff;color:#6f5b61;cursor:pointer;text-transform:capitalize;user-select:none}
+    #edRoot .stu-tchip.on{background:#A87C83;color:#fff;border-color:#A87C83}
+    #edRoot .stu-pickwrap{max-height:320px;overflow:auto;border:1px solid var(--line,#ece3e4);border-radius:10px;padding:6px}
+    #edRoot .stu-picrow{display:flex;gap:9px;align-items:center;padding:8px 9px;border-radius:8px;font-size:13px;cursor:pointer}
+    #edRoot .stu-picrow:hover{background:#faf6f5}
     </style>
     <div id="emailtab" class="hidden"></div>
     <div id="advanced" class="hidden"></div>
@@ -1239,12 +1248,54 @@ function slugifyL(t){ return (t||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").re
 let STUDIO_view="classes", STU_loaded=false, INSTR=[], OCLASSES=[], VCHAL=[], DAYS_current=null, DAYS_list=[];
 const STU_TIERS=["free","member","premium","practitioner","teacher","ultimate"];
 const STU_CSTATUS=["draft","published","archived"];
+const STU_DIFF=[["","— difficulty —"],"Beginner","Beginner–Intermediate","Intermediate","Intermediate–Advanced","Advanced","All levels"];
 function slugifyC(s){return String(s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
 function stuF(label,id,val,ph,type){return `<div class="field"><label>${label}</label><input id="${id}" type="${type||"text"}" value="${esc(val==null?"":val)}" placeholder="${esc(ph||"")}"/></div>`;}
 function stuTA(label,id,val,ph,h){return `<div class="field"><label>${label}</label><textarea id="${id}" style="min-height:${h||90}px" placeholder="${esc(ph||"")}">${esc(val||"")}</textarea></div>`;}
 function stuSel(label,id,opts,val){return `<div class="field"><label>${label}</label><select id="${id}">${opts.map(o=>{const v=Array.isArray(o)?o[0]:o,t=Array.isArray(o)?o[1]:o;return `<option value="${esc(v)}"${String(val)===String(v)?" selected":""}>${esc(t)}</option>`;}).join("")}</select></div>`;}
 function stuErr(m){ const e=$("stuMsg"); if(e)e.innerHTML='<span style="color:#A03A22">'+esc(m)+'</span>'; return false; }
 function instrName(id){ const x=INSTR.find(i=>i.id===id); return x?x.name:""; }
+function tierLabel(x){ const t=(x.access_tiers&&x.access_tiers.length)?x.access_tiers:(x.access_tier?[x.access_tier]:[]); return t.join(", ")||"—"; }
+
+// image field with an Upload button (to the studio-media bucket) + live preview
+function stuImg(label,id,val,folder){
+  return `<div class="field"><label>${label}</label>
+    <div class="stu-imgrow"><input id="${id}" type="text" value="${esc(val==null?"":val)}" placeholder="https://… or upload"/>
+    <button type="button" class="btn ghost stu-imgup" data-up="${id}" data-folder="${folder}" style="padding:7px 12px;white-space:nowrap">⬆ Upload</button></div>
+    <div class="stu-imgprev" id="${id}_pv"${val?"":' style="display:none"'}><img src="${esc(val||"")}" alt=""/></div></div>`;
+}
+function wireUploads(){
+  document.querySelectorAll("#edRoot .stu-imgup").forEach(btn=>{
+    btn.onclick=()=>{
+      const inp=$(btn.dataset.up), folder=btn.dataset.folder||"misc";
+      const file=document.createElement("input"); file.type="file"; file.accept="image/*";
+      file.onchange=async()=>{
+        const f=file.files&&file.files[0]; if(!f)return;
+        if(f.size>8*1024*1024){ stuErr("Image is over 8MB — please use a smaller file."); return; }
+        const orig=btn.textContent; btn.disabled=true; btn.textContent="Uploading…";
+        try{
+          const ext=((f.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,""))||"jpg";
+          const path=folder+"/"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+"."+ext;
+          const up=await sb.storage.from("studio-media").upload(path,f,{upsert:true,contentType:f.type||"image/jpeg"});
+          if(up.error)throw up.error;
+          const pub=sb.storage.from("studio-media").getPublicUrl(path);
+          inp.value=pub.data.publicUrl;
+          const pv=$(inp.id+"_pv"); if(pv){ pv.style.display=""; pv.querySelector("img").src=pub.data.publicUrl; }
+        }catch(e){ stuErr("Upload failed: "+(e.message||e)); }
+        btn.disabled=false; btn.textContent=orig;
+      };
+      file.click();
+    };
+  });
+}
+// multi-select access tiers
+function stuTierChips(id,selected){
+  const sel=Array.isArray(selected)&&selected.length?selected:[];
+  return `<div class="field"><label>Access tiers <span style="color:var(--muted);font-weight:400">(who can watch — pick one or more)</span></label>
+    <div class="stu-tchips" id="${id}">${STU_TIERS.map(t=>`<span class="stu-tchip${sel.indexOf(t)>=0?" on":""}" data-t="${t}">${t}</span>`).join("")}</div></div>`;
+}
+function wireTierChips(){ document.querySelectorAll("#edRoot .stu-tchips .stu-tchip").forEach(c=>c.onclick=()=>c.classList.toggle("on")); }
+function getTiers(id){ return Array.prototype.slice.call(document.querySelectorAll("#edRoot #"+id+" .stu-tchip.on")).map(c=>c.dataset.t); }
 
 async function loadStudio(force){
   if(STU_loaded && !force) return;
@@ -1282,22 +1333,22 @@ function renderInstructors(){
   return html;
 }
 function renderClasses(){
-  let html=`<div class="erow-top"><div class="note">On-demand classes members can watch. Set an access tier and publish when ready.</div><button class="btn" style="padding:7px 14px" data-new="class">+ New class</button></div>`;
+  let html=`<div class="erow-top"><div class="note">On-demand classes members can watch. Set access tiers and publish when ready.</div><button class="btn" style="padding:7px 14px" data-new="class">+ New class</button></div>`;
   if(!OCLASSES.length) return html+'<div style="padding:24px;color:var(--muted)">No classes yet.</div>';
   OCLASSES.forEach(c=>{ html+=`<div class="lrow">
     <div style="width:62px;height:38px;border-radius:7px;background:#f0e9ea url('${esc(c.thumbnail_url||"")}') center/cover;flex:0 0 auto"></div>
-    <div><div class="mn">${esc(c.title)}</div><div class="ms">${esc(instrName(c.instructor_id)||"—")} · ${esc(c.duration_label||"")} · <b>${esc(c.access_tier)}</b></div></div>
+    <div><div class="mn">${esc(c.title)}</div><div class="ms">${esc(instrName(c.instructor_id)||"—")} · ${esc(c.duration_label||"")}${c.difficulty_level?" · "+esc(c.difficulty_level):""} · <b>${esc(tierLabel(c))}</b></div></div>
     <div class="lright"><span class="${c.status==="published"?"pill-on":"pill-off"}">${esc(c.status)}</span><button class="btn ghost" style="padding:5px 11px" data-edit="class:${c.id}">Edit</button></div>
   </div>`; });
   return html;
 }
 function renderChallenges(){
-  let html=`<div class="erow-top"><div class="note">Multi-day video challenges. Create the challenge, then add its days.</div><button class="btn" style="padding:7px 14px" data-new="chal">+ New challenge</button></div>`;
+  let html=`<div class="erow-top"><div class="note">Multi-day video challenges. Create the challenge, then add its videos.</div><button class="btn" style="padding:7px 14px" data-new="chal">+ New challenge</button></div>`;
   if(!VCHAL.length) return html+'<div style="padding:24px;color:var(--muted)">No challenges yet.</div>';
   VCHAL.forEach(c=>{ html+=`<div class="lrow">
     <div style="width:62px;height:38px;border-radius:7px;background:#f0e9ea url('${esc(c.preview_image_url||"")}') center/cover;flex:0 0 auto"></div>
-    <div><div class="mn">${esc(c.title)}${c.is_free?' <span class="pill-on" style="background:#eef0e8;color:#6b7355">free</span>':""}</div><div class="ms">${c.total_days||0} days · <b>${esc(c.access_tier)}</b></div></div>
-    <div class="lright"><span class="${c.status==="published"?"pill-on":"pill-off"}">${esc(c.status)}</span><button class="btn ghost" style="padding:5px 11px" data-days="${c.id}">Days</button><button class="btn ghost" style="padding:5px 11px" data-edit="chal:${c.id}">Edit</button></div>
+    <div><div class="mn">${esc(c.title)}${c.is_free?' <span class="pill-on" style="background:#eef0e8;color:#6b7355">free</span>':""}</div><div class="ms">${c.total_days||0} videos${c.difficulty_level?" · "+esc(c.difficulty_level):""} · <b>${esc(tierLabel(c))}</b></div></div>
+    <div class="lright"><span class="${c.status==="published"?"pill-on":"pill-off"}">${esc(c.status)}</span><button class="btn ghost" style="padding:5px 11px" data-days="${c.id}">Videos</button><button class="btn ghost" style="padding:5px 11px" data-edit="chal:${c.id}">Edit</button></div>
   </div>`; });
   return html;
 }
@@ -1327,7 +1378,7 @@ function editInstr(id){
     <div class="edbody"><div class="grp">
       ${stuF("Name","iName",x.name)}
       ${stuTA("Bio","iBio",x.bio,"A short intro shown on their classes.",90)}
-      ${stuF("Photo URL","iImg",x.image_url,"https://…")}
+      ${stuImg("Photo","iImg",x.image_url,"instructors")}
     </div>
     <div style="display:flex;gap:10px;align-items:center">
       <button class="btn" data-save>Save</button>
@@ -1335,6 +1386,7 @@ function editInstr(id){
       <span id="stuMsg" style="font-size:12px"></span>
     </div></div>
   </div></div>`;
+  wireUploads();
   stuWire({
     save:async()=>{ const name=$("iName").value.trim(); if(!name)return stuErr("Name is required.");
       const payload={name,bio:$("iBio").value.trim(),image_url:$("iImg").value.trim()};
@@ -1343,17 +1395,18 @@ function editInstr(id){
   });
 }
 function editClass(id){
-  const c=id?OCLASSES.find(x=>x.id===id):{title:"",slug:"",video_url:"",thumbnail_url:"",duration_label:"",class_theme:"",instructor_id:"",access_tier:"practitioner",status:"draft"};
+  const c=id?OCLASSES.find(x=>x.id===id):{title:"",slug:"",video_url:"",thumbnail_url:"",duration_label:"",class_theme:"",instructor_id:"",access_tiers:["practitioner","ultimate"],difficulty_level:"",status:"draft"};
   const instrOpts=[["","— none —"]].concat(INSTR.map(i=>[i.id,i.name]));
   $("edRoot").innerHTML=`<div class="ovl"><div class="ed">
     <div class="edtop"><h2>${id?"Edit class":"New class"}</h2><button class="btn ghost" style="margin-left:auto;padding:7px 13px" data-x>Close</button></div>
     <div class="edbody"><div class="grp">
       ${stuF("Title","cTitle",c.title)}
       ${stuF("Video URL","cVideo",c.video_url,"YouTube, Vimeo, or .mp4 link")}
-      <div class="row2">${stuF("Thumbnail URL","cThumb",c.thumbnail_url,"https://…")}${stuF("Duration","cDur",c.duration_label,"e.g. 32 min")}</div>
-      <div class="row2">${stuSel("Instructor","cInstr",instrOpts,c.instructor_id||"")}${stuF("Class theme","cTheme",c.class_theme,"e.g. Hips & Heart")}</div>
-      <div class="row2">${stuSel("Access tier","cTier",STU_TIERS,c.access_tier)}${stuSel("Status","cStatus",STU_CSTATUS,c.status)}</div>
-      ${stuF("Slug (optional)","cSlug",c.slug,"auto from title if blank")}
+      ${stuImg("Thumbnail","cThumb",c.thumbnail_url,"classes")}
+      <div class="row2">${stuSel("Instructor","cInstr",instrOpts,c.instructor_id||"")}${stuF("Duration","cDur",c.duration_label,"e.g. 32 min")}</div>
+      <div class="row2">${stuF("Class theme","cTheme",c.class_theme,"e.g. Hips & Heart")}${stuSel("Difficulty","cDiff",STU_DIFF,c.difficulty_level||"")}</div>
+      ${stuTierChips("cTiers",c.access_tiers)}
+      <div class="row2">${stuSel("Status","cStatus",STU_CSTATUS,c.status)}${stuF("Slug (optional)","cSlug",c.slug,"auto from title if blank")}</div>
     </div>
     <div style="display:flex;gap:10px;align-items:center">
       <button class="btn" data-save>Save</button>
@@ -1361,24 +1414,28 @@ function editClass(id){
       <span id="stuMsg" style="font-size:12px"></span>
     </div></div>
   </div></div>`;
+  wireUploads(); wireTierChips();
   stuWire({
     save:async()=>{ const title=$("cTitle").value.trim(); if(!title)return stuErr("Title is required.");
-      const payload={title,slug:($("cSlug").value.trim()||slugifyC(title)),video_url:$("cVideo").value.trim(),thumbnail_url:$("cThumb").value.trim(),duration_label:$("cDur").value.trim(),class_theme:$("cTheme").value.trim(),instructor_id:$("cInstr").value||null,access_tier:$("cTier").value,status:$("cStatus").value};
+      const tiers=getTiers("cTiers");
+      const payload={title,slug:($("cSlug").value.trim()||slugifyC(title)),video_url:$("cVideo").value.trim(),thumbnail_url:$("cThumb").value.trim(),duration_label:$("cDur").value.trim(),class_theme:$("cTheme").value.trim(),instructor_id:$("cInstr").value||null,difficulty_level:$("cDiff").value||null,access_tiers:tiers,access_tier:(tiers[0]||"member"),status:$("cStatus").value};
       return id?sb.from("online_classes").update(payload).eq("id",id):sb.from("online_classes").insert(payload); },
     del:id?()=>delRow("online_classes",id,"class"):null
   });
 }
 function editChal(id){
-  const c=id?VCHAL.find(x=>x.id===id):{title:"",subtitle:"",description:"",preview_image_url:"",badge_image_url:"",completion_badge_name:"",is_free:false,access_tier:"practitioner",total_days:0,status:"draft"};
+  const c=id?VCHAL.find(x=>x.id===id):{title:"",subtitle:"",description:"",preview_image_url:"",badge_image_url:"",completion_badge_name:"",is_free:false,access_tiers:["practitioner","ultimate"],difficulty_level:"",total_days:0,status:"draft"};
   $("edRoot").innerHTML=`<div class="ovl"><div class="ed">
     <div class="edtop"><h2>${id?"Edit challenge":"New challenge"}</h2><button class="btn ghost" style="margin-left:auto;padding:7px 13px" data-x>Close</button></div>
     <div class="edbody"><div class="grp">
       ${stuF("Title","vTitle",c.title)}
       ${stuF("Subtitle","vSub",c.subtitle)}
       ${stuTA("Description","vDesc",c.description,"What this challenge is about.",80)}
-      <div class="row2">${stuF("Preview image URL","vPrev",c.preview_image_url)}${stuF("Badge image URL","vBadge",c.badge_image_url)}</div>
-      <div class="row2">${stuF("Completion badge name","vBadgeName",c.completion_badge_name)}${stuF("Total days","vDays",c.total_days,"auto-updates from days","number")}</div>
-      <div class="row2">${stuSel("Access tier","vTier",STU_TIERS,c.access_tier)}${stuSel("Status","vStatus",STU_CSTATUS,c.status)}</div>
+      ${stuImg("Preview image","vPrev",c.preview_image_url,"challenges")}
+      ${stuImg("Badge image","vBadge",c.badge_image_url,"challenges")}
+      <div class="row2">${stuF("Completion badge name","vBadgeName",c.completion_badge_name)}${stuSel("Difficulty","vDiff",STU_DIFF,c.difficulty_level||"")}</div>
+      ${stuTierChips("vTiers",c.access_tiers)}
+      <div class="row2">${stuSel("Status","vStatus",STU_CSTATUS,c.status)}${stuF("Total days","vDays",c.total_days,"auto-updates from videos","number")}</div>
       <label class="toggle"><input type="checkbox" id="vFree" ${c.is_free?"checked":""}/> Free challenge (open to all logged-in members)</label>
     </div>
     <div style="display:flex;gap:10px;align-items:center">
@@ -1387,9 +1444,11 @@ function editChal(id){
       <span id="stuMsg" style="font-size:12px"></span>
     </div></div>
   </div></div>`;
+  wireUploads(); wireTierChips();
   stuWire({
     save:async()=>{ const title=$("vTitle").value.trim(); if(!title)return stuErr("Title is required.");
-      const payload={title,subtitle:$("vSub").value.trim(),description:$("vDesc").value.trim(),preview_image_url:$("vPrev").value.trim(),badge_image_url:$("vBadge").value.trim(),completion_badge_name:$("vBadgeName").value.trim(),is_free:$("vFree").checked,access_tier:$("vTier").value,status:$("vStatus").value,total_days:parseInt($("vDays").value,10)||0};
+      const tiers=getTiers("vTiers");
+      const payload={title,subtitle:$("vSub").value.trim(),description:$("vDesc").value.trim(),preview_image_url:$("vPrev").value.trim(),badge_image_url:$("vBadge").value.trim(),completion_badge_name:$("vBadgeName").value.trim(),is_free:$("vFree").checked,difficulty_level:$("vDiff").value||null,access_tiers:tiers,access_tier:(tiers[0]||"member"),status:$("vStatus").value,total_days:parseInt($("vDays").value,10)||0};
       return id?sb.from("video_challenges").update(payload).eq("id",id):sb.from("video_challenges").insert(payload); },
     del:id?()=>delRow("video_challenges",id,"challenge"):null
   });
@@ -1398,7 +1457,7 @@ async function openDays(challengeId){
   DAYS_current=challengeId;
   const ch=VCHAL.find(c=>c.id===challengeId);
   $("edRoot").innerHTML=`<div class="ovl"><div class="ed">
-    <div class="edtop"><h2>Days · ${esc(ch?ch.title:"")}</h2><button class="btn ghost" style="margin-left:auto;padding:7px 13px" data-x>Close</button></div>
+    <div class="edtop"><h2>Videos · ${esc(ch?ch.title:"")}</h2><button class="btn ghost" style="margin-left:auto;padding:7px 13px" data-x>Close</button></div>
     <div class="edbody" id="daysBody"><div style="color:var(--muted)">Loading…</div></div>
   </div></div>`;
   $("edRoot").querySelector("[data-x]").onclick=()=>{ closeEd(); loadStudio(true); };
@@ -1407,8 +1466,9 @@ async function openDays(challengeId){
   DAYS_list=data||[]; renderDays();
 }
 function renderDays(){
-  let html=`<div class="erow-top"><div class="note">${DAYS_list.length} day(s). “Unlock after” sets how many days into the challenge each lesson opens (0 = right away).</div><button class="btn" style="padding:7px 14px" data-dnew>+ Add day</button></div>`;
-  if(!DAYS_list.length) html+='<div style="padding:18px;color:var(--muted)">No days yet — add the first one.</div>';
+  let html=`<div class="erow-top"><div class="note">${DAYS_list.length} video(s). “Unlock after” sets how many days into the challenge each opens (0 = right away).</div>
+    <div style="display:flex;gap:8px"><button class="btn ghost" style="padding:7px 12px" data-dfrom>+ Add from classes</button><button class="btn" style="padding:7px 14px" data-dnew>+ New video</button></div></div>`;
+  if(!DAYS_list.length) html+='<div style="padding:18px;color:var(--muted)">No videos yet — add the first one, or pull several in from your classes.</div>';
   DAYS_list.forEach(d=>{ html+=`<div class="lrow">
     <div style="width:34px;height:34px;border-radius:8px;background:#C8A0A6;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex:0 0 auto">${d.day_number}</div>
     <div><div class="mn">${esc(d.title)}</div><div class="ms">${esc(d.duration_label||"")}${d.unlock_delay_days?" · unlocks after "+d.unlock_delay_days+" day(s)":""}</div></div>
@@ -1416,18 +1476,39 @@ function renderDays(){
   </div>`; });
   $("daysBody").innerHTML=html;
   $("daysBody").querySelector("[data-dnew]").onclick=()=>editDay(null);
+  $("daysBody").querySelector("[data-dfrom]").onclick=()=>addFromClasses();
   $("daysBody").querySelectorAll("[data-dedit]").forEach(b=>b.onclick=()=>editDay(b.dataset.dedit));
+}
+function addFromClasses(){
+  if(!OCLASSES.length){ alert("You have no online classes yet — create some classes first, then you can pull them in here."); return; }
+  const start=DAYS_list.reduce((m,x)=>Math.max(m,x.day_number||0),0);
+  let html=`<div class="erow-top"><div class="note">Pick classes to add as videos. Each becomes a new day, in the order shown.</div></div>
+    <div class="stu-pickwrap">`+OCLASSES.map(c=>`<label class="stu-picrow"><input type="checkbox" value="${c.id}"><span>${esc(c.title)}<span style="color:var(--muted)"> · ${esc(c.duration_label||"—")}</span></span></label>`).join("")+`</div>
+    <div style="display:flex;gap:10px;margin-top:12px;align-items:center"><button class="btn" id="pkGo">Add selected</button><button class="btn ghost" id="pkCancel">Cancel</button><span id="stuMsg" style="font-size:12px"></span></div>`;
+  $("daysBody").innerHTML=html;
+  $("pkCancel").onclick=()=>openDays(DAYS_current);
+  $("pkGo").onclick=async()=>{
+    const ids=Array.prototype.slice.call($("daysBody").querySelectorAll('input[type=checkbox]:checked')).map(x=>x.value);
+    if(!ids.length){ stuErr("Select at least one class."); return; }
+    $("pkGo").disabled=true; $("stuMsg").innerHTML='<span style="color:var(--muted)">Adding…</span>';
+    let n=start;
+    const rows=ids.map(id=>{ const c=OCLASSES.find(o=>o.id===id); n++; return {challenge_id:DAYS_current,day_number:n,title:c.title,video_url:c.video_url,thumbnail_url:c.thumbnail_url,duration_label:c.duration_label,class_theme:c.class_theme,instructor_id:c.instructor_id||null,unlock_delay_days:0}; });
+    const { error }=await sb.from("video_challenge_days").insert(rows);
+    if(error){ stuErr(error.message); $("pkGo").disabled=false; return; }
+    await syncTotalDays(DAYS_current); openDays(DAYS_current);
+  };
 }
 function editDay(id){
   const d=id?DAYS_list.find(x=>x.id===id):{day_number:(DAYS_list.reduce((m,x)=>Math.max(m,x.day_number||0),0)+1),title:"",video_url:"",thumbnail_url:"",duration_label:"",lesson_description:"",class_theme:"",breath_cue:"",body_focus:"",energy_level:"",goal_benefit:"",props:"",reflection_prompt:"",worksheet_url:"",unlock_delay_days:0,instructor_id:""};
   const instrOpts=[["","— none —"]].concat(INSTR.map(i=>[i.id,i.name]));
   $("edRoot").innerHTML=`<div class="ovl"><div class="ed">
-    <div class="edtop"><h2>${id?"Edit day":"New day"}</h2><button class="btn ghost" style="margin-left:auto;padding:7px 13px" data-x>Close</button></div>
+    <div class="edtop"><h2>${id?"Edit video":"New video"}</h2><button class="btn ghost" style="margin-left:auto;padding:7px 13px" data-x>Close</button></div>
     <div class="edbody"><div class="grp">
       <div class="row2">${stuF("Day number","dNum",d.day_number,"","number")}${stuF("Unlock after (days)","dUnlock",d.unlock_delay_days,"0 = immediately","number")}</div>
       ${stuF("Title","dTitle",d.title)}
       ${stuF("Video URL","dVideo",d.video_url,"YouTube, Vimeo, or .mp4")}
-      <div class="row2">${stuF("Thumbnail URL","dThumb",d.thumbnail_url)}${stuF("Duration","dDur",d.duration_label,"e.g. 18 min")}</div>
+      ${stuImg("Thumbnail","dThumb",d.thumbnail_url,"challenge-days")}
+      ${stuF("Duration","dDur",d.duration_label,"e.g. 18 min")}
       ${stuTA("Lesson description","dDesc",d.lesson_description,"",70)}
       <div class="row2">${stuSel("Instructor","dInstr",instrOpts,d.instructor_id||"")}${stuF("Class theme","dTheme",d.class_theme)}</div>
       <div class="row2">${stuF("Body focus","dBody",d.body_focus)}${stuF("Energy level","dEnergy",d.energy_level)}</div>
@@ -1442,6 +1523,7 @@ function editDay(id){
       <span id="stuMsg" style="font-size:12px"></span>
     </div></div>
   </div></div>`;
+  wireUploads();
   $("edRoot").querySelector("[data-x]").onclick=()=>openDays(DAYS_current);
   const sv=$("edRoot").querySelector("[data-save]");
   sv.onclick=async()=>{
@@ -1455,7 +1537,7 @@ function editDay(id){
     openDays(DAYS_current);
   };
   const dl=$("edRoot").querySelector("[data-del]");
-  if(dl)dl.onclick=async()=>{ if(!confirm("Delete this day?"))return; const { error }=await sb.from("video_challenge_days").delete().eq("id",id); if(error){ stuErr(error.message); return; } await syncTotalDays(DAYS_current); openDays(DAYS_current); };
+  if(dl)dl.onclick=async()=>{ if(!confirm("Delete this video?"))return; const { error }=await sb.from("video_challenge_days").delete().eq("id",id); if(error){ stuErr(error.message); return; } await syncTotalDays(DAYS_current); openDays(DAYS_current); };
 }
 async function syncTotalDays(cid){
   const { data }=await sb.from("video_challenge_days").select("day_number").eq("challenge_id",cid);
