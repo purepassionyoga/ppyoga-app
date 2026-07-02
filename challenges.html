@@ -261,6 +261,8 @@
 <style id="chCSS">
 .cl-title{font-family:var(--ppy-fhead,'Playfair Display',serif);color:var(--ppy-accentDk,#A87C83);font-size:30px;margin:0}
 .cl-sub{color:var(--ppy-muted,#9a8f93);margin:4px 0 8px}
+.ch-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.ch-filters select{border:1px solid var(--ppy-line,#ece3e4);border-radius:10px;padding:8px 12px;font:inherit;font-size:13px;background:#fff;color:var(--ppy-ink,#4a4047)}
 .ch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
 .ch-card{background:#fff;border:1px solid var(--ppy-line,#ece3e4);border-radius:16px;overflow:hidden;cursor:pointer;transition:.15s;display:flex;flex-direction:column}
 .ch-card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(168,124,131,.16)}
@@ -298,7 +300,7 @@
 .clv-meta{margin-top:12px;color:var(--ppy-muted,#9a8f93);font-size:13px}.cl-upg{text-align:center;padding:26px}
 </style>
 <div style="margin:6px 0 16px"><h1 class="cl-title">Challenges</h1><p class="cl-sub">Multi-day video journeys to build a steady practice.</p></div>
-<div id="chListWrap"><div id="chGrid" class="ch-grid"></div><div id="chState" class="state">Loading challenges…</div></div>
+<div id="chListWrap"><div id="chFilters" class="ch-filters"></div><div id="chGrid" class="ch-grid"></div><div id="chState" class="state">Loading challenges…</div></div>
 <div id="chDetail" style="display:none"></div>
 </div>
 
@@ -313,6 +315,10 @@ const arr=v=>Array.isArray(v)?v:[];
 
 let CH=[], INSTR={}, SITE={}, UID=null, TOKEN=null, EMAIL=null, TIER="free", IS_ADMIN=false;
 let CUR=null, DAYS=[], ENR=null, DONE=new Set(), TRK=null, RESUME={};
+let CFch={instr:"",dur:""}, CH_INSTR={}, CH_MIN={};
+function durMin(label){ const m=String(label||"").match(/(\d+)/); return m?parseInt(m[1],10):null; }
+function chDurBucket(mn){ if(!mn)return null; if(mn<30)return "u30"; if(mn<60)return "30-60"; if(mn<120)return "60-120"; return "120+"; }
+const CH_DUR_OPTS=[["","Any length"],["u30","Under 30 min"],["30-60","30\u201360 min"],["60-120","1\u20132 hours"],["120+","2+ hours"]];
 async function loadResume(){ if(!UID)return; try{ const r=await fetch(SB+"/rest/v1/resume_positions?select=content_id,position_seconds,duration_seconds&user_id=eq."+UID+"&content_type=eq.challenge_day",{headers:{apikey:KEY,Authorization:"Bearer "+TOKEN}}); (await r.json()||[]).forEach(x=>RESUME[x.content_id]={pos:x.position_seconds,dur:x.duration_seconds}); }catch(e){} }
 function saveResume(id,pos,dur){ if(!UID||!id||(pos||0)<3)return; try{ fetch(SB+"/rest/v1/resume_positions",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({user_id:UID,content_type:"challenge_day",content_id:id,position_seconds:Math.round(pos),duration_seconds:dur?Math.round(dur):null,updated_at:new Date().toISOString()}),keepalive:true}); }catch(e){} RESUME[id]={pos:Math.round(pos),dur:dur?Math.round(dur):null}; }
 function fmtTime(x){ x=Math.max(0,Math.round(x||0)); const m=Math.floor(x/60),ss=x%60; return m+":"+(ss<10?"0":"")+ss; }
@@ -329,14 +335,17 @@ async function loadSession(){ const s=readSession(); if(!s)return; UID=s.user.id
 async function load(){
   await loadSession();
   try{
-    const [siteR,insR,chR]=await Promise.all([
+    const [siteR,insR,chR,daysR]=await Promise.all([
       fetch(SB+"/rest/v1/app_settings?select=value&key=eq.site",{headers:h()}),
       fetch(SB+"/rest/v1/instructors?select=id,name",{headers:h()}),
-      fetch(SB+"/rest/v1/video_challenges?select=*&status=eq.published&order=created_at.desc",{headers:h()})
+      fetch(SB+"/rest/v1/video_challenges?select=*&status=eq.published&order=created_at.desc",{headers:h()}),
+      fetch(SB+"/rest/v1/video_challenge_days?select=challenge_id,instructor_id,duration_label",{headers:h()})
     ]);
     const site=await siteR.json(); SITE=(site&&site[0]&&site[0].value)||{};
     (await insR.json()||[]).forEach(i=>INSTR[i.id]=i);
     CH=await chR.json()||[];
+    CH_INSTR={}; CH_MIN={};
+    (await daysR.json()||[]).forEach(d=>{ if(!d.challenge_id)return; (CH_INSTR[d.challenge_id]=CH_INSTR[d.challenge_id]||new Set()); if(d.instructor_id)CH_INSTR[d.challenge_id].add(d.instructor_id); const mn=durMin(d.duration_label); if(mn)CH_MIN[d.challenge_id]=(CH_MIN[d.challenge_id]||0)+mn; });
     await loadResume();
     $("chState").style.display="none"; renderList();
   }catch(e){ $("chState").innerHTML="Couldn’t load challenges right now. Please refresh."; }
@@ -346,8 +355,17 @@ function effTiers(c){ const t=chTiers(c); return t.length?t:((SITE.challenges_ti
 function canAccess(c){ if(IS_ADMIN)return true; if(!UID)return false; if(c.is_free)return true; const t=effTiers(c); return t.indexOf("free")>=0||t.indexOf(TIER)>=0; }
 function renderList(){
   $("chDetail").style.display="none"; $("chListWrap").style.display="";
-  if(!CH.length){ $("chGrid").innerHTML='<div style="color:var(--ppy-muted,#9a8f93);padding:26px">No challenges yet — check back soon.</div>'; return; }
-  $("chGrid").innerHTML=CH.map(c=>{
+  const insIds=[...new Set([].concat(...Object.keys(CH_INSTR).map(k=>Array.from(CH_INSTR[k]))))];
+  $("chFilters").innerHTML=
+    `<select id="cfInstr"><option value="">All instructors</option>${insIds.map(id=>`<option value="${id}"${CFch.instr===id?" selected":""}>${esc((INSTR[id]&&INSTR[id].name)||"\u2014")}</option>`).join("")}</select>`+
+    `<select id="cfDur">${CH_DUR_OPTS.map(d=>`<option value="${d[0]}"${CFch.dur===d[0]?" selected":""}>${d[1]}</option>`).join("")}</select>`;
+  $("cfInstr").onchange=e=>{CFch.instr=e.target.value;renderList();};
+  $("cfDur").onchange=e=>{CFch.dur=e.target.value;renderList();};
+  let list=CH.slice();
+  if(CFch.instr)list=list.filter(c=>(CH_INSTR[c.id]||new Set()).has(CFch.instr));
+  if(CFch.dur)list=list.filter(c=>chDurBucket(CH_MIN[c.id])===CFch.dur);
+  if(!list.length){ $("chGrid").innerHTML='<div style="color:var(--ppy-muted,#9a8f93);padding:26px">'+(CH.length?"No challenges match those filters.":"No challenges yet — check back soon.")+'</div>'; return; }
+  $("chGrid").innerHTML=list.map(c=>{
     const locked=!canAccess(c);
     return `<div class="ch-card" data-id="${c.id}">
       <div class="ch-thumb" style="background-image:url('${esc(c.preview_image_url||"")}')">
