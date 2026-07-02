@@ -458,12 +458,20 @@ function applyDesign(d){
   if(d.website_url)document.querySelectorAll('a[data-home]').forEach(a=>a.href=d.website_url);
 }
 async function loadDesign(){try{const r=await fetch(`${SB}/rest/v1/app_settings?key=eq.design&select=value`,{headers:{apikey:KEY,Authorization:"Bearer "+KEY}});const j=await r.json();applyDesign(j&&j[0]&&j[0].value);}catch(e){}}
+/* Shared Pose-of-the-Day picker — MUST stay byte-identical to the copy on the landing page
+   so both surfaces always show the same pose. Rolls at 00:00 UTC. */
+function ppyPickPOTD(list,lib){
+  lib=lib||{};
+  if(lib.potd_enabled===false) return null;
+  var pool=(list||[]).slice().filter(function(p){return p && (p.status===undefined||p.status==="published");});
+  pool.sort(function(a,b){var ia=String(a&&a.id!=null?a.id:(a&&a.slug)||""),ib=String(b&&b.id!=null?b.id:(b&&b.slug)||"");return ia<ib?-1:ia>ib?1:0;});
+  if(!pool.length) return null;
+  if(lib.potd_slug){var pin=pool.find(function(x){return String((x&&x.slug)||"").toLowerCase()===String(lib.potd_slug).toLowerCase();});if(pin)return pin;}
+  return pool[Math.floor(Date.now()/86400000)%pool.length];
+}
 function renderPOTD(){
   const el=document.getElementById('potd');if(!el)return;
-  if(LIB.potd_enabled===false||!POSES.length){el.innerHTML="";return;}
-  let p=null;
-  if(LIB.potd_slug)p=POSES.find(x=>(x.slug||"").toLowerCase()===String(LIB.potd_slug).toLowerCase());
-  if(!p)p=POSES[Math.floor(Date.now()/86400000)%POSES.length];
+  const p=ppyPickPOTD(POSES,LIB);
   if(!p){el.innerHTML="";return;}
   const _iu=poseImgUrl(p);const thumb=_iu?`<img src="${esc(_iu)}">`:(p.emoji||"🧘");
   el.innerHTML=`<div class="potd"><div class="potd-th">${thumb}</div>
