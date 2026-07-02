@@ -284,6 +284,22 @@
 .ch-prog-t{font-size:12px;color:var(--ppy-muted,#9a8f93);margin-top:5px}
 .ch-badge-won{margin-top:12px;background:#eef0e8;color:#5a6a3f;border-radius:12px;padding:12px 14px;font-weight:600}
 .ch-days{display:flex;flex-direction:column;gap:8px}
+.cl-inslink{cursor:pointer;text-decoration:underline;text-underline-offset:2px;color:inherit}
+.cl-inslink:hover{color:var(--ppy-accentDk,#A87C83)}
+.ins-ovl{position:fixed;inset:0;background:rgba(60,40,45,.55);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px}
+.ins-modal{background:#fff;border-radius:18px;max-width:440px;width:100%;padding:24px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.28);max-height:88vh;overflow:auto;font-family:var(--ppy-fbody,'Poppins',sans-serif)}
+.ins-x{position:absolute;top:12px;right:12px;border:none;background:#f4ecec;width:30px;height:30px;border-radius:50%;cursor:pointer;color:#6f5b61;font-size:13px}
+.ins-head{display:flex;gap:16px;align-items:center;margin-bottom:2px}
+.ins-photo{width:84px;height:84px;border-radius:50%;object-fit:cover;flex:none}
+.ins-ph{display:flex;align-items:center;justify-content:center;background:#f6eef0;font-size:30px}
+.ins-name{font-family:var(--ppy-fhead,'Playfair Display',serif);font-size:22px;color:var(--ppy-accentDk,#A87C83);line-height:1.2}
+.ins-credline{font-size:12px;color:var(--ppy-sage,#a8ad91);margin-top:3px}
+.ins-bio{font-size:14px;color:var(--ppy-ink,#4a4047);line-height:1.55;margin:14px 0 2px}
+.ins-sec{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ppy-muted,#9a8f93);margin:16px 0 8px}
+.ins-creds{display:flex;flex-wrap:wrap;gap:7px}
+.ins-chip{font-size:12px;padding:5px 12px;border-radius:999px;background:#f6eef0;color:#A87C83;border:1px solid #ecd9dd}
+.ins-badges{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.ins-badges img{width:66px;height:66px;object-fit:contain}
 .ch-day{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--ppy-line,#ece3e4);border-radius:12px;padding:11px 14px}
 .ch-day.locked{opacity:.6}
 .ch-daynum{width:32px;height:32px;border-radius:50%;background:var(--ppy-accent,#C8A0A6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex:0 0 auto}
@@ -335,7 +351,7 @@ async function load(){
   try{
     const [siteR,insR,chR,daysR]=await Promise.all([
       fetch(SB+"/rest/v1/app_settings?select=value&key=eq.site",{headers:h()}),
-      fetch(SB+"/rest/v1/instructors?select=id,name",{headers:h()}),
+      fetch(SB+"/rest/v1/instructors?select=id,name,image_url,bio,credentials,badge_urls",{headers:h()}),
       fetch(SB+"/rest/v1/video_challenges?select=*&status=eq.published&order=created_at.desc",{headers:h()}),
       fetch(SB+"/rest/v1/video_challenge_days?select=challenge_id,instructor_id",{headers:h()})
     ]);
@@ -413,7 +429,7 @@ function renderDetail(){
     const unlocked=dayUnlocked(d), isDone=DONE.has(d.day_number);
     html+=`<div class="ch-day${unlocked?"":" locked"}">
       <div class="ch-daynum">${isDone?"✓":d.day_number}</div>
-      <div class="ch-dinfo"><div class="ch-dt">${esc(d.title)}</div><div class="ch-dm">${esc(d.duration_label||"")}${!unlocked?" · "+esc(unlockLabel(d)):(isDone?"":esc(dayResume(d)))}</div></div>
+      <div class="ch-dinfo"><div class="ch-dt">${esc(d.title)}</div><div class="ch-dm">${(INSTR[d.instructor_id]?'<a href="#" class="cl-inslink" data-ins="'+d.instructor_id+'">'+esc(INSTR[d.instructor_id].name)+'</a> · ':"")}${esc(d.duration_label||"")}${!unlocked?" · "+esc(unlockLabel(d)):(isDone?"":esc(dayResume(d)))}</div></div>
       <div class="ch-dact">${unlocked?`<button class="btn ghost sm" data-day="${d.id}">${isDone?"Rewatch":"Watch"}</button>`:'🔒'}</div>
     </div>`;
   });
@@ -422,6 +438,7 @@ function renderDetail(){
   $("chBack").onclick=renderList;
   const en=$("chEnroll"); if(en)en.onclick=enroll;
   $("chDetail").querySelectorAll("[data-day]").forEach(b=>{b.onclick=()=>openDay(b.dataset.day);b.onmouseenter=()=>prefetchDay(b.dataset.day);});
+  $("chDetail").querySelectorAll(".cl-inslink").forEach(el=>el.onclick=(e)=>{e.preventDefault();openInstructor(el.dataset.ins);});
 }
 async function enroll(){
   try{
@@ -456,14 +473,33 @@ function bunnySign(type,id,v){
 function prefetchDay(dayId){ const d=DAYS.find(x=>x.id===dayId); if(!d)return; const v=parseVideo(d.video_url); if(v.type==="bunny")bunnySign("challenge_day",dayId,v); }
 let PJ_LOADED=false;
 function preloadPlayerJs(){ if(PJ_LOADED||window.playerjs)return; PJ_LOADED=true; const t=document.createElement("script"); t.src="https://cdn.embed.ly/player-0.1.0.min.js"; t.async=true; document.head.appendChild(t); }
+function openInstructor(id){
+  const x=INSTR[id]; if(!x)return;
+  const creds=Array.isArray(x.credentials)?x.credentials:[];
+  const badges=Array.isArray(x.badge_urls)?x.badge_urls:[];
+  const ov=document.createElement("div"); ov.className="ins-ovl";
+  ov.innerHTML='<div class="ins-modal"><button class="ins-x" aria-label="Close">\u2715</button>'
+    +'<div class="ins-head">'+(x.image_url?'<img class="ins-photo" src="'+esc(x.image_url)+'" alt="">':'<div class="ins-photo ins-ph">\ud83c\udf38</div>')
+    +'<div><div class="ins-name">'+esc(x.name)+'</div>'+(creds.length?'<div class="ins-credline">'+creds.slice(0,3).map(esc).join(" \u00b7 ")+'</div>':"")+'</div></div>'
+    +(x.bio?'<div class="ins-bio">'+esc(x.bio)+'</div>':"")
+    +(creds.length?'<div class="ins-sec">Credentials</div><div class="ins-creds">'+creds.map(c=>'<span class="ins-chip">'+esc(c)+'</span>').join("")+'</div>':"")
+    +(badges.length?'<div class="ins-badges">'+badges.map(u=>'<img src="'+esc(u)+'" alt="badge">').join("")+'</div>':"")
+    +'</div>';
+  document.body.appendChild(ov);
+  const close=()=>{ if(ov.parentNode)ov.parentNode.removeChild(ov); };
+  ov.onclick=e=>{ if(e.target===ov)close(); };
+  ov.querySelector(".ins-x").onclick=close;
+}
 function openDay(dayId){
   const d=DAYS.find(x=>x.id===dayId); if(!d)return; const v=parseVideo(d.video_url); const isDone=DONE.has(d.day_number);
   const r=RESUME[d.id]; let resumeFrom=resumeStart(r);
-  $("modalRoot").innerHTML='<div class="clv-ovl" id="clvOvl"><div class="clv-modal"><div class="clv-head"><h3>Day '+d.day_number+': '+esc(d.title)+'</h3><button class="clv-x" id="clvX">✕</button></div><div class="clv-body"><div class="clv-video" id="clvVideo"></div><div class="clv-meta" id="clvMeta">'+esc(d.lesson_description||"")+(resumeFrom>0?' · <span style="color:var(--ppy-accentDk,#A87C83)">Resuming from '+fmtTime(resumeFrom)+'</span> · <a href="#" id="clvRestart" style="color:var(--ppy-muted,#9a8f93)">start over</a>':"")+'</div>'+(d.reflection_prompt?'<div class="ch-reflect">💭 '+esc(d.reflection_prompt)+'</div>':"")+'<div style="display:flex;gap:8px;margin-top:14px;align-items:center"><button class="btn" id="chDone" '+(isDone?"disabled":"")+'>'+(isDone?"✓ Completed":"Mark day complete")+'</button>'+(d.worksheet_url?'<a class="btn ghost" href="'+esc(d.worksheet_url)+'" target="_blank" rel="noopener">Worksheet</a>':"")+'</div></div></div></div>';
+  const ins=INSTR[d.instructor_id]; const insLink=ins?'<a href="#" class="cl-inslink" data-ins="'+d.instructor_id+'">'+esc(ins.name)+'</a>':"";
+  $("modalRoot").innerHTML='<div class="clv-ovl" id="clvOvl"><div class="clv-modal"><div class="clv-head"><h3>Day '+d.day_number+': '+esc(d.title)+'</h3><button class="clv-x" id="clvX">✕</button></div><div class="clv-body"><div class="clv-video" id="clvVideo"></div><div class="clv-meta" id="clvMeta">'+(insLink?insLink+(d.lesson_description?" · ":""):"")+esc(d.lesson_description||"")+(resumeFrom>0?' · <span style="color:var(--ppy-accentDk,#A87C83)">Resuming from '+fmtTime(resumeFrom)+'</span> · <a href="#" id="clvRestart" style="color:var(--ppy-muted,#9a8f93)">start over</a>':"")+'</div>'+(d.reflection_prompt?'<div class="ch-reflect">💭 '+esc(d.reflection_prompt)+'</div>':"")+'<div style="display:flex;gap:8px;margin-top:14px;align-items:center"><button class="btn" id="chDone" '+(isDone?"disabled":"")+'>'+(isDone?"✓ Completed":"Mark day complete")+'</button>'+(d.worksheet_url?'<a class="btn ghost" href="'+esc(d.worksheet_url)+'" target="_blank" rel="noopener">Worksheet</a>':"")+'</div></div></div></div>';
   const close=()=>{ if(TRK)saveResume(d.id,TRK.lastPos,TRK.dur); recordDay(d); $("modalRoot").innerHTML=""; renderDetail(); };
   $("clvX").onclick=close; $("clvOvl").onclick=e=>{if(e.target.id==="clvOvl")close();};
   const dn=$("chDone"); if(dn&&!isDone)dn.onclick=()=>markComplete(d,dn);
   startTracker($("clvVideo"),v,d,resumeFrom);
+  const ilk=document.querySelector("#clvMeta .cl-inslink"); if(ilk)ilk.onclick=(e)=>{e.preventDefault();openInstructor(ilk.dataset.ins);};
   const rs=$("clvRestart"); if(rs)rs.onclick=(e)=>{ e.preventDefault(); if(TRK&&TRK.seek){TRK.seek(0);TRK.lastPos=0;} saveResume(d.id,0,TRK?TRK.dur:0); };
 }
 function startTracker(box,v,day,resumeFrom){
