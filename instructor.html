@@ -37,6 +37,9 @@ tr:last-child td{border-bottom:none}
 .center .ic{font-size:40px}
 .muted{color:var(--muted)}
 .model-note{font-size:12px;color:var(--muted);margin-top:8px}
+.p-bar{display:inline-block;width:84px;height:7px;border-radius:999px;background:#efe4e6;overflow:hidden;vertical-align:middle}
+.p-bar span{display:block;height:100%;background:var(--rose)}
+.p-bl{font-size:11px;color:var(--muted);margin-left:6px}
 </style>
 </head>
 <body>
@@ -97,7 +100,7 @@ function renderMessage(t,m){ $("app").innerHTML=`<div class="center"><div class=
 function rollup(){
   const views=CTX.views.filter(v=>inPeriod(v.created_at) && !v.self_view);
   const per={}; let tViews=0,tSecs=0;
-  views.forEach(v=>{ const c=per[v.class_id]=per[v.class_id]||{plays:0,views:0,secs:0,psum:0,pc:0}; c.plays++; c.secs+=v.watched_seconds; if(isView(v)){c.views++;tViews++;} tSecs+=v.watched_seconds; if(v.duration_seconds){c.psum+=Math.min(100,v.watched_seconds/v.duration_seconds*100);c.pc++;} });
+  views.forEach(v=>{ const c=per[v.class_id]=per[v.class_id]||{plays:0,views:0,secs:0,psum:0,pc:0,fin:0}; c.plays++; c.secs+=v.watched_seconds; if(isView(v)){c.views++;tViews++;} tSecs+=v.watched_seconds; if(v.duration_seconds){c.psum+=Math.min(100,v.watched_seconds/v.duration_seconds*100);c.pc++;if(v.watched_seconds/v.duration_seconds>=0.9)c.fin++;} });
   return {per,tViews,tSecs};
 }
 function estEarnings(tViews,minutes){
@@ -124,10 +127,10 @@ function render(){
       <div class="stat pay"><div class="k">Estimated earnings</div><div class="v">${esc(est.label)}</div></div>
     </div>
     <div class="note" style="margin-bottom:22px"><b>Your pay:</b> ${esc(modelLabels[CTX.pay.pay_model]||CTX.pay.pay_model)}${CTX.pay.pay_model!=="rev_share"?` · rate ${money(+CTX.pay.pay_rate||0)}`:""}<div class="model-note">${esc(est.note)}</div></div>
-    <table><thead><tr><th>Class</th><th>Level</th><th>Plays</th><th>Views</th><th>Watch h</th><th>Avg % watched</th></tr></thead><tbody>`;
+    <table><thead><tr><th>Class</th><th>Level</th><th>Plays</th><th>Views</th><th>Watch h</th><th>Avg progress</th><th>Completion</th></tr></thead><tbody>`;
   if(!CTX.classes.length) html+='<tr><td colspan="6" class="muted" style="padding:18px">No published classes yet.</td></tr>';
-  CTX.classes.forEach(c=>{ const d=per[c.id]||{plays:0,views:0,secs:0,psum:0,pc:0};
-    html+=`<tr><td><span class="name">${esc(c.title)}</span>${c.status!=="published"?' <span class="pill">'+esc(c.status)+'</span>':""}</td><td>${esc(c.difficulty_level||"—")}</td><td>${d.plays}</td><td>${d.views}</td><td>${(d.secs/3600).toFixed(1)}</td><td>${d.pc?Math.round(d.psum/d.pc)+"%":"—"}</td></tr>`;
+  CTX.classes.forEach(c=>{ const d=per[c.id]||{plays:0,views:0,secs:0,psum:0,pc:0,fin:0}; const avg=d.pc?Math.round(d.psum/d.pc):0, comp=d.pc?Math.round((d.fin||0)/d.pc*100):null;
+    html+=`<tr><td><span class="name">${esc(c.title)}</span>${c.status!=="published"?' <span class="pill">'+esc(c.status)+'</span>':""}</td><td>${esc(c.difficulty_level||"—")}</td><td>${d.plays}</td><td>${d.views}</td><td>${(d.secs/3600).toFixed(1)}</td><td>${d.pc?'<span class="p-bar"><span style="width:'+avg+'%"></span></span><span class="p-bl">'+avg+'%</span>':"—"}</td><td>${comp==null?"—":comp+"%"}</td></tr>`;
   });
   html+=`</tbody></table>
     <p class="muted" style="font-size:12px;margin-top:14px">A “view” counts after ${esc(SET.view_threshold_value)} ${SET.view_threshold_type==="percent"?"% watched":"seconds"} of genuine watch time (skipping ahead doesn’t count), and your own views aren’t counted. Estimated earnings are provisional and may be finalized by the studio.</p>`;
