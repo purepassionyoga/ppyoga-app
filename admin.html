@@ -1277,7 +1277,7 @@ async function loadRoyalties(force){
     sb.from("instructors").select("*").order("name"),
     sb.from("instructor_pay").select("*"),
     sb.from("online_classes").select("id,title,instructor_id,duration_label,status"),
-    sb.from("class_views").select("class_id,instructor_id,watched_seconds,duration_seconds,created_at")
+    sb.from("class_views").select("class_id,instructor_id,watched_seconds,duration_seconds,created_at,self_view")
   ]);
   if(setr&&setr.data&&setr.data.value)ROY_set=Object.assign({currency:"USD",view_threshold_type:"seconds",view_threshold_value:30,pool_monthly:0},setr.data.value);
   ROY_instr=instr.data||[]; ROY_classes=cls.data||[]; ROY_views=views.data||[];
@@ -1285,7 +1285,7 @@ async function loadRoyalties(force){
   ROY_loaded=true; renderRoyalties();
 }
 function royRollups(){
-  const views=ROY_views.filter(v=>royInPeriod(v.created_at));
+  const views=ROY_views.filter(v=>royInPeriod(v.created_at) && !v.self_view);
   const perClass={}, perInstr={};
   views.forEach(v=>{
     const c=perClass[v.class_id]=perClass[v.class_id]||{plays:0,views:0,secs:0,psum:0,pc:0};
@@ -1356,7 +1356,7 @@ function renderRoyalties(){
     </tr>`;
   });
   html+=`</tbody></table>
-  <div class="ms" style="margin-top:6px">Rate meaning: per-view = $ per billable view · per-minute = $ per watch-minute · flat = $ per class they’ve produced · rev-share = split of the monthly pool by watch time.</div>
+  <div class="ms" style="margin-top:6px">Rate meaning: per-view = $ per billable view · per-minute = $ per watch-minute · flat = $ per class they’ve produced · rev-share = split of the monthly pool by watch time. Instructors’ own views never count, and only genuine watch time (no skipping/fast-forward) is credited.</div>
 
   <div style="font-weight:600;margin:20px 0 4px">By class</div>
   <table><thead><tr><th>Class</th><th>Instructor</th><th>Plays</th><th>Views</th><th>Watch h</th><th>Avg % watched</th></tr></thead><tbody>`;
