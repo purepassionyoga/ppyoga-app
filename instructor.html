@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Instructor Portal · Pure Passion Yoga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--rose:#C8A0A6;--clayDk:#A87C83;--sage:#a8ad91;--jade:#2E7D6B;--ink:#4a4047;--head:#6f5b61;--muted:#9a8f93;--line:#ece3e4;--card:#fff;--field:#faf6f5;--bg:#f6f0ee;--fh:'Playfair Display',Georgia,serif;--fb:'Poppins',system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--fb);background:var(--bg);color:var(--ink)}
+header{background:#fff;border-bottom:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+header .logo{font-family:var(--fh);font-weight:700;color:var(--rose);font-size:19px}
+header .sub{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);margin-top:-2px}
+header .sp{flex:1}
+.btn{background:var(--rose);color:#fff;border:none;border-radius:10px;padding:9px 15px;font:inherit;font-weight:500;cursor:pointer;font-size:13px}
+.btn.ghost{background:#fff;color:var(--head);border:1px solid var(--line)}
+main{max-width:1000px;margin:0 auto;padding:26px 20px 60px}
+h1{font-family:var(--fh);color:var(--head);font-weight:600;font-size:26px;margin:0 0 4px}
+.lead{color:var(--muted);font-size:14px;margin:0 0 22px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat .v{font-family:var(--fh);font-size:26px;font-weight:600;color:var(--head);margin-top:3px}
+.stat.pay .v{color:var(--clayDk)}
+.bar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+select{border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;font-size:13px;background:#fff;color:var(--ink)}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:13.5px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:11px 14px;border-bottom:1px solid var(--line);background:var(--field)}
+td{padding:11px 14px;border-bottom:1px solid #f4eeec}
+tr:last-child td{border-bottom:none}
+.name{font-weight:500;color:var(--head)}
+.pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:999px;background:#eef0e8;color:#6b7355}
+.note{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;color:var(--head);font-size:13.5px;line-height:1.55}
+.center{min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;color:var(--head)}
+.center .ic{font-size:40px}
+.muted{color:var(--muted)}
+.model-note{font-size:12px;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="logo">Pure Passion Yoga</div><div class="sub">Instructor Portal</div></div>
+  <div class="sp"></div>
+  <button class="btn ghost" id="signout" style="display:none">Sign out</button>
+</header>
+<main id="app"><div class="center"><div class="ic">🌿</div><div>Loading your portal…</div></div></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const URL_="https://nxjbpgnpblqepathojzr.supabase.co";
+const KEY_="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
+const sb=supabase.createClient(URL_,KEY_);
+const $=id=>document.getElementById(id);
+const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let PERIOD="month", CTX=null, SET={currency:"USD",view_threshold_type:"seconds",view_threshold_value:30,pool_monthly:0};
+
+function money(n){ try{ return new Intl.NumberFormat(undefined,{style:"currency",currency:SET.currency||"USD"}).format(n||0);}catch(e){ return "$"+(Number(n)||0).toFixed(2);} }
+function pStart(){ const n=new Date(); if(PERIOD==="month")return new Date(n.getFullYear(),n.getMonth(),1); if(PERIOD==="lastmonth")return new Date(n.getFullYear(),n.getMonth()-1,1); if(PERIOD==="30d"){const d=new Date(n);d.setDate(d.getDate()-30);return d;} return null; }
+function pEnd(){ const n=new Date(); if(PERIOD==="lastmonth")return new Date(n.getFullYear(),n.getMonth(),1); return null; }
+function inPeriod(ts){ const t=new Date(ts),s=pStart(),e=pEnd(); if(s&&t<s)return false; if(e&&t>=e)return false; return true; }
+function isView(v){ if(SET.view_threshold_type==="percent"){ if(!v.duration_seconds)return false; return (v.watched_seconds/v.duration_seconds*100)>=(+SET.view_threshold_value||0);} return v.watched_seconds>=(+SET.view_threshold_value||0); }
+
+async function init(){
+  const { data:{ session } }=await sb.auth.getSession();
+  if(!session||!session.user){ return renderSignedOut(); }
+  $("signout").style.display=""; $("signout").onclick=()=>sb.auth.signOut().then(()=>location.reload());
+
+  // pay row (RLS returns it only if this login's email matches an instructor's portal_email)
+  const pay=await sb.from("instructor_pay").select("*").limit(1);
+  const p=(pay.data||[])[0];
+  if(pay.error){ return renderMessage("Something went wrong", pay.error.message); }
+  if(!p){ return renderNotLinked(session.user.email); }
+
+  const [ins,setr,cls,views]=await Promise.all([
+    sb.from("instructors").select("id,name,image_url,bio").eq("id",p.instructor_id).maybeSingle(),
+    sb.from("app_settings").select("value").eq("key","royalties").maybeSingle(),
+    sb.from("online_classes").select("id,title,duration_label,class_theme,difficulty_level,status").eq("instructor_id",p.instructor_id),
+    sb.from("class_views").select("class_id,watched_seconds,duration_seconds,created_at").eq("instructor_id",p.instructor_id)
+  ]);
+  if(setr&&setr.data&&setr.data.value)SET=Object.assign(SET,setr.data.value);
+  CTX={ pay:p, instr:ins.data||{name:"Instructor"}, classes:cls.data||[], views:views.data||[] };
+  render();
+}
+function renderSignedOut(){
+  $("app").innerHTML=`<div class="center"><div class="ic">🔒</div><h1>Instructor Portal</h1>
+    <div class="muted" style="max-width:420px">Please sign in with the email your studio linked to your instructor profile.</div>
+    <a class="btn" href="/" style="text-decoration:none">Go to sign in</a></div>`;
+}
+function renderNotLinked(email){
+  $("app").innerHTML=`<div class="center"><div class="ic">🌱</div><h1>Almost there</h1>
+    <div class="muted" style="max-width:460px">You're signed in as <b>${esc(email||"")}</b>, but this email isn't linked to an instructor profile yet. Ask the studio to add it in the admin panel, then refresh.</div></div>`;
+}
+function renderMessage(t,m){ $("app").innerHTML=`<div class="center"><div class="ic">🌿</div><h1>${esc(t)}</h1><div class="muted">${esc(m||"")}</div></div>`; }
+
+function rollup(){
+  const views=CTX.views.filter(v=>inPeriod(v.created_at));
+  const per={}; let tViews=0,tSecs=0;
+  views.forEach(v=>{ const c=per[v.class_id]=per[v.class_id]||{plays:0,views:0,secs:0,psum:0,pc:0}; c.plays++; c.secs+=v.watched_seconds; if(isView(v)){c.views++;tViews++;} tSecs+=v.watched_seconds; if(v.duration_seconds){c.psum+=Math.min(100,v.watched_seconds/v.duration_seconds*100);c.pc++;} });
+  return {per,tViews,tSecs};
+}
+function estEarnings(tViews,minutes){
+  const p=CTX.pay, rate=+p.pay_rate||0;
+  if(p.active===false)return {val:0,label:money(0),note:"Your account is currently marked inactive."};
+  if(p.pay_model==="per_view")return {val:tViews*rate,label:money(tViews*rate),note:`${money(rate)} per view × ${tViews} views`};
+  if(p.pay_model==="per_minute")return {val:minutes*rate,label:money(minutes*rate),note:`${money(rate)} per watch-minute × ${minutes.toFixed(0)} min`};
+  if(p.pay_model==="flat_per_class")return {val:CTX.classes.length*rate,label:money(CTX.classes.length*rate),note:`${money(rate)} per class × ${CTX.classes.length} classes`};
+  return {val:null,label:"Revenue share",note:"You're on revenue share — your payout is a share of the monthly pool based on your watch time, finalized by the studio."};
+}
+function render(){
+  const {per,tViews,tSecs}=rollup();
+  const minutes=tSecs/60;
+  const est=estEarnings(tViews,minutes);
+  const modelLabels={per_view:"Per view",per_minute:"Per watch-minute",rev_share:"Revenue share",flat_per_class:"Flat per class"};
+  let html=`<h1>Hi ${esc((CTX.instr.name||"").split(" ")[0]||"there")} 🌿</h1>
+    <p class="lead">Here's how your classes are doing and what you've earned.</p>
+    <div class="bar"><label class="muted" style="font-size:13px">Period</label>
+      <select id="per">${[["month","This month"],["lastmonth","Last month"],["30d","Last 30 days"],["all","All time"]].map(o=>`<option value="${o[0]}"${PERIOD===o[0]?" selected":""}>${o[1]}</option>`).join("")}</select></div>
+    <div class="cards">
+      <div class="stat"><div class="k">Your classes</div><div class="v">${CTX.classes.length}</div></div>
+      <div class="stat"><div class="k">Views</div><div class="v">${tViews}</div></div>
+      <div class="stat"><div class="k">Watch time</div><div class="v">${(tSecs/3600).toFixed(1)}<span style="font-size:14px"> h</span></div></div>
+      <div class="stat pay"><div class="k">Estimated earnings</div><div class="v">${esc(est.label)}</div></div>
+    </div>
+    <div class="note" style="margin-bottom:22px"><b>Your pay:</b> ${esc(modelLabels[CTX.pay.pay_model]||CTX.pay.pay_model)}${CTX.pay.pay_model!=="rev_share"?` · rate ${money(+CTX.pay.pay_rate||0)}`:""}<div class="model-note">${esc(est.note)}</div></div>
+    <table><thead><tr><th>Class</th><th>Level</th><th>Plays</th><th>Views</th><th>Watch h</th><th>Avg % watched</th></tr></thead><tbody>`;
+  if(!CTX.classes.length) html+='<tr><td colspan="6" class="muted" style="padding:18px">No published classes yet.</td></tr>';
+  CTX.classes.forEach(c=>{ const d=per[c.id]||{plays:0,views:0,secs:0,psum:0,pc:0};
+    html+=`<tr><td><span class="name">${esc(c.title)}</span>${c.status!=="published"?' <span class="pill">'+esc(c.status)+'</span>':""}</td><td>${esc(c.difficulty_level||"—")}</td><td>${d.plays}</td><td>${d.views}</td><td>${(d.secs/3600).toFixed(1)}</td><td>${d.pc?Math.round(d.psum/d.pc)+"%":"—"}</td></tr>`;
+  });
+  html+=`</tbody></table>
+    <p class="muted" style="font-size:12px;margin-top:14px">A “view” counts after ${esc(SET.view_threshold_value)} ${SET.view_threshold_type==="percent"?"% watched":"seconds"}. Estimated earnings are provisional and may be finalized by the studio.</p>`;
+  $("app").innerHTML=html;
+  $("per").onchange=e=>{ PERIOD=e.target.value; render(); };
+}
+init().catch(e=>renderMessage("Something went wrong", e.message||String(e)));
+</script>
+</body>
+</html>
