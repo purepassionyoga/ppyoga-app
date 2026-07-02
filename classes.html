@@ -285,10 +285,19 @@
 .clv-video>video,.clv-video>iframe,.clv-video>div{width:100%;height:100%;border:0}
 .clv-meta{margin-top:12px;color:var(--ppy-muted,#9a8f93);font-size:13px}
 .cl-upg{text-align:center;padding:26px}
+.cl-progbar{position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(255,255,255,.55)}
+.cl-progbar span{display:block;height:100%;background:var(--ppy-accent,#C8A0A6)}
+#clResume{margin-bottom:18px}
+.cl-cw-h{font-family:var(--ppy-fhead,'Playfair Display',serif);color:var(--ppy-accentDk,#A87C83);font-size:18px;margin:0 0 10px}
+.cl-cw-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px}
+.cl-cw-card{flex:0 0 200px;cursor:pointer}
+.cl-cw-thumb{position:relative;aspect-ratio:16/9;border-radius:12px;background-color:#efe7e6;background-position:center;background-size:cover;overflow:hidden}
+.cl-cw-n{font-size:13px;color:var(--ppy-ink,#4a4047);margin-top:6px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 <div class="cl-head"><h1 class="cl-title">Classes</h1><p class="cl-sub">On-demand yoga classes to practice anytime.</p></div>
 <div id="clFilters" class="cl-filters"></div>
 <div id="clCount" class="count"></div>
+<div id="clResume"></div>
 <div id="clGrid" class="cl-grid"></div>
 <div id="clState" class="state">Loading classes…</div>
 </div>
@@ -303,6 +312,11 @@ const esc=s=>(s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;
 const arr=v=>Array.isArray(v)?v:[];
 
 let CLASSES=[], INSTR={}, SITE={}, UID=null, TOKEN=null, EMAIL=null, TIER="free", IS_ADMIN=false, TRK=null;
+let RESUME={};
+async function loadResume(type){ if(!UID)return; try{ const r=await fetch(SB+"/rest/v1/resume_positions?select=content_id,position_seconds,duration_seconds,updated_at&user_id=eq."+UID+"&content_type=eq."+type,{headers:{apikey:KEY,Authorization:"Bearer "+TOKEN}}); (await r.json()||[]).forEach(x=>RESUME[x.content_id]={pos:x.position_seconds,dur:x.duration_seconds,upd:x.updated_at}); }catch(e){} }
+function saveResume(type,id,pos,dur){ if(!UID||!id||(pos||0)<3)return; const upd=new Date().toISOString(); try{ fetch(SB+"/rest/v1/resume_positions",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({user_id:UID,content_type:type,content_id:id,position_seconds:Math.round(pos),duration_seconds:dur?Math.round(dur):null,updated_at:upd}),keepalive:true}); }catch(e){} RESUME[id]={pos:Math.round(pos),dur:dur?Math.round(dur):null,upd:upd}; }
+function fmtTime(x){ x=Math.max(0,Math.round(x||0)); const m=Math.floor(x/60),ss=x%60; return m+":"+(ss<10?"0":"")+ss; }
+function resumeBar(id){ const r=RESUME[id]; if(!r||!r.pos||r.pos<5)return""; if(r.dur&&r.pos>=r.dur-15)return""; const pct=r.dur?Math.min(100,Math.round(r.pos/r.dur*100)):8; return '<div class="cl-progbar"><span style="width:'+(pct||8)+'%"></span></div>'; }
 const CF={theme:"",diff:""};
 
 function h(hdrs){ return Object.assign({apikey:KEY,Authorization:"Bearer "+(TOKEN||KEY)},hdrs||{}); }
@@ -331,6 +345,7 @@ async function load(){
     const site=await siteR.json(); SITE=(site&&site[0]&&site[0].value)||{};
     (await insR.json()||[]).forEach(i=>INSTR[i.id]=i);
     CLASSES=await clsR.json()||[];
+    await loadResume("class");
     $("clState").style.display="none";
     buildFilters(); render();
   }catch(e){
@@ -350,7 +365,14 @@ function buildFilters(){
   $("fTheme").onchange=e=>{CF.theme=e.target.value;render();};
   $("fDiff").onchange=e=>{CF.diff=e.target.value;render();};
 }
+function renderResume(){ const el=$("clResume"); if(!el)return;
+  const items=CLASSES.filter(c=>{const r=RESUME[c.id];return r&&r.pos>5&&(!r.dur||r.pos<r.dur-15)&&canWatch(c);}).sort((a,b)=>String(RESUME[b.id].upd||"").localeCompare(String(RESUME[a.id].upd||""))).slice(0,10);
+  if(!items.length){ el.innerHTML=""; return; }
+  el.innerHTML='<div class="cl-cw-h">Continue watching</div><div class="cl-cw-row">'+items.map(c=>{const r=RESUME[c.id],pct=r.dur?Math.min(100,Math.round(r.pos/r.dur*100)):8;return '<div class="cl-cw-card" data-id="'+c.id+'"><div class="cl-cw-thumb" style="background-image:url(\''+esc(c.thumbnail_url||"")+'\')"><div class="cl-progbar"><span style="width:'+(pct||8)+'%"></span></div></div><div class="cl-cw-n">'+esc(c.title)+'</div></div>';}).join("")+'</div>';
+  el.querySelectorAll(".cl-cw-card").forEach(x=>x.onclick=()=>openClass(x.dataset.id));
+}
 function render(){
+  renderResume();
   let list=CLASSES.slice();
   if(CF.theme)list=list.filter(c=>c.class_theme===CF.theme);
   if(CF.diff)list=list.filter(c=>c.difficulty_level===CF.diff);
@@ -360,7 +382,7 @@ function render(){
     const ins=INSTR[c.instructor_id], locked=!canWatch(c);
     return `<div class="cl-card" data-id="${c.id}">
       <div class="cl-thumb" style="background-image:url('${esc(c.thumbnail_url||"")}')">
-        ${locked?'<div class="cl-lock">🔒 '+esc((effectiveTiers(c)[0]||"members"))+'</div>':'<div class="play">▶</div>'}
+        ${locked?'<div class="cl-lock">🔒 '+esc((effectiveTiers(c)[0]||"members"))+'</div>':'<div class="play">▶</div>'}${resumeBar(c.id)}
       </div>
       <div class="cl-b">
         <div class="cl-n">${esc(c.title)}</div>
@@ -399,39 +421,32 @@ function parseVideo(url){
 }
 function openPlayer(c){
   const v=parseVideo(c.video_url), ins=INSTR[c.instructor_id];
-  $("modalRoot").innerHTML=`<div class="clv-ovl" id="clvOvl"><div class="clv-modal">
-    <div class="clv-head"><h3>${esc(c.title)}</h3><button class="clv-x" id="clvX">✕</button></div>
-    <div class="clv-body"><div class="clv-video" id="clvVideo"></div>
-      <div class="clv-meta">${esc(ins?ins.name:"")}${c.duration_label?" · "+esc(c.duration_label):""}${c.difficulty_level?" · "+esc(c.difficulty_level):""}</div>
-    </div></div></div>`;
-  const close=()=>{ recordView(); $("modalRoot").innerHTML=""; };
-  $("clvX").onclick=close;
-  $("clvOvl").onclick=e=>{ if(e.target.id==="clvOvl")close(); };
-  startTracker($("clvVideo"), v, c);
-  if(v.type==="none"||v.type==="iframe"){ /* no reliable tracking */ }
+  const r=RESUME[c.id]; let resumeFrom=0; if(r&&r.pos>5&&(!r.dur||r.pos<r.dur-15))resumeFrom=r.pos;
+  const baseMeta=(ins?esc(ins.name):"")+(c.duration_label?" · "+esc(c.duration_label):"")+(c.difficulty_level?" · "+esc(c.difficulty_level):"");
+  $("modalRoot").innerHTML='<div class="clv-ovl" id="clvOvl"><div class="clv-modal"><div class="clv-head"><h3>'+esc(c.title)+'</h3><button class="clv-x" id="clvX">✕</button></div><div class="clv-body"><div class="clv-video" id="clvVideo"></div><div class="clv-meta" id="clvMeta">'+baseMeta+'</div></div></div></div>';
+  if(resumeFrom>0){ const m=$("clvMeta"); if(m)m.innerHTML=baseMeta+' · <span style="color:var(--ppy-accentDk,#A87C83)">Resuming from '+fmtTime(resumeFrom)+'</span> · <a href="#" id="clvRestart" style="color:var(--ppy-muted,#9a8f93)">start over</a>'; }
+  const close=()=>{ if(TRK)saveResume("class",c.id,TRK.lastPos,TRK.dur); recordView(); $("modalRoot").innerHTML=""; render(); };
+  $("clvX").onclick=close; $("clvOvl").onclick=e=>{ if(e.target.id==="clvOvl")close(); };
+  startTracker($("clvVideo"), v, c, resumeFrom);
+  const rs=$("clvRestart"); if(rs)rs.onclick=(e)=>{ e.preventDefault(); if(TRK&&TRK.seek){TRK.seek(0);TRK.lastPos=0;} saveResume("class",c.id,0,TRK?TRK.dur:0); const m=$("clvMeta"); if(m)m.innerHTML=baseMeta; };
 }
-function startTracker(box, v, cls){
-  const st={secs:0,lastPos:0,lastT:performance.now(),dur:0,playing:false,cls:cls,recorded:false,stop:null};
-  TRK=st;
-  function tick(pos,playing,dur){
-    const now=performance.now(), wall=(now-st.lastT)/1000; st.lastT=now;
-    if(dur&&!st.dur)st.dur=dur;
-    if(playing&&st.playing){ const ct=pos-st.lastPos, credit=Math.max(0,Math.min(ct,wall)); if(credit>0&&credit<3600)st.secs+=credit; }
-    st.lastPos=pos; st.playing=playing;
-  }
+function startTracker(box, v, cls, resumeFrom){
+  const st={secs:0,lastPos:resumeFrom||0,lastT:performance.now(),dur:0,playing:false,cls:cls,recorded:false,stop:null,seek:function(){}}; TRK=st;
+  function tick(pos,playing,dur){ const now=performance.now(),wall=(now-st.lastT)/1000; st.lastT=now; if(dur&&!st.dur)st.dur=dur; if(playing&&st.playing){ const ct=pos-st.lastPos,credit=Math.max(0,Math.min(ct,wall)); if(credit>0&&credit<3600)st.secs+=credit; } st.lastPos=pos; st.playing=playing; }
   if(v.type==="file"){
-    const vid=document.createElement("video"); vid.src=v.url; vid.controls=true; vid.playsInline=true; box.appendChild(vid); st.el=vid;
-    const iv=setInterval(()=>tick(vid.currentTime||0, !vid.paused&&!vid.ended, vid.duration||0),1000);
-    st.stop=()=>clearInterval(iv);
+    const vid=document.createElement("video"); vid.src=v.url; vid.controls=true; vid.playsInline=true; box.appendChild(vid); st.el=vid; st.seek=function(t){try{vid.currentTime=t;}catch(e){}};
+    vid.addEventListener("loadedmetadata",function(){ if(resumeFrom>0&&resumeFrom<(vid.duration||1e9)-5){try{vid.currentTime=resumeFrom;}catch(e){}} });
+    const iv=setInterval(()=>tick(vid.currentTime||0, !vid.paused&&!vid.ended, vid.duration||0),1000); st.stop=()=>clearInterval(iv);
   } else if(v.type==="youtube"){
-    const pid="ytp_"+Date.now(); const d=document.createElement("div"); d.id=pid; box.appendChild(d);
-    const mk=()=>{ try{ st.yt=new YT.Player(pid,{videoId:v.id,host:"https://www.youtube.com",playerVars:{rel:0,modestbranding:1,playsinline:1}}); }catch(e){} };
+    const pid="ytp_"+Date.now(); const dv=document.createElement("div"); dv.id=pid; box.appendChild(dv);
+    const mk=()=>{ try{ st.yt=new YT.Player(pid,{videoId:v.id,playerVars:{rel:0,modestbranding:1,playsinline:1},events:{onReady:function(e){ st.seek=function(t){try{e.target.seekTo(t,true);}catch(_){}}; if(resumeFrom>0){try{e.target.seekTo(resumeFrom,true);}catch(_){}} }}}); }catch(e){} };
     if(window.YT&&window.YT.Player)mk(); else { if(!document.getElementById("ytapi")){const t=document.createElement("script");t.id="ytapi";t.src="https://www.youtube.com/iframe_api";document.head.appendChild(t);} const prev=window.onYouTubeIframeAPIReady; window.onYouTubeIframeAPIReady=function(){ if(prev)try{prev();}catch(e){} mk(); }; }
     const iv=setInterval(()=>{ try{ if(st.yt&&st.yt.getPlayerState){ tick(st.yt.getCurrentTime()||0, st.yt.getPlayerState()===1, st.yt.getDuration()||0); } }catch(e){} },1000);
     st.stop=()=>{ clearInterval(iv); try{st.yt&&st.yt.destroy&&st.yt.destroy();}catch(e){} };
   } else if(v.type==="vimeo"){
     const ifr=document.createElement("iframe"); ifr.src="https://player.vimeo.com/video/"+v.id; ifr.allow="autoplay; fullscreen; picture-in-picture"; ifr.setAttribute("allowfullscreen",""); box.appendChild(ifr);
-    const setup=()=>{ try{ const pl=new Vimeo.Player(ifr); st.vm=pl; let pos=0,playing=false,dur=0;
+    const setup=()=>{ try{ const pl=new Vimeo.Player(ifr); st.vm=pl; st.seek=function(t){try{pl.setCurrentTime(t);}catch(e){}}; let pos=0,playing=false,dur=0;
+        pl.ready().then(function(){ if(resumeFrom>0){try{pl.setCurrentTime(resumeFrom);}catch(e){}} });
         pl.on("timeupdate",dd=>{pos=dd.seconds;dur=dd.duration;}); pl.on("play",()=>playing=true); pl.on("pause",()=>playing=false); pl.on("ended",()=>playing=false);
         const iv=setInterval(()=>tick(pos,playing,dur),1000); st.stop=()=>clearInterval(iv);
       }catch(e){} };
@@ -439,16 +454,13 @@ function startTracker(box, v, cls){
   } else {
     const ifr=document.createElement("iframe"); ifr.src=v.type==="iframe"?v.url:"about:blank"; ifr.allow="autoplay; fullscreen"; ifr.setAttribute("allowfullscreen",""); box.appendChild(ifr);
   }
+  st.saveIv=setInterval(()=>{ if(st.lastPos>3)saveResume("class",cls.id,st.lastPos,st.dur); },10000);
+  const _os=st.stop; st.stop=function(){ try{_os&&_os();}catch(e){} try{clearInterval(st.saveIv);}catch(e){} };
 }
 function recordView(){
-  const st=TRK; if(!st||st.recorded)return; st.recorded=true;
-  try{ if(st.stop)st.stop(); }catch(e){}
-  const secs=Math.round(st.secs), dur=Math.round(st.dur||0);
-  if(!UID||secs<1)return;
-  try{
-    const body=JSON.stringify({user_id:UID,class_id:st.cls.id,watched_seconds:secs,duration_seconds:dur||null});
-    fetch(SB+"/rest/v1/class_views",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"return=minimal"},body:body,keepalive:true});
-  }catch(e){}
+  const st=TRK; if(!st||st.recorded)return; st.recorded=true; try{ if(st.stop)st.stop(); }catch(e){}
+  const secs=Math.round(st.secs), dur=Math.round(st.dur||0); if(!UID||secs<1)return;
+  try{ fetch(SB+"/rest/v1/class_views",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify({user_id:UID,class_id:st.cls.id,watched_seconds:secs,duration_seconds:dur||null}),keepalive:true}); }catch(e){}
 }
 window.addEventListener("pagehide",recordView);
 document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="hidden")recordView(); });
