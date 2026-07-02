@@ -1595,7 +1595,7 @@ function editClass(id){
     <div class="edtop"><h2>${id?"Edit class":"New class"}</h2><button class="btn ghost" style="margin-left:auto;padding:7px 13px" data-x>Close</button></div>
     <div class="edbody"><div class="grp">
       ${stuF("Title","cTitle",c.title)}
-      ${stuF("Video URL","cVideo",c.video_url,"YouTube, Vimeo, or .mp4 link")}
+      ${stuF("Video URL","cVideo",c.video_url,"YouTube, Vimeo, Bunny, or .mp4 link")}
       ${stuImg("Thumbnail","cThumb",c.thumbnail_url,"classes")}
       <div class="row2">${stuSel("Instructor","cInstr",instrOpts,c.instructor_id||"")}${stuF("Duration","cDur",c.duration_label,"e.g. 32 min")}</div>
       <div class="row2">${stuF("Class theme","cTheme",c.class_theme,"e.g. Hips & Heart")}${stuSel("Difficulty","cDiff",STU_DIFF,c.difficulty_level||"")}</div>
@@ -1700,7 +1700,7 @@ function editDay(id){
     <div class="edbody"><div class="grp">
       <div class="row2">${stuF("Day number","dNum",d.day_number,"","number")}${stuF("Unlock after (days)","dUnlock",d.unlock_delay_days,"0 = immediately","number")}</div>
       ${stuF("Title","dTitle",d.title)}
-      ${stuF("Video URL","dVideo",d.video_url,"YouTube, Vimeo, or .mp4")}
+      ${stuF("Video URL","dVideo",d.video_url,"YouTube, Vimeo, Bunny, or .mp4")}
       ${stuImg("Thumbnail","dThumb",d.thumbnail_url,"challenge-days")}
       ${stuF("Duration","dDur",d.duration_label,"e.g. 18 min")}
       ${stuTA("Lesson description","dDesc",d.lesson_description,"",70)}
