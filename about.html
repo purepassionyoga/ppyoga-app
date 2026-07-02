@@ -1,328 +1,955 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>About Us — Pure Passion Yoga</title>
-<meta name="description" content="Pure Passion Yoga is a space to move, breathe, and grow — on-demand classes, guided challenges, a living pose library, and tools to build a practice that's truly yours.">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>About Us · Pure Passion Yoga</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,500&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script>(function(){try{var t=localStorage.getItem("ppy-theme");var m=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches;var dark=t?t==="dark":m;document.documentElement.setAttribute("data-theme",dark?"dark":"light");}catch(e){}})();</script>
 <style>
   :root{
-    --rose:#C8A0A6; --rose-lt:#E8C6C1; --aubergine:#A87C83; --sage:#A8AD91; --sand:#DCCFC6;
-    --jade:#2E7D6B; --ink:#4a4047; --muted:#9a8f93; --line:#efe4e5; --blush:#fbf6f5; --white:#fff;
-    --fhead:'Playfair Display',Georgia,serif; --fbody:'Poppins',system-ui,sans-serif;
+    --rose:#C8A0A6; --roseTitle:#C8A0A6; --roseDeep:#A87C83; --sage:#a8ad91;
+    --taupe:#9C8579; --body:#6C7682; --paper:#fff; --stage:#FBF8F6; --line:#EFE6E8;
+    --lineDk:#E2D7D9; --chipBg:#F6ECEF; --chipFg:#A87C83; --sageBg:#EEF1E4; --sageFg:#7E8466;
+    --font-head:'Playfair Display',Georgia,serif; --font-body:'Poppins',system-ui,sans-serif;
   }
+  /* ===== Dark mode palette ===== */
+  :root[data-theme="dark"]{
+    --paper:#241c21 !important; --stage:#191317 !important;
+    --body:#E8DEE3 !important; --taupe:#B49EA8 !important;
+    --line:#352b32 !important; --lineDk:#41343c !important;
+    --chipBg:#33262d !important; --chipFg:#E2C2C9 !important;
+    --sageBg:#2a2f23 !important; --sageFg:#AEB593 !important;
+    --roseDeep:#D9AAB1 !important;
+    --ppy-bg:#191317 !important; --ppy-surface:#241c21 !important;
+    --ppy-ink:#E8DEE3 !important; --ppy-muted:#B49EA8 !important;
+    --ppy-line:#352b32 !important; --ppy-lineDk:#41343c !important;
+    --ppy-chip:#33262d !important; --ppy-accentDk:#D9AAB1 !important;
+    --bg:#191317 !important; --card:#241c21 !important; --field:#2c2229 !important;
+    --ink:#E8DEE3 !important; --muted:#B49EA8 !important;
+  }
+  :root[data-theme="dark"] .ppy-header{background:rgba(25,19,23,.92) !important}
+  :root[data-theme="dark"] .ppy-mobile{background:var(--ppy-surface) !important}
+  :root[data-theme="dark"] .ppy-btn.ghost,:root[data-theme="dark"] .ppy-btn.admin{background:var(--ppy-surface) !important}
+  .ppy-theme{padding:0 !important;width:38px;height:38px;justify-content:center}
+  .ppy-theme svg{width:18px;height:18px}
   *{box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{margin:0;font-family:var(--fbody);color:var(--ink);background:var(--white);line-height:1.65;-webkit-font-smoothing:antialiased}
-  a{color:inherit}
-  img{max-width:100%;display:block}
-  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
-  .eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--aubergine);font-weight:500;margin:0 0 14px}
-  h1,h2,h3{font-family:var(--fhead);color:var(--aubergine);font-weight:600;line-height:1.15;margin:0}
-  p{margin:0 0 18px}
+  body{margin:0;background:var(--stage);color:var(--body);font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+  .serif{font-family:var(--font-head)}
+  a{color:inherit;text-decoration:none}
 
-  /* lotus divider */
-  .lotus{display:block;margin:0 auto;color:var(--rose)}
-  .rule{display:flex;align-items:center;justify-content:center;gap:16px;margin:0 auto;max-width:220px;color:var(--rose)}
-  .rule::before,.rule::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,var(--rose-lt))}
-  .rule::after{background:linear-gradient(90deg,var(--rose-lt),transparent)}
+  header{background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  .bar{max-width:1200px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .brand{font-family:var(--font-head);font-weight:700;font-size:22px;color:var(--roseDeep);letter-spacing:.02em}
+  nav{display:flex;gap:18px;font-size:13px;color:var(--taupe)}
+  nav a.active{color:var(--rose);font-weight:600}
 
-  /* header */
-  header.site{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-  .nav{display:flex;align-items:center;justify-content:space-between;height:70px}
-  .brand{display:flex;align-items:center;gap:10px;text-decoration:none}
-  .brand .mk{color:var(--rose)}
-  .brand .wm{font-family:var(--fhead);font-size:20px;font-weight:600;color:var(--aubergine);letter-spacing:.01em}
-  .nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0}
-  .nav a.link{text-decoration:none;font-size:14px;color:var(--ink);opacity:.85;transition:opacity .2s,color .2s}
-  .nav a.link:hover{opacity:1;color:var(--aubergine)}
-  .nav .cta{font-size:14px;text-decoration:none;background:var(--rose);color:#fff;padding:9px 18px;border-radius:999px;transition:background .2s}
-  .nav .cta:hover{background:var(--aubergine)}
-  .menutoggle{display:none}
+  .wrap{max-width:1200px;margin:0 auto;padding:24px}
+  .search{width:100%;padding:12px 16px;border:1px solid var(--lineDk);border-radius:12px;font:inherit;font-size:14px;outline:none;background:var(--paper);color:var(--body);margin-bottom:18px}
+  .frow{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+  .flabel{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--taupe);width:96px;flex:0 0 auto;padding-top:7px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+  .chip{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--body);cursor:pointer;transition:.15s}
+  .chip:hover{border-color:var(--rose)}
+  .chip.on{background:var(--rose);color:#fff;border-color:var(--rose)}
 
-  /* hero */
-  .hero{position:relative;text-align:center;overflow:hidden;
-    background:radial-gradient(120% 90% at 50% -10%,#fdf3f2 0%,#fbf7f4 45%,#ffffff 80%)}
-  .hero .wrap{padding:92px 24px 78px;position:relative;z-index:1}
-  .hero h1{font-size:clamp(40px,6vw,68px);letter-spacing:-.01em;margin:0 auto;max-width:14ch}
-  .hero h1 em{font-style:italic;color:var(--rose)}
-  .hero .lead{font-size:clamp(16px,1.9vw,19px);color:var(--ink);opacity:.9;max-width:60ch;margin:22px auto 30px;font-weight:300}
-  .hero .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-  .btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;border-radius:999px;font-size:15px;font-weight:500;padding:13px 26px;transition:transform .18s,background .2s,color .2s,border-color .2s}
-  .btn.primary{background:var(--aubergine);color:#fff}
-  .btn.primary:hover{background:#96676f}
-  .btn.ghost{background:#fff;color:var(--aubergine);border:1px solid var(--rose-lt)}
-  .btn.ghost:hover{border-color:var(--rose);background:#fffafa}
-  .btn:hover{transform:translateY(-1px)}
-  .hero .halo{position:absolute;inset:0;pointer-events:none;opacity:.5}
-  .hero .halo svg{position:absolute;left:50%;top:8%;transform:translateX(-50%);width:520px;max-width:90%;color:#f2d9da}
+  .count{color:var(--taupe);font-size:13px;margin:14px 0 18px}
+  .potd{display:flex;align-items:center;gap:14px;background:var(--chipBg);border:1px solid var(--line);border-radius:16px;padding:12px 16px;margin-bottom:18px}
+  .potd-th{width:56px;height:56px;border-radius:12px;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden;flex:0 0 auto}
+  .potd-th img{max-width:100%;max-height:100%;object-fit:contain}
+  .potd-body{flex:1}
+  .potd-k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--roseDeep)}
+  .potd-name{font-family:var(--font-head);color:var(--rose);font-size:18px}
+  .potd-san{font-family:var(--font-head);font-style:italic;color:var(--sage);font-size:13px}
+  .potd-btn{background:var(--rose);color:#fff;border:none;border-radius:999px;padding:8px 16px;font-size:13px;cursor:pointer}
+  .potd-btn:hover{background:var(--roseDeep)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:16px}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:.18s;position:relative}
+  .card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(166,100,114,.12);border-color:var(--lineDk)}
+  .thumb{height:140px;display:flex;align-items:center;justify-content:center;background:var(--paper);border-bottom:1px solid var(--line);font-size:50px}
+  .thumb img{max-height:100%;max-width:100%;object-fit:contain}
+  .cbody{padding:12px 14px 14px}
+  .cname{font-family:var(--font-head);font-weight:600;font-size:16px;color:var(--rose);line-height:1.2}
+  .csans{font-family:var(--font-head);font-style:italic;color:var(--sage);font-size:13px;margin-top:2px}
+  .crow{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11.5px;color:var(--taupe)}
+  .badge{font-size:11px;padding:2px 9px;border-radius:999px;font-weight:500}
+  .heart{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:999px;background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--rose);font-size:15px}
+  .heart.on{background:var(--rose);color:#fff;border-color:var(--rose)}
 
-  /* generic section */
-  section{padding:82px 0}
-  .center{text-align:center}
-  .measure{max-width:640px;margin:0 auto}
-  .measure p{font-size:17px;color:#5c5157}
-  .kh{font-size:clamp(26px,3.4vw,38px);margin:0 auto 18px}
+  .state{padding:60px 20px;text-align:center;color:var(--taupe)}
 
-  /* offerings */
-  .offer{background:var(--blush)}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
-  .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px 24px;transition:transform .2s,box-shadow .2s,border-color .2s}
-  .card:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(168,124,131,.13);border-color:var(--rose-lt)}
-  .ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#fdeef0;color:var(--aubergine);margin-bottom:16px}
-  .ic.sage{background:#eef1e8;color:#6f7a54}
-  .card h3{font-size:20px;margin-bottom:8px}
-  .card p{font-size:14.5px;color:#6b6066;margin:0}
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(58,38,44,.42);display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow:auto;z-index:50}
+  .modal{background:var(--paper);max-width:920px;width:100%;border-radius:26px;margin:16px 0;overflow:hidden;animation:in .28s cubic-bezier(.2,.7,.2,1)}
+  @keyframes in{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.modal{animation:none}}
+  .mtop{position:sticky;top:0;background:var(--paper);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);display:flex;justify-content:flex-end;padding:12px 18px;z-index:2}
+  .close{background:#CDA0A6;color:#fff;border:none;font:inherit;font-size:13px;padding:7px 16px;border-radius:999px;cursor:pointer}
+  .mbody{padding:8px 28px 44px}
+  .mhead{text-align:center;padding-top:8px}
+  .mtitle{font-family:var(--font-head);font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--roseTitle);font-size:40px;margin:0}
+  .msans{font-family:var(--font-head);font-style:italic;color:var(--sage);font-size:22px;margin-top:4px}
+  .mpron{font-family:var(--font-head);color:var(--taupe);font-size:17px;margin-top:2px}
+  .malt{font-size:12px;color:var(--taupe);margin-top:10px}
+  .facts{display:flex;justify-content:center;flex-wrap:wrap;margin:24px 0}
+  .fact{padding:0 22px;text-align:center;border-left:1px solid var(--line)}
+  .fact:first-child{border-left:none}
+  .fact .l{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--taupe)}
+  .fact .v{font-size:14px;color:var(--body);font-weight:500;margin-top:2px}
+  .intro{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center}
+  .intro p{font-size:15px;line-height:1.7;color:var(--body)}
+  .fig{background:var(--chipBg);border:1px solid var(--line);border-radius:18px;min-height:230px;display:flex;align-items:center;justify-content:center;font-size:90px}
+  .fig img{max-height:230px;max-width:100%;object-fit:contain}
+  .rule{border-top:1px solid var(--line);margin:30px 0}
+  .secgrid{display:grid;grid-template-columns:1fr 1fr;gap:30px 48px}
+  .sec h3{font-family:var(--font-head);color:var(--rose);font-size:23px;margin:0 0 12px}
+  .sec, .sec p, .sec li{font-size:14px;line-height:1.65;color:var(--body)}
+  .sec.full{grid-column:1/-1}
+  .sec p{margin:0 0 10px}
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{display:flex;gap:10px;margin-bottom:8px}
+  ul.clean li::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--rose);margin-top:8px;flex:0 0 auto}
+  ol.steps{list-style:none;padding:0;margin:0;counter-reset:s}
+  ol.steps li{display:flex;gap:12px;margin-bottom:10px;counter-increment:s}
+  ol.steps li::before{content:counter(s);font-family:var(--font-head);color:var(--roseDeep);font-size:18px;width:18px;flex:0 0 auto}
+  .tags{display:flex;flex-wrap:wrap;gap:7px}
+  .tag{font-size:12px;padding:4px 11px;border-radius:999px;background:var(--chipBg);color:var(--chipFg)}
+  .tag.sage{background:var(--sageBg);color:var(--sageFg)}
+  .affirm{margin:36px auto 0;max-width:640px;background:var(--chipBg);border-radius:18px;text-align:center;padding:26px}
+  .affirm .l{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--roseDeep)}
+  .affirm .q{font-family:var(--font-head);font-style:italic;color:var(--roseDeep);font-size:24px;margin-top:8px}
+  .vary{margin-top:44px;text-align:center}
+  .vary h2{font-family:var(--font-head);text-transform:uppercase;letter-spacing:.18em;color:var(--roseTitle);font-size:28px;margin:0 0 16px}
+  .vchips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:640px;margin:0 auto}
+  .vchip{font-size:14px;padding:8px 16px;border-radius:12px;background:var(--chipBg);border:1px solid var(--line);color:var(--body)}
+  @media (max-width:640px){.intro,.secgrid{grid-template-columns:1fr}.mtitle{font-size:30px}.flabel{width:100%}}
 
-  /* story */
-  .story .wrap{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
-  .story .panel{background:linear-gradient(160deg,#fdf1f1,#f4efe9);border-radius:22px;padding:40px;border:1px solid var(--line)}
-  .story .panel .sig{font-family:var(--fhead);font-style:italic;font-size:22px;color:var(--aubergine);margin:0 0 6px}
-  .story .panel .who{font-size:13px;color:var(--muted);letter-spacing:.02em}
-  .story .panel .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
-  .story .panel .chip{font-size:12px;padding:6px 13px;border-radius:999px;background:#fff;border:1px solid var(--rose-lt);color:var(--aubergine)}
-  .story h2{font-size:clamp(26px,3.4vw,36px);margin-bottom:18px}
-  .story p{font-size:16px;color:#5c5157}
-
-  /* philosophy */
-  .phil{background:var(--white)}
-  .beliefs{list-style:none;margin:40px auto 0;padding:0;max-width:680px}
-  .beliefs li{display:flex;gap:16px;align-items:flex-start;padding:16px 0;border-top:1px solid var(--line);font-size:16.5px;color:#544a50}
-  .beliefs li:last-child{border-bottom:1px solid var(--line)}
-  .beliefs .dot{flex:0 0 auto;margin-top:5px;color:var(--sage)}
-  .beliefs b{font-weight:600;color:var(--aubergine)}
-
-  /* community / cta band */
-  .band{background:radial-gradient(120% 120% at 50% 0%,#fbeceb,#f6efe9);text-align:center}
-  .band .wrap{padding:76px 24px}
-  .band h2{font-size:clamp(28px,3.6vw,40px);max-width:18ch;margin:0 auto 16px}
-  .band p{max-width:56ch;margin:0 auto 28px;color:#5c5157;font-size:17px}
-
-  /* footer */
-  footer.site{background:#fff;border-top:1px solid var(--line);padding:56px 0 30px}
-  .fgrid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px}
-  .fbrand .wm{font-family:var(--fhead);font-size:19px;color:var(--aubergine);font-weight:600;margin-bottom:10px}
-  .fbrand p{font-size:13.5px;color:var(--muted);max-width:34ch;margin:0 0 14px}
-  .fsoc{display:flex;gap:14px}
-  .fsoc a{color:var(--rose);text-decoration:none;transition:color .2s}
-  .fsoc a:hover{color:var(--aubergine)}
-  .fcol h4{font-family:var(--fbody);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;font-weight:600}
-  .fcol ul{list-style:none;margin:0;padding:0}
-  .fcol li{margin-bottom:9px}
-  .fcol a{font-size:14px;color:#6b6066;text-decoration:none;transition:color .2s}
-  .fcol a:hover{color:var(--aubergine)}
-  .fbot{margin-top:42px;padding-top:22px;border-top:1px solid var(--line);text-align:center;font-size:12.5px;color:var(--muted)}
-
-  /* motion + responsive */
-  .rise{opacity:0;transform:translateY(14px);animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards}
-  .d1{animation-delay:.08s}.d2{animation-delay:.16s}.d3{animation-delay:.24s}
-  @keyframes rise{to{opacity:1;transform:none}}
-  @media (max-width:860px){
-    .nav ul,.nav .cta{display:none}
-    .menutoggle{display:inline-flex}
-    .grid{grid-template-columns:1fr 1fr}
-    .story .wrap{grid-template-columns:1fr;gap:32px}
-    .fgrid{grid-template-columns:1fr 1fr}
-  }
-  @media (max-width:560px){
-    .grid{grid-template-columns:1fr}
-    .fgrid{grid-template-columns:1fr}
-    section{padding:60px 0}
-  }
-  @media (prefers-reduced-motion:reduce){
-    .rise{animation:none;opacity:1;transform:none}
-    html{scroll-behavior:auto}
-  }
-  a:focus-visible,.btn:focus-visible{outline:2px solid var(--aubergine);outline-offset:3px;border-radius:8px}
+  /* ===== PPY site header ===== */
+.ppy-header{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(10px);border-bottom:1px solid var(--ppy-line,#EFE6E8)}
+.ppy-header [hidden]{display:none !important}
+.ppy-bar{max-width:1200px;margin:0 auto;padding:11px 22px;display:flex;align-items:center;gap:16px}
+.ppy-brand{display:flex;align-items:center;gap:9px;text-decoration:none;flex:0 0 auto}
+.ppy-brand .mark{width:34px;height:34px;flex:0 0 auto}
+.ppy-brand .wm{font-family:var(--ppy-fhead,'Playfair Display',Georgia,serif);font-weight:700;color:var(--ppy-accentDk,#A87C83);font-size:20px;line-height:1}
+.ppy-brand img.lg{height:42px;width:auto;display:block}
+.ppy-nav{display:flex;align-items:center;gap:2px;margin-left:6px}
+.ppy-nav a{display:inline-flex;align-items:center;color:var(--ppy-ink,#6C7682);text-decoration:none;font-size:14px;font-weight:500;font-family:var(--ppy-fbody,'Poppins',system-ui,sans-serif);padding:8px 12px;border-radius:10px;white-space:nowrap}
+.ppy-nav a:hover{background:var(--ppy-chip,#F6ECEF);color:var(--ppy-accentDk,#A87C83)}
+.ppy-nav a.active{color:var(--ppy-accent,#C8A0A6);font-weight:600}
+.ppy-nav a.locked{color:#A79FAC}
+.ppy-nav a .lk{margin-left:5px;opacity:.7}
+.ppy-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.ppy-tier{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ppy-accentDk,#A87C83);background:var(--ppy-chip,#F6ECEF);border-radius:999px;padding:4px 9px;font-weight:600;font-family:var(--ppy-fbody,'Poppins',sans-serif)}
+.ppy-btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:500;font-size:13.5px;font-family:var(--ppy-fbody,'Poppins',sans-serif);padding:8px 15px;border-radius:11px;white-space:nowrap;cursor:pointer;border:none}
+.ppy-btn.primary{background:var(--ppy-accentDk,#A87C83);color:#fff}
+.ppy-btn.ghost{background:#fff;color:var(--ppy-accentDk,#A87C83);border:1px solid var(--ppy-lineDk,#E2D7D9)}
+.ppy-btn.up{background:var(--ppy-accent,#C8A0A6);color:#fff}
+.ppy-btn.admin{background:#fff;color:var(--ppy-accentDk,#A87C83);border:1px solid var(--ppy-accent,#C8A0A6)}
+.ppy-burger{display:none;background:none;border:1px solid var(--ppy-lineDk,#E2D7D9);border-radius:10px;width:42px;height:38px;cursor:pointer;align-items:center;justify-content:center;color:var(--ppy-ink,#6C7682)}
+.ppy-burger svg{width:22px;height:22px}
+.ppy-mobile{display:none;border-top:1px solid var(--ppy-line,#EFE6E8);background:#fff}
+.ppy-mobile a{display:flex;align-items:center;padding:13px 22px;color:var(--ppy-ink,#6C7682);text-decoration:none;font-weight:500;font-family:var(--ppy-fbody,'Poppins',sans-serif);border-bottom:1px solid var(--ppy-line,#EFE6E8)}
+.ppy-mobile a .lk{margin-left:auto;opacity:.6}
+.ppy-mobile a.up{color:#fff;background:var(--ppy-accent,#C8A0A6)}
+.ppy-mobile a.admin{color:var(--ppy-accentDk,#A87C83)}
+@media (max-width:820px){.ppy-nav{display:none}.ppy-right{display:flex;order:3;margin-left:0}.ppy-right>*{display:none}.ppy-right>#ppyAuth{display:inline-flex}.ppy-brand{order:1}.ppy-burger{display:inline-flex;order:2;margin:0 auto}.ppy-mobile.open{display:block}}
+/* ===== end header ===== */
+.cuevars{margin-top:24px}
+.cuevars h2{font-family:var(--font-head);color:var(--roseTitle);font-size:20px;margin:0 0 12px}
+.cuetabs{display:flex;gap:6px;border-bottom:1px solid var(--line,#ece3e5);margin-bottom:14px;flex-wrap:wrap}
+.cuetab{background:none;border:none;padding:9px 14px;color:var(--taupe);font-size:14px;cursor:pointer;border-bottom:2px solid transparent;font-family:inherit}
+.cuetab.on{color:var(--rose);border-bottom-color:var(--rose);font-weight:600}
+.cuen{font-size:11px;opacity:.7}
+.cuepane.hidden{display:none}
+.vargal{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px}
+.fambase{display:inline-block;font-size:9px;text-transform:uppercase;letter-spacing:.06em;background:var(--sage,#a8ad91);color:#fff;border-radius:6px;padding:1px 5px;margin-left:4px;vertical-align:middle}
+.varcard{background:var(--paper,#fff);border:2px solid var(--line,#ece3e5);border-radius:14px;padding:12px;text-align:center;cursor:pointer;font-family:inherit;width:100%;transition:border-color .15s,box-shadow .15s}
+.varcard:hover{border-color:var(--rose)}
+.varcard.on{border-color:var(--rose);box-shadow:0 0 0 3px rgba(200,160,166,.18)}
+.varhint{font-size:13px;color:var(--taupe);margin:-6px 0 12px}
+.varth{width:100%;aspect-ratio:1;background:var(--stage,#faf6f4);border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:40px;margin-bottom:8px}
+.varth img{width:100%;height:100%;object-fit:contain}
+.varnm{font-family:var(--font-head);color:var(--roseTitle);font-size:15px;font-weight:600;line-height:1.2}
+.varsn{font-size:12px;color:var(--sage);font-style:italic;margin-top:2px}
+.varnote{font-size:12px;color:var(--taupe);margin-top:6px;line-height:1.4}
 </style>
 </head>
 <body>
-
-<!-- HEADER (static brand shell — can be swapped for the shared adaptive header) -->
-<header class="site">
-  <div class="wrap nav">
-    <a class="brand" href="/">
-      <span class="mk" aria-hidden="true">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 21c-4-2.2-7-5.4-7-9 0 2 1.7 3.6 3.4 4.2C7 13.5 8.2 11 12 8c3.8 3 5 5.5 3.6 8.2C17.3 15.6 19 14 19 12c0 3.6-3 6.8-7 9Z"/><path d="M12 8V4M9.5 6.2 8 4.6M14.5 6.2 16 4.6"/></svg>
-      </span>
-      <span class="wm">Pure Passion Yoga</span>
+<style id="ppyLoaderCSS">
+#ppyLoader{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#FBF7F6;opacity:1;transition:opacity .45s ease}
+#ppyLoader.hide{opacity:0;pointer-events:none}
+#ppyLoader .ppyl-mark{font-size:52px;line-height:1;animation:ppySpin 1s linear infinite;transform-origin:50% 50%}
+#ppyLoader .ppyl-word{font-family:'Playfair Display',Georgia,serif;color:#A87C83;font-size:14px;letter-spacing:.06em;opacity:.75}
+@keyframes ppySpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){#ppyLoader .ppyl-mark{animation:none}}
+</style>
+<div id="ppyLoader" aria-hidden="true">
+  <div class="ppyl-mark">🌸</div>
+  <div class="ppyl-word">Pure Passion Yoga</div>
+</div>
+<script>
+(function(){var el=document.getElementById('ppyLoader');if(!el)return;var done=false;function hide(){if(done)return;done=true;el.classList.add('hide');setTimeout(function(){if(el)el.style.display='none';},520);}window.ppyHideLoader=hide;if(document.readyState==='complete'){setTimeout(hide,180);}else{window.addEventListener('load',function(){setTimeout(hide,180);});}setTimeout(hide,6000);})();
+</script>
+<header class="ppy-header" id="ppyHeader">
+  <div class="ppy-bar">
+    <a class="ppy-brand" id="ppyBrand" href="/">
+      <svg class="mark" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 7c2.6 3.2 4 6.7 4 10.2 0 3.8-1.6 7.2-4 9.8-2.4-2.6-4-6-4-9.8C20 13.7 21.4 10.2 24 7Z" fill="#C8A0A6"/>
+        <path d="M13 14c3.7 1 6.6 2.9 8.6 5.3 2.2 2.6 3.2 5.8 3.1 9-3.4-.6-6.6-2.2-8.8-4.8-2-2.4-3-5.6-2.9-9.5Z" fill="#a8ad91"/>
+        <path d="M35 14c-3.7 1-6.6 2.9-8.6 5.3-2.2 2.6-3.2 5.8-3.1 9 3.4-.6 6.6-2.2 8.8-4.8 2-2.4 3-5.6 2.9-9.5Z" fill="#a8ad91"/>
+        <path d="M8 22c3.6-.2 6.8.6 9.4 2.3 2.7 1.8 4.5 4.4 5.4 7.4-3.4.5-6.8-.1-9.6-1.9C10.7 28.2 9 25.4 8 22Z" fill="#A87C83"/>
+        <path d="M40 22c-3.6-.2-6.8.6-9.4 2.3-2.7 1.8-4.5 4.4-5.4 7.4 3.4.5 6.8-.1 9.6-1.9 2.5-1.6 4.2-4.4 5.2-7.8Z" fill="#A87C83"/>
+        <path d="M12 31c4 0 12 1.6 12 8 0-6.4 8-8 12-8-1.5 5-6.5 9-12 9s-10.5-4-12-9Z" fill="#C8A0A6"/>
+      </svg>
+      <span class="wm brand">Pure Passion Yoga</span>
     </a>
-    <ul>
-      <li><a class="link" href="/">Home</a></li>
-      <li><a class="link" href="/classes">Classes</a></li>
-      <li><a class="link" href="/challenges">Challenges</a></li>
-      <li><a class="link" href="/library">Pose Library</a></li>
-      <li><a class="link" href="/builder">Sequence Builder</a></li>
-      <li><a class="link" href="/shop">Shop</a></li>
-    </ul>
-    <a class="cta" href="/pricing">Join us</a>
-    <a class="menutoggle btn ghost" href="/" style="padding:8px 14px" aria-label="Menu">Menu</a>
+    <nav class="ppy-nav" id="ppyNav">
+      <a href="/about">About</a>
+      <a data-nav="classes" hidden href="/classes">Classes</a>
+      <a data-nav="challenges" hidden href="/challenges">Challenges</a>
+      <a href="/library">Pose Library</a>
+      <a href="/builder">Sequence Builder</a>
+      <a data-nav="teacher" hidden href="/teacher">Teacher</a>
+      <a href="/shop">Shop</a>
+    </nav>
+    <div class="ppy-right" id="ppyRight">
+      <button class="ppy-btn ghost ppy-theme" id="ppyTheme" type="button" aria-label="Toggle dark mode" title="Dark mode"></button>
+      <span class="ppy-tier" id="ppyTier" hidden></span>
+      <a class="ppy-btn admin" id="ppyAdmin" hidden href="/admin">Admin</a>
+      <a class="ppy-btn primary" id="ppyAuth" href="/profile">Sign in</a>
+      <a class="ppy-btn ghost" id="ppySignout" hidden href="#">Sign out</a>
+    </div>
+    <button class="ppy-burger" id="ppyBurger" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="ppy-mobile" id="ppyMobile">
+    <a href="#" id="ppyThemeM" role="button">Dark mode</a>
+    <a href="/about">About</a>
+    <a data-nav="classes" hidden href="/classes">Classes</a>
+    <a data-nav="challenges" hidden href="/challenges">Challenges</a>
+    <a href="/library">Pose Library</a>
+    <a href="/builder">Sequence Builder</a>
+    <a data-nav="teacher" hidden href="/teacher">Teacher</a>
+    <a href="/shop">Shop</a>
+    <a class="admin" id="ppyAdminM" hidden href="/admin">Admin</a>
+    <a class="up" id="ppyAuthM" href="/profile">Sign in</a>
+    <a class="admin" id="ppySignoutM" hidden href="#">Sign out</a>
   </div>
 </header>
+<script>
+(function(){
+  function paint(t){ var dark=t==="dark";
+    var moon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>';
+    var sun='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.2 17.2 18.6 18.6M18.6 5.4 17.2 6.8M6.8 17.2 5.4 18.6"/></svg>';
+    var b=document.getElementById("ppyTheme"); if(b){ b.innerHTML=dark?sun:moon; b.setAttribute("aria-label",dark?"Switch to light mode":"Switch to dark mode"); b.title=dark?"Light mode":"Dark mode"; }
+    var m=document.getElementById("ppyThemeM"); if(m){ m.textContent=dark?"Light mode":"Dark mode"; }
+  }
+  function cur(){ return document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light"; }
+  function setT(t){ try{localStorage.setItem("ppy-theme",t);}catch(e){} document.documentElement.setAttribute("data-theme",t); paint(t); }
+  function toggle(e){ if(e)e.preventDefault(); setT(cur()==="dark"?"light":"dark"); }
+  var b=document.getElementById("ppyTheme"); if(b) b.addEventListener("click",toggle);
+  var m=document.getElementById("ppyThemeM"); if(m) m.addEventListener("click",toggle);
+  paint(cur());
+  try{ var mq=window.matchMedia("(prefers-color-scheme:dark)"); if(mq.addEventListener) mq.addEventListener("change",function(ev){ try{if(!localStorage.getItem("ppy-theme")){ document.documentElement.setAttribute("data-theme",ev.matches?"dark":"light"); paint(cur()); }}catch(e){} }); }catch(e){}
+})();
+</script>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="halo" aria-hidden="true">
-    <svg viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="1"><g><path d="M100 108C64 92 40 70 40 44c0 15 13 27 26 31C56 52 68 32 100 12c32 20 44 40 34 63 13-4 26-16 26-31 0 26-24 48-60 64Z"/><path d="M100 108C86 96 78 82 78 66c0 9 7 16 15 19-6-9-1-24 7-40 8 16 13 31 7 40 8-3 15-10 15-19 0 16-8 30-22 42Z"/></g></svg>
-  </div>
-  <div class="wrap">
-    <p class="eyebrow rise">About Us</p>
-    <h1 class="rise d1">Wellness, as a <em>mindful journey</em>.</h1>
-    <p class="lead rise d2">Pure Passion Yoga is a space to move, breathe, and grow — with on-demand classes, guided challenges, a living pose library, and the tools to build a practice that's genuinely yours.</p>
-    <div class="btns rise d3">
-      <a class="btn primary" href="/classes">Browse classes</a>
-      <a class="btn ghost" href="/challenges">Start a challenge</a>
+<style id="aboutCSS">
+.abt{--bg:#fff;--panel:#fbf6f5;--soft:#5c5157;--muted:#9a8f93;--aline:#efe4e5;--rose:#C8A0A6;--rose-lt:#E8C6C1;--aub:#A87C83;--sage:#A8AD91;--card:#fff;--heroA:#fdf3f2;--heroB:#fbf7f4;--atxt:#4a4047;color:var(--atxt);font-family:'Poppins',system-ui,sans-serif;line-height:1.65}
+[data-theme="dark"] .abt{--bg:#17141a;--panel:#211b22;--soft:#cabfc4;--aline:#332a33;--rose-lt:#5a464f;--aub:#d7abb4;--card:#211b22;--heroA:#231a24;--heroB:#1a151b;--atxt:#ece4e6}
+.abt *{box-sizing:border-box}
+.abt a{color:inherit}
+.abt-wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+.abt .eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--aub);font-weight:500;margin:0 0 14px}
+.abt h1,.abt h2,.abt h3{font-family:'Playfair Display',Georgia,serif;color:var(--aub);font-weight:600;line-height:1.15;margin:0}
+.abt p{margin:0 0 18px}
+.abt .rule{display:flex;align-items:center;justify-content:center;gap:16px;margin:0 auto 8px;max-width:220px;color:var(--rose)}
+.abt .rule::before,.abt .rule::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,var(--rose-lt))}
+.abt .rule::after{background:linear-gradient(90deg,var(--rose-lt),transparent)}
+.abt .hero{position:relative;text-align:center;overflow:hidden;background:radial-gradient(120% 90% at 50% -10%,var(--heroA) 0%,var(--heroB) 45%,var(--bg) 80%)}
+.abt .hero .abt-wrap{padding:84px 24px 74px;position:relative;z-index:1}
+.abt .hero h1{font-size:clamp(38px,6vw,64px);letter-spacing:-.01em;margin:0 auto;max-width:14ch}
+.abt .hero h1 em{font-style:italic;color:var(--rose)}
+.abt .lead{font-size:clamp(16px,1.9vw,19px);color:var(--soft);max-width:60ch;margin:22px auto 30px;font-weight:300}
+.abt .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.abt .abtn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;border-radius:999px;font-size:15px;font-weight:500;padding:13px 26px;transition:transform .18s,background .2s,border-color .2s;cursor:pointer}
+.abt .abtn.primary{background:var(--aub);color:#fff}
+.abt .abtn.primary:hover{background:#96676f}
+.abt .abtn.ghost{background:var(--card);color:var(--aub);border:1px solid var(--rose-lt)}
+.abt .abtn:hover{transform:translateY(-1px)}
+.abt .halo{position:absolute;inset:0;pointer-events:none;opacity:.5}
+.abt .halo svg{position:absolute;left:50%;top:8%;transform:translateX(-50%);width:520px;max-width:90%;color:#f2d9da}
+[data-theme="dark"] .abt .halo{opacity:.12}
+.abt .sec{padding:78px 0}
+.abt .center{text-align:center}
+.abt .measure{max-width:640px;margin:0 auto}
+.abt .measure p{font-size:17px;color:var(--soft)}
+.abt .kh{font-size:clamp(26px,3.4vw,38px);margin:0 auto 18px}
+.abt .offer{background:var(--panel)}
+.abt .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px;text-align:left}
+.abt .card{background:var(--card);border:1px solid var(--aline);border-radius:18px;padding:28px 24px;transition:transform .2s,box-shadow .2s,border-color .2s;text-decoration:none;color:inherit;display:block;position:relative}
+.abt a.card:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(168,124,131,.16);border-color:var(--rose-lt)}
+.abt .ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#fdeef0;color:var(--aub);margin-bottom:16px}
+[data-theme="dark"] .abt .ic{background:#2c2026}
+.abt .ic.sage{background:#eef1e8;color:#6f7a54}
+[data-theme="dark"] .abt .ic.sage{background:#242a20;color:#aeb98f}
+.abt .card h3{font-size:20px;margin-bottom:8px}
+.abt .card p{font-size:14.5px;color:var(--soft);margin:0}
+.abt .soon{position:absolute;top:16px;right:16px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:var(--aub);background:#fdeef0;border:1px solid var(--rose-lt);padding:4px 10px;border-radius:999px}
+[data-theme="dark"] .abt .soon{background:#2c2026}
+.abt .story .abt-wrap{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.abt .panel{background:linear-gradient(160deg,#fdf1f1,#f4efe9);border-radius:22px;padding:40px;border:1px solid var(--aline)}
+[data-theme="dark"] .abt .panel{background:linear-gradient(160deg,#271d24,#201a1c)}
+.abt .panel .sig{font-family:'Playfair Display',serif;font-style:italic;font-size:22px;color:var(--aub);margin:0 0 6px}
+.abt .panel .who{font-size:13px;color:var(--muted);letter-spacing:.02em}
+.abt .panel .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.abt .panel .chip{font-size:12px;padding:6px 13px;border-radius:999px;background:var(--card);border:1px solid var(--rose-lt);color:var(--aub)}
+.abt .story h2{font-size:clamp(26px,3.4vw,36px);margin-bottom:18px}
+.abt .story p{font-size:16px;color:var(--soft)}
+.abt .beliefs{list-style:none;margin:40px auto 0;padding:0;max-width:680px;text-align:left}
+.abt .beliefs li{display:flex;gap:16px;align-items:flex-start;padding:16px 0;border-top:1px solid var(--aline);font-size:16.5px;color:var(--soft)}
+.abt .beliefs li:last-child{border-bottom:1px solid var(--aline)}
+.abt .beliefs .dot{flex:0 0 auto;margin-top:5px;color:var(--sage)}
+.abt .beliefs b{font-weight:600;color:var(--aub)}
+.abt .band{background:radial-gradient(120% 120% at 50% 0%,#fbeceb,#f6efe9);text-align:center}
+[data-theme="dark"] .abt .band{background:radial-gradient(120% 120% at 50% 0%,#271d23,#1c171a)}
+.abt .band .abt-wrap{padding:74px 24px}
+.abt .band h2{font-size:clamp(28px,3.6vw,40px);max-width:20ch;margin:0 auto 16px}
+.abt .band p{max-width:56ch;margin:0 auto 28px;color:var(--soft);font-size:17px}
+.abt .rise{opacity:0;transform:translateY(14px);animation:abtrise .7s cubic-bezier(.2,.7,.2,1) forwards}
+.abt .d1{animation-delay:.08s}.abt .d2{animation-delay:.16s}.abt .d3{animation-delay:.24s}
+@keyframes abtrise{to{opacity:1;transform:none}}
+@media (max-width:860px){.abt .grid{grid-template-columns:1fr 1fr}.abt .story .abt-wrap{grid-template-columns:1fr;gap:32px}}
+@media (max-width:560px){.abt .grid{grid-template-columns:1fr}.abt .sec{padding:56px 0}}
+@media (prefers-reduced-motion:reduce){.abt .rise{animation:none;opacity:1;transform:none}}
+</style>
+
+<main class="abt">
+  <section class="hero">
+    <div class="halo" aria-hidden="true"><svg viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="1"><path d="M100 108C64 92 40 70 40 44c0 15 13 27 26 31C56 52 68 32 100 12c32 20 44 40 34 63 13-4 26-16 26-31 0 26-24 48-60 64Z"/><path d="M100 108C86 96 78 82 78 66c0 9 7 16 15 19-6-9-1-24 7-40 8 16 13 31 7 40 8-3 15-10 15-19 0 16-8 30-22 42Z"/></svg></div>
+    <div class="abt-wrap">
+      <p class="eyebrow rise">About Us</p>
+      <h1 class="rise d1">Wellness, as a <em>mindful journey</em>.</h1>
+      <p class="lead rise d2">Pure Passion Yoga is a space to move, breathe, and grow &mdash; with a living pose library, tools to build your own flows, and mindful practices for everyday life.</p>
+      <div class="btns rise d3">
+        <a class="abtn primary" href="/library">Explore the pose library</a>
+        <a class="abtn ghost" href="/pricing">See membership</a>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- WELCOME -->
-<section>
-  <div class="wrap center measure">
-    <div class="rule" aria-hidden="true"><svg class="lotus" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 20c-4-2-7-5-7-8.5 0 2 1.7 3.5 3.4 4C7 12.6 8.4 10 12 7.2c3.6 2.8 5 5.4 3.6 8.3C17.3 15 19 13.5 19 11.5 19 15 16 18 12 20Z"/></svg></div>
-    <h2 class="kh" style="margin-top:26px">Welcome to Pure Passion Yoga</h2>
-    <p>We see wellness as more than a routine. It's an ongoing practice of balance, self-discovery, and living with intention — one breath, one pose, one small choice at a time.</p>
-    <p>Whether you're rolling out your mat for the very first time or deepening a practice you've loved for years, everything here is designed to meet you where you are — with warmth, and without pressure.</p>
-  </div>
-</section>
+  <section class="sec">
+    <div class="abt-wrap center measure">
+      <div class="rule" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 20c-4-2-7-5-7-8.5 0 2 1.7 3.5 3.4 4C7 12.6 8.4 10 12 7.2c3.6 2.8 5 5.4 3.6 8.3C17.3 15 19 13.5 19 11.5 19 15 16 18 12 20Z"/></svg></div>
+      <h2 class="kh" style="margin-top:26px">Welcome to Pure Passion Yoga</h2>
+      <p>We see wellness as more than a routine. It's an ongoing practice of balance, self-discovery, and living with intention &mdash; one breath, one pose, one small choice at a time.</p>
+      <p>Whether you're rolling out your mat for the very first time or deepening a practice you've loved for years, everything here is designed to meet you where you are &mdash; with warmth, and without pressure.</p>
+    </div>
+  </section>
 
-<!-- OFFERINGS (centered on what the platform is today) -->
-<section class="offer">
-  <div class="wrap center">
-    <p class="eyebrow">What you'll find here</p>
-    <h2 class="kh">A whole practice, in one place</h2>
-    <p class="measure" style="margin:0 auto;color:#6b6066">From your first gentle stretch to planning a class of your own, Pure Passion Yoga grows with you.</p>
-    <div class="grid" style="text-align:left">
-      <div class="card">
-        <div class="ic" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3V9Z" fill="currentColor" stroke="none"/></svg></div>
-        <h3>Online Classes</h3>
-        <p>On-demand yoga to practice anytime — from restorative and gentle to energizing flow — guided by instructors who feel like they're right there with you.</p>
-      </div>
-      <div class="card">
-        <div class="ic sage" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M4 9h16M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/></svg></div>
-        <h3>Challenges</h3>
-        <p>Guided, multi-day journeys that open a new practice each day — so you build a steady rhythm and actually feel your progress unfold.</p>
-      </div>
-      <div class="card">
-        <div class="ic" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z"/><path d="M17 7h2v13H8"/><path d="M8 8h6M8 11h6"/></svg></div>
-        <h3>Pose Library</h3>
-        <p>A growing, illustrated library of postures with Sanskrit names, clear cues, and modifications — a reference you'll return to again and again.</p>
-      </div>
-      <div class="card">
-        <div class="ic sage" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 4 8 4-8 4-8-4 8-4Z"/><path d="m4 12 8 4 8-4M4 16l8 4 8-4"/></svg></div>
-        <h3>Sequence Builder</h3>
-        <p>For teachers and curious practitioners: shape your own flows pose by pose, then take them to the mat — or to your class.</p>
-      </div>
-      <div class="card">
-        <div class="ic" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></div>
-        <h3>Yoga Shop</h3>
-        <p>Journals, coloring books, and mindful tools to carry your practice off the mat and into the small, everyday moments.</p>
-      </div>
-      <div class="card" style="background:linear-gradient(160deg,#fdf1f1,#f5f0ea);display:flex;flex-direction:column;justify-content:center">
-        <h3 style="margin-bottom:10px">New here?</h3>
-        <p style="margin-bottom:16px">Find the membership that fits your practice — free to explore, room to grow.</p>
-        <a class="btn ghost" href="/pricing" style="align-self:flex-start;padding:10px 20px">See plans</a>
+  <section class="sec offer">
+    <div class="abt-wrap center">
+      <p class="eyebrow">What you'll find here</p>
+      <h2 class="kh">A whole practice, in one place</h2>
+      <p class="measure" style="margin:0 auto;color:var(--soft)">From your first gentle stretch to planning a class of your own, Pure Passion Yoga grows with you.</p>
+      <div class="grid">
+        <div class="card">
+          <span class="soon">Coming soon</span>
+          <div class="ic" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3V9Z" fill="currentColor" stroke="none"/></svg></div>
+          <h3>Online Classes</h3>
+          <p>On-demand yoga to practice anytime &mdash; from restorative and gentle to energizing flow, guided by instructors who feel like they're right there with you.</p>
+        </div>
+        <div class="card">
+          <span class="soon">Coming soon</span>
+          <div class="ic sage" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M4 9h16M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/></svg></div>
+          <h3>Challenges</h3>
+          <p>Guided, multi-day journeys that open a new practice each day &mdash; so you build a steady rhythm and actually feel your progress unfold.</p>
+        </div>
+        <a class="card" href="/library">
+          <div class="ic" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z"/><path d="M17 7h2v13H8"/><path d="M8 8h6M8 11h6"/></svg></div>
+          <h3>Pose Library</h3>
+          <p>A growing, illustrated library of postures with Sanskrit names, clear cues, and modifications &mdash; a reference you'll return to again and again.</p>
+        </a>
+        <a class="card" href="/builder">
+          <div class="ic sage" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 4 8 4-8 4-8-4 8-4Z"/><path d="m4 12 8 4 8-4M4 16l8 4 8-4"/></svg></div>
+          <h3>Sequence Builder</h3>
+          <p>For teachers and curious practitioners: shape your own flows pose by pose, then take them to the mat &mdash; or to your class.</p>
+        </a>
+        <a class="card" href="/shop">
+          <div class="ic" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></div>
+          <h3>Yoga Shop</h3>
+          <p>Journals, coloring books, and mindful tools to carry your practice off the mat and into the small, everyday moments.</p>
+        </a>
+        <a class="card" href="/pricing" style="background:linear-gradient(160deg,#fdf1f1,#f5f0ea);display:flex;flex-direction:column;justify-content:center">
+          <h3 style="margin-bottom:10px">New here?</h3>
+          <p style="margin-bottom:16px">Find the membership that fits your practice &mdash; free to explore, room to grow.</p>
+          <span class="abtn ghost" style="align-self:flex-start;padding:10px 20px">See plans</span>
+        </a>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- STORY -->
-<section class="story">
-  <div class="wrap">
-    <div>
-      <p class="eyebrow">Our Story</p>
-      <h2>Founded from a love of the practice</h2>
-      <p>Pure Passion Yoga began with a simple love of yoga and mindful living. Its founder, Kristine Koller — a Registered Yoga Teacher based in Las Vegas — has walked the path of practice since 2020, and what started as a personal passion grew into a place to share it.</p>
-      <p>We built this platform because wellness isn't one-size-fits-all. It looks a little different for every body and every season of life, and there's real beauty in practices that honor individuality over perfection.</p>
-    </div>
-    <div class="panel">
-      <p class="sig">"Come as you are — the practice will meet you there."</p>
-      <p class="who">Kristine Koller · Founder &amp; Teacher</p>
-      <div class="badges">
-        <span class="chip">RYT-200</span>
-        <span class="chip">Las Vegas</span>
-        <span class="chip">Practicing since 2020</span>
+  <section class="sec story">
+    <div class="abt-wrap">
+      <div>
+        <p class="eyebrow">Our Story</p>
+        <h2>Founded from a love of the practice</h2>
+        <p>Pure Passion Yoga began with a simple love of yoga and mindful living. Its founder, Kristine Koller &mdash; a Registered Yoga Teacher based in Las Vegas &mdash; has walked the path of practice since 2020, and what started as a personal passion grew into a place to share it.</p>
+        <p>We built this platform because wellness isn't one-size-fits-all. It looks a little different for every body and every season of life, and there's real beauty in practices that honor individuality over perfection.</p>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- PHILOSOPHY -->
-<section class="phil">
-  <div class="wrap center">
-    <p class="eyebrow">Our Philosophy</p>
-    <h2 class="kh">What we believe</h2>
-    <ul class="beliefs">
-      <li><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg></span><span><b>Yoga is for every body</b> and every stage of life.</span></li>
-      <li><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg></span><span><b>Mindfulness belongs in ordinary moments</b> — not just on the mat.</span></li>
-      <li><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg></span><span><b>Creativity is a genuine form of self-care</b>, worth making time for.</span></li>
-      <li><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg></span><span><b>Growth comes through compassion</b>, not perfection.</span></li>
-      <li><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg></span><span><b>Small, intentional practices</b> add up to meaningful change.</span></li>
-    </ul>
-  </div>
-</section>
-
-<!-- COMMUNITY / CTA -->
-<section class="band">
-  <div class="wrap">
-    <p class="eyebrow">A community rooted in mindfulness</p>
-    <h2>More than a library of classes — a place to grow, together</h2>
-    <p>We're committed to keeping this space welcoming, inclusive, and honest: one that empowers you rather than pressures you. Wherever you are in your journey, we're grateful to be part of it.</p>
-    <div class="btns" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-      <a class="btn primary" href="/classes">Begin your practice</a>
-      <a class="btn ghost" href="mailto:hello@purepassionyoga.com">Say hello</a>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer class="site">
-  <div class="wrap">
-    <div class="fgrid">
-      <div class="fbrand">
-        <div class="wm">Pure Passion Yoga</div>
-        <p>A mindful yoga practice for every body — move, breathe, and grow at your own pace.</p>
-        <div class="fsoc">
-          <a href="https://www.instagram.com/purepassionyoga/" aria-label="Instagram">Instagram</a>
-          <a href="https://www.facebook.com/PurePassionYoga" aria-label="Facebook">Facebook</a>
-          <a href="https://www.youtube.com/@purepassionyoga" aria-label="YouTube">YouTube</a>
+      <div class="panel">
+        <p class="sig">"Come as you are &mdash; the practice will meet you there."</p>
+        <p class="who">Kristine Koller &middot; Founder &amp; Teacher</p>
+        <div class="badges">
+          <span class="chip">RYT-200</span>
+          <span class="chip">Las Vegas</span>
+          <span class="chip">Practicing since 2020</span>
         </div>
       </div>
-      <div class="fcol">
-        <h4>Practice</h4>
-        <ul>
-          <li><a href="/classes">Online Classes</a></li>
-          <li><a href="/challenges">Challenges</a></li>
-          <li><a href="/library">Pose Library</a></li>
-          <li><a href="/builder">Sequence Builder</a></li>
-        </ul>
-      </div>
-      <div class="fcol">
-        <h4>Company</h4>
-        <ul>
-          <li><a href="/about">About Us</a></li>
-          <li><a href="https://purepassionyoga.com/about-me/">About Me</a></li>
-          <li><a href="/shop">Yoga Shop</a></li>
-          <li><a href="/pricing">Membership</a></li>
-        </ul>
-      </div>
-      <div class="fcol">
-        <h4>Support</h4>
-        <ul>
-          <li><a href="https://purepassionyoga.com/policies/frequently-asked-questions-faq/">FAQ</a></li>
-          <li><a href="mailto:hello@purepassionyoga.com">Contact</a></li>
-          <li><a href="/legal">Legal Center</a></li>
-          <li><a href="https://purepassionyoga.com/policies/privacy-policy/">Privacy</a></li>
-        </ul>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="abt-wrap center">
+      <p class="eyebrow">Our Philosophy</p>
+      <h2 class="kh">What we believe</h2>
+      <ul class="beliefs">
+        <li><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg></span><span><b>Yoga is for every body</b> and every stage of life.</span></li>
+        <li><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg></span><span><b>Mindfulness belongs in ordinary moments</b> &mdash; not just on the mat.</span></li>
+        <li><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg></span><span><b>Creativity is a genuine form of self-care</b>, worth making time for.</span></li>
+        <li><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg></span><span><b>Growth comes through compassion</b>, not perfection.</span></li>
+        <li><span class="dot" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg></span><span><b>Small, intentional practices</b> add up to meaningful change.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="abt-wrap">
+      <p class="eyebrow">A community rooted in mindfulness</p>
+      <h2>More than a library &mdash; a place to grow, together</h2>
+      <p>We're committed to keeping this space welcoming, inclusive, and honest: one that empowers you rather than pressures you. Wherever you are in your journey, we're grateful to be part of it.</p>
+      <div class="btns">
+        <a class="abtn primary" href="/library">Explore the library</a>
+        <a class="abtn ghost" href="mailto:hello@purepassionyoga.com">Say hello</a>
       </div>
     </div>
-    <div class="fbot">Pure Passion Yoga LLC © 2026 · Made with intention · hello@purepassionyoga.com</div>
-  </div>
-</footer>
+  </section>
+</main>
 
+<div id="modalRoot"></div>
+
+<script>
+/* ===== PPY adaptive header controller =====
+   Self-contained, no external deps. Cross-origin safe.
+   Logged-out / cross-origin -> shows the public shell.
+   Same-origin session -> tier pill, Account, Admin (if is_admin), Sign out. */
+(function(){
+  var SB="https://nxjbpgnpblqepathojzr.supabase.co", KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik", REF="nxjbpgnpblqepathojzr";
+  var $=function(id){return document.getElementById(id);};
+
+  var burger=$("ppyBurger"), mob=$("ppyMobile");
+  if(burger&&mob) burger.addEventListener("click",function(){mob.classList.toggle("open");});
+
+  try{
+    var norm=function(h,p){return h+(p||"/").replace(/\/index\.html$/,"/").replace(/\/+$/,"/");};
+    var here=norm(location.host, location.pathname);
+    document.querySelectorAll("#ppyNav a").forEach(function(a){
+      try{var u=new URL(a.href); if(norm(u.host,u.pathname)===here) a.classList.add("active");}catch(e){}
+    });
+  }catch(e){}
+
+  fetch(SB+"/rest/v1/app_settings?select=key,value&key=in.(design,site)",
+        {headers:{apikey:KEY,Authorization:"Bearer "+KEY}})
+    .then(function(r){return r.ok?r.json():[];})
+    .then(function(rows){
+      var map={}; (rows||[]).forEach(function(x){map[x.key]=x.value||{};});
+      var d=map.design||{}, site=map.site||{};
+      if(d.app_name){ document.querySelectorAll(".ppy-brand .wm").forEach(function(e){e.textContent=d.app_name;}); }
+      if(d.logo_url){
+        document.querySelectorAll(".ppy-brand").forEach(function(b){
+          var mark=b.querySelector(".mark");
+          var img=document.createElement("img"); img.className="lg"; img.src=d.logo_url; img.alt=(d.app_name||"Pure Passion Yoga");
+          if(mark) b.replaceChild(img,mark);
+          var wm=b.querySelector(".wm"); if(wm) wm.style.display="none";
+        });
+      }
+      if(site.classes_enabled)    document.querySelectorAll("[data-nav='classes']").forEach(function(e){e.hidden=false;});
+      if(site.challenges_enabled) document.querySelectorAll("[data-nav='challenges']").forEach(function(e){e.hidden=false;});
+    }).catch(function(){});
+
+  function readSession(){
+    try{
+      var raw=localStorage.getItem("sb-"+REF+"-auth-token");
+      if(!raw) return null;
+      if(raw.indexOf("base64-")===0){ raw=decodeURIComponent(escape(atob(raw.slice(7)))); }
+      var s=JSON.parse(raw);
+      if(s && s.access_token && s.user && s.user.id) return s;
+    }catch(e){}
+    return null;
+  }
+  var sess=readSession();
+  if(!sess) return;
+
+  function signOut(e){
+    if(e) e.preventDefault();
+    try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf("sb-"+REF+"-auth-token")===0) localStorage.removeItem(k); }); }catch(_){}
+    location.reload();
+  }
+  var auth=$("ppyAuth"), authM=$("ppyAuthM"), so=$("ppySignout"), som=$("ppySignoutM");
+  if(auth) auth.textContent="Account";
+  if(authM) authM.textContent="Account";
+  if(so){ so.hidden=false; so.addEventListener("click",signOut); }
+  if(som){ som.hidden=false; som.addEventListener("click",signOut); }
+
+  fetch(SB+"/rest/v1/profiles?select=tier,is_admin&id=eq."+encodeURIComponent(sess.user.id),
+        {headers:{apikey:KEY,Authorization:"Bearer "+sess.access_token}})
+    .then(function(r){return r.ok?r.json():[];})
+    .then(function(rows){
+      var p=(rows&&rows[0])||{};
+      if(p.tier){ var t=$("ppyTier"); if(t){ t.textContent=p.tier; t.hidden=false; } }
+      if(p.is_admin){ var a=$("ppyAdmin"); if(a) a.hidden=false; var am=$("ppyAdminM"); if(am) am.hidden=false; document.querySelectorAll("[data-nav='classes'],[data-nav='challenges']").forEach(function(e){e.hidden=false;}); }
+    }).catch(function(){});
+})();
+</script>
+<script>
+/* ===== PPY theme palette applier (light + dark, admin-driven) ===== */
+(function(){
+  var SB="https://nxjbpgnpblqepathojzr.supabase.co", KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
+  var R=document.documentElement.style, DESIGN=null;
+  var BG=['--bg','--ppy-bg','--stage'], SF=['--card','--ppy-surface','--paper'],
+      TX=['--ink','--ppy-ink','--body'], MU=['--muted','--ppy-muted','--taupe'],
+      AC=['--ppy-accent','--ppy-accentDk','--rose','--roseDeep','--roseTitle','--clay','--clayDk','--head','--aub'],
+      SG=['--sage','--ppy-sage'];
+  function imp(keys,v){ if(!v) return; for(var i=0;i<keys.length;i++) R.setProperty(keys[i],v,"important"); }
+  function clr(keys){ for(var i=0;i<keys.length;i++) R.removeProperty(keys[i]); }
+  function apply(){
+    if(!DESIGN) return; var d=DESIGN, dark=document.documentElement.getAttribute("data-theme")==="dark";
+    clr(BG.concat(SF,TX,MU,AC,SG));
+    if(dark){
+      imp(BG,d.dark_color_page_bg); imp(SF,d.dark_color_surface); imp(TX,d.dark_color_body_text);
+      imp(MU,d.dark_color_secondary_text); imp(AC,d.dark_color_primary||d.color_primary); imp(SG,d.dark_color_secondary||d.color_secondary);
+    } else {
+      imp(BG,d.color_page_bg); imp(SF,d.color_surface); imp(TX,d.color_body_text);
+      imp(MU,d.color_secondary_text); imp(AC,d.color_primary); imp(SG,d.color_secondary);
+    }
+  }
+  function load(){ fetch(SB+"/rest/v1/app_settings?select=value&key=eq.design",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}})
+    .then(function(r){return r.ok?r.json():[];}).then(function(rows){ DESIGN=(rows&&rows[0]&&rows[0].value)||{}; apply(); }).catch(function(){}); }
+  window.ppyApplyPalette=apply; window.ppyRefreshPalette=load;
+  load();
+  document.addEventListener("click",function(e){ var t=e.target; if(t&&t.closest&&(t.closest("#ppyTheme")||t.closest("#ppyThemeM"))) setTimeout(apply,20); });
+})();
+</script>
+<script>
+/* teacher nav gate */
+(function(){
+  var SB="https://nxjbpgnpblqepathojzr.supabase.co", KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik", REF="nxjbpgnpblqepathojzr";
+  function rs(){ try{ var raw=localStorage.getItem("sb-"+REF+"-auth-token"); if(!raw)return null; if(raw.indexOf("base64-")===0){ raw=decodeURIComponent(escape(atob(raw.slice(7)))); } var s=JSON.parse(raw); if(s&&s.access_token&&s.user&&s.user.id) return s; }catch(e){} return null; }
+  var sess=rs(); if(!sess) return;
+  fetch(SB+"/rest/v1/profiles?select=tier,is_admin&id=eq."+encodeURIComponent(sess.user.id),{headers:{apikey:KEY,Authorization:"Bearer "+sess.access_token}})
+    .then(function(r){return r.ok?r.json():[];}).then(function(rows){ var p=(rows&&rows[0])||{}; if(p.is_admin||p.tier==="teacher"||p.tier==="ultimate"){ document.querySelectorAll("[data-nav='teacher']").forEach(function(e){e.hidden=false;}); } }).catch(function(){});
+})();
+</script>
+
+<script>
+window.PPY_TOUR={page:"about",steps:[]};
+</script>
+<script>
+(function(){
+  var REF="nxjbpgnpblqepathojzr", SB="https://"+REF+".supabase.co",
+      KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
+  var CFG = window.PPY_TOUR || {page:"",steps:[]};
+  var PAGE = CFG.page, STEPS = CFG.steps||[];
+  var PATHS = {profile:"/profile",library:"/library",builder:"/builder",shop:"/shop",classes:"/classes",challenges:"/challenges"};
+  var LABELS = {profile:"Your profile & avatar",library:"The pose library",builder:"The sequence builder",shop:"The shop",classes:"Classes",challenges:"Challenges"};
+  var UIDg=null, TIERg="free", FLAGS={}, DONEg=true;
+  function sess(){ try{ var raw=localStorage.getItem("sb-"+REF+"-auth-token"); if(!raw)return null; if(raw.indexOf("base64-")===0){ raw=decodeURIComponent(escape(atob(raw.slice(7)))); } var s=JSON.parse(raw); var at=s&&(s.access_token||(s.currentSession&&s.currentSession.access_token)); var uid=s&&((s.user&&s.user.id)||(s.currentSession&&s.currentSession.user&&s.currentSession.user.id)); if(at&&uid)return {token:at,uid:uid}; }catch(e){} return null; }
+  function tok(){ var s=sess(); return s?s.token:null; }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function get(url,auth){ var t=auth&&tok(); var h={apikey:KEY,Authorization:"Bearer "+(t||KEY)}; return fetch(SB+url,{headers:h}).then(function(r){return r.json();}); }
+  function patchProfile(body){ var t=tok(); if(!t||!UIDg)return Promise.resolve(); return fetch(SB+"/rest/v1/profiles?id=eq."+encodeURIComponent(UIDg),{method:"PATCH",headers:{apikey:KEY,Authorization:"Bearer "+t,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify(body)}); }
+
+  var css=document.createElement("style"); css.textContent=
+  '.ppt-ov{position:fixed;inset:0;z-index:99998;pointer-events:none}'+
+  '.ppt-hole{position:absolute;border-radius:12px;box-shadow:0 0 0 9999px rgba(40,28,33,.62);transition:all .2s ease;pointer-events:none}'+
+  '.ppt-ring{position:absolute;border:2px solid #C8A0A6;border-radius:12px;transition:all .2s ease;pointer-events:none;box-shadow:0 0 0 4px rgba(200,160,166,.25)}'+
+  '.ppt-tip{position:fixed;z-index:100000;max-width:330px;background:#fff;border-radius:14px;box-shadow:0 18px 50px rgba(40,28,33,.28);padding:16px 18px;font-family:Poppins,system-ui,sans-serif;color:#4a4047;pointer-events:auto}'+
+  '.ppt-tip h4{margin:0 0 6px;font-family:"Playfair Display",Georgia,serif;color:#A87C83;font-size:18px}'+
+  '.ppt-tip p{margin:0 0 12px;font-size:13.5px;line-height:1.5}'+
+  '.ppt-row{display:flex;align-items:center;justify-content:space-between;gap:8px}'+
+  '.ppt-dots{font-size:11px;color:#9b8e92}'+
+  '.ppt-b{font-family:inherit;font-size:13px;border-radius:9px;padding:7px 13px;cursor:pointer;border:1px solid #e7dcdf;background:#fff;color:#4a4047}'+
+  '.ppt-b.pri{background:#C8A0A6;border-color:#C8A0A6;color:#fff}'+
+  '.ppt-skip{background:none;border:none;color:#9b8e92;font-size:12px;cursor:pointer;font-family:inherit}'+
+  '.ppt-modal-ov{position:fixed;inset:0;z-index:100001;background:rgba(40,28,33,.5);display:flex;overflow-y:auto;padding:18px;font-family:Poppins,system-ui,sans-serif}'+
+  '.ppt-modal{background:#fff;border-radius:18px;max-width:480px;width:100%;margin:auto;padding:24px;color:#4a4047;box-shadow:0 24px 70px rgba(40,28,33,.3)}'+
+  '.ppt-modal h2{font-family:"Playfair Display",Georgia,serif;color:#A87C83;margin:0 0 6px;font-size:24px}'+
+  '.ppt-stop{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #eee2e4;border-radius:11px;margin-bottom:8px;cursor:pointer;background:#faf6f4}'+
+  '.ppt-stop b{font-size:14px;font-weight:600}'+
+  '.ppt-stop span{font-size:12px;color:#9b8e92}'+
+  '.ppt-num{width:24px;height:24px;border-radius:50%;background:#C8A0A6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex:0 0 auto}'+
+  '.ppt-faqq{border:1px solid #eee2e4;border-radius:11px;margin-bottom:8px;overflow:hidden}'+
+  '.ppt-faqq summary{cursor:pointer;padding:12px 14px;font-weight:500;font-size:14px;list-style:none}'+
+  '.ppt-faqq summary::-webkit-details-marker{display:none}'+
+  '.ppt-faqq .a{padding:0 14px 14px;font-size:13px;line-height:1.55;color:#5b5258}'+
+  '.ppt-faqcat{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#a8ad91;margin:14px 0 6px;font-weight:600}'+
+  '.ppt-launch{position:fixed;right:18px;bottom:18px;z-index:99990;display:flex;gap:8px;font-family:Poppins,system-ui,sans-serif}'+
+  '.ppt-launch button{border:1px solid #e7dcdf;background:#fff;border-radius:22px;padding:9px 15px;font-size:13px;cursor:pointer;box-shadow:0 6px 18px rgba(40,28,33,.12);color:#A87C83;font-family:inherit}'+
+  '.ppt-launch button.tour{background:#C8A0A6;color:#fff;border-color:#C8A0A6}';
+  document.head.appendChild(css);
+
+  var ovl,hole,ring,tip,curSteps,curIdx,onDone;
+  function teardown(){ [ovl,tip].forEach(function(e){ if(e&&e.parentNode)e.parentNode.removeChild(e); }); ovl=tip=hole=ring=null; window.removeEventListener("resize",reflow); window.removeEventListener("scroll",reflow,true); }
+  function findEl(sel){ try{ return document.querySelector(sel); }catch(e){ return null; } }
+  function visible(el){ return el && (el.offsetWidth>0||el.offsetHeight>0||el.getClientRects().length>0); }
+  function reflow(){ if(curSteps)position(); }
+  function position(){
+    if(!curSteps)return;
+    var step=curSteps[curIdx]; var el=findEl(step.sel);
+    if(!visible(el))return;
+    var r=el.getBoundingClientRect(); var pad=6;
+    hole.style.left=(r.left-pad)+"px"; hole.style.top=(r.top-pad)+"px"; hole.style.width=(r.width+pad*2)+"px"; hole.style.height=(r.height+pad*2)+"px";
+    ring.style.left=(r.left-pad)+"px"; ring.style.top=(r.top-pad)+"px"; ring.style.width=(r.width+pad*2)+"px"; ring.style.height=(r.height+pad*2)+"px";
+    var tr=tip.getBoundingClientRect(); var vw=innerWidth, vh=innerHeight; var top,left;
+    var below=r.bottom+12, above=r.top-tr.height-12;
+    if(below+tr.height<vh){ top=below; } else if(above>0){ top=above; } else { top=Math.max(12,(vh-tr.height)/2); }
+    left=Math.min(Math.max(12,r.left+r.width/2-tr.width/2), vw-tr.width-12);
+    tip.style.top=top+"px"; tip.style.left=left+"px";
+  }
+  function showStep(){
+    var step=curSteps[curIdx]; var el=findEl(step.sel);
+    if(!visible(el)){ if(curIdx<curSteps.length-1){ curIdx++; return showStep(); } else { return finish(); } }
+    tip.innerHTML='<h4>'+esc(step.title)+'</h4><p>'+esc(step.text)+'</p>'+
+      '<div class="ppt-row"><button class="ppt-skip">Skip tour</button><div class="ppt-row" style="gap:6px">'+
+      (curIdx>0?'<button class="ppt-b" data-back>Back</button>':'')+
+      '<span class="ppt-dots">'+(curIdx+1)+' / '+curSteps.length+'</span>'+
+      '<button class="ppt-b pri" data-next>'+(curIdx===curSteps.length-1?"Done":"Next")+'</button></div></div>';
+    tip.querySelector(".ppt-skip").onclick=function(){ finish(true); };
+    var bk=tip.querySelector("[data-back]"); if(bk)bk.onclick=function(){ curIdx=Math.max(0,curIdx-1); showStep(); };
+    tip.querySelector("[data-next]").onclick=function(){ if(curIdx>=curSteps.length-1)finish(); else { curIdx++; showStep(); } };
+    // scroll first, then measure after the scroll settles (avoids stale-coord misalignment)
+    el.scrollIntoView({block:"center",behavior:"smooth"});
+    position();
+    requestAnimationFrame(function(){ requestAnimationFrame(position); });
+    setTimeout(position,200); setTimeout(position,420); setTimeout(position,640);
+  }
+  function runSteps(steps,doneCb){
+    if(!steps||!steps.length){ if(doneCb)doneCb(); return; }
+    curSteps=steps; curIdx=0; onDone=doneCb;
+    ovl=document.createElement("div"); ovl.className="ppt-ov";
+    hole=document.createElement("div"); hole.className="ppt-hole"; ovl.appendChild(hole);
+    ring=document.createElement("div"); ring.className="ppt-ring"; ovl.appendChild(ring);
+    tip=document.createElement("div"); tip.className="ppt-tip";
+    document.body.appendChild(ovl); document.body.appendChild(tip);
+    window.addEventListener("resize",reflow); window.addEventListener("scroll",reflow,true);
+    setTimeout(showStep,60);
+  }
+  function finish(skipped){ var cb=onDone; teardown(); curSteps=null; if(cb)cb(skipped); }
+
+  function getState(){ try{ return JSON.parse(localStorage.getItem("ppy-tour"))||null; }catch(e){ return null; } }
+  function setState(s){ if(s)localStorage.setItem("ppy-tour",JSON.stringify(s)); else localStorage.removeItem("ppy-tour"); }
+  function nav(page){ location.href=PATHS[page]||"/"; }
+  function computeRoute(){
+    var t=(TIERg||"free").toLowerCase(); var r=[];
+    var cls=!!FLAGS.classes_enabled, ch=!!FLAGS.challenges_enabled;
+    if(t==="practitioner"){ r=[]; if(cls)r.push("classes"); if(ch)r.push("challenges"); r.push("shop"); }
+    else if(t==="teacher"){ r=["profile","library","builder","shop"]; }
+    else if(t==="ultimate"||t==="premium"){ r=["profile","library","builder"]; if(cls)r.push("classes"); if(ch)r.push("challenges"); r.push("shop"); }
+    else { r=["profile","library","shop"]; }
+    return r;
+  }
+  function maybeContinue(){
+    var st=getState(); if(!st||!st.active)return false;
+    if(st.route[st.idx]!==PAGE)return false;
+    runSteps(STEPS,function(skipped){
+      if(skipped){ st.active=false; setState(st); return; }
+      st.idx++;
+      if(st.idx>=st.route.length){ setState(null); }
+      else { setState(st); nav(st.route[st.idx]); }
+    });
+    return true;
+  }
+  function startFullTour(){
+    var route=computeRoute(); var st={route:route,idx:0,active:true}; setState(st);
+    patchProfile({tour_done:true});
+    if(route[0]===PAGE) maybeContinue(); else nav(route[0]);
+  }
+  function startLocal(){ runSteps(STEPS); }
+
+  function welcome(){
+    var route=computeRoute();
+    var stops=route.map(function(p,i){ return '<div class="ppt-stop" data-stop="'+p+'"><div class="ppt-num">'+(i+1)+'</div><div><b>'+esc(LABELS[p]||p)+'</b><br><span>'+esc(PATHS[p])+'</span></div></div>'; }).join("");
+    var ov=document.createElement("div"); ov.className="ppt-modal-ov";
+    ov.innerHTML='<div class="ppt-modal"><h2>Welcome to Pure Passion Yoga</h2><p style="font-size:14px;margin:0 0 14px;color:#5b5258">Take a quick tour to get set up. We\'ll start with your profile so you can pick an avatar \u2014 then it shows up across the app.</p>'+stops+
+      '<div style="display:flex;gap:8px;margin-top:16px"><button class="ppt-b pri" data-full style="flex:1">Start the tour</button><button class="ppt-b" data-later>Maybe later</button></div></div>';
+    document.body.appendChild(ov);
+    function later(){ patchProfile({tour_done:true}); if(ov.parentNode)ov.parentNode.removeChild(ov); }
+    ov.addEventListener("click",function(e){ if(e.target===ov)later(); });
+    ov.querySelector("[data-later]").onclick=later;
+    ov.querySelector("[data-full]").onclick=function(){ if(ov.parentNode)ov.parentNode.removeChild(ov); startFullTour(); };
+    ov.querySelectorAll("[data-stop]").forEach(function(s){ s.onclick=function(){ var p=s.dataset.stop; patchProfile({tour_done:true}); if(ov.parentNode)ov.parentNode.removeChild(ov); var rt=computeRoute(); var st={route:rt,idx:rt.indexOf(p),active:true}; setState(st); if(p===PAGE)maybeContinue(); else nav(p); }; });
+  }
+
+  function openFAQ(){
+    var ov=document.createElement("div"); ov.className="ppt-modal-ov";
+    ov.innerHTML='<div class="ppt-modal"><h2>Help & FAQs</h2><div id="ppt-faqbody"><p style="font-size:13px;color:#9b8e92">Loading\u2026</p></div><button class="ppt-b" style="width:100%;margin-top:14px" data-close>Close</button></div>';
+    document.body.appendChild(ov);
+    function cl(){ if(ov.parentNode)ov.parentNode.removeChild(ov); }
+    ov.addEventListener("click",function(e){ if(e.target===ov)cl(); });
+    ov.querySelector("[data-close]").onclick=cl;
+    get("/rest/v1/faqs?select=category,question,answer,position&is_published=eq.true&order=category,position",false).then(function(rows){
+      rows=Array.isArray(rows)?rows:[]; var byCat={}; rows.forEach(function(f){ (byCat[f.category]=byCat[f.category]||[]).push(f); });
+      var html=Object.keys(byCat).map(function(c){ return '<div class="ppt-faqcat">'+esc(c)+'</div>'+byCat[c].map(function(f){ return '<details class="ppt-faqq"><summary>'+esc(f.question)+'</summary><div class="a">'+esc(f.answer)+'</div></details>'; }).join(""); }).join("");
+      document.getElementById("ppt-faqbody").innerHTML=html||'<p style="font-size:13px;color:#9b8e92">No FAQs yet.</p>';
+    }).catch(function(){ var b=document.getElementById("ppt-faqbody"); if(b)b.innerHTML='<p style="font-size:13px;color:#9b8e92">Couldn\'t load FAQs.</p>'; });
+  }
+
+  function buttons(){
+    var wrap=document.createElement("div"); wrap.className="ppt-launch";
+    var t=document.createElement("button"); t.className="tour"; t.textContent="\u2728 Take a tour"; t.onclick=startLocal;
+    var help=document.createElement("button"); help.textContent="\u2753 Help"; help.onclick=openFAQ;
+    if(STEPS&&STEPS.length)wrap.appendChild(t); wrap.appendChild(help);
+    document.body.appendChild(wrap);
+  }
+
+  function init(){
+    buttons();
+    var s=sess(); if(s)UIDg=s.uid;
+    var sitePromise=get("/rest/v1/app_settings?key=eq.site&select=value",false).then(function(j){ FLAGS=(j&&j[0]&&j[0].value)||{}; }).catch(function(){});
+    var profPromise = (s) ? get("/rest/v1/profiles?select=tier,tour_done&id=eq."+encodeURIComponent(s.uid),true).then(function(j){ if(j&&j[0]){ TIERg=j[0].tier||"free"; DONEg=!!j[0].tour_done; } }).catch(function(){}) : Promise.resolve();
+    Promise.all([sitePromise,profPromise]).then(function(){
+      if(maybeContinue())return;
+      if(s && !DONEg){ welcome(); }
+    });
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init); else init();
+  window.PPYTour={start:startLocal,welcome:welcome,faq:openFAQ,full:startFullTour};
+})();
+
+</script>
+
+<style id="ppyh-css">
+.ppyh-fab{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;z-index:99990;display:none;align-items:center;justify-content:center;color:#fff;font-size:24px;background:linear-gradient(135deg,#C8A0A6,#A87C83);box-shadow:0 8px 24px rgba(168,124,131,.45);transition:transform .15s,box-shadow .15s}
+.ppyh-fab:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(168,124,131,.55)}
+.ppyh-fab.show{display:flex}
+.ppyh-panel{position:fixed;right:20px;bottom:86px;width:368px;max-width:calc(100vw - 32px);height:540px;max-height:calc(100vh - 120px);background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(40,28,33,.32);z-index:99991;display:none;flex-direction:column;overflow:hidden;font-family:Poppins,system-ui,-apple-system,sans-serif;color:#4a4047}
+.ppyh-panel.open{display:flex}
+.ppyh-head{background:linear-gradient(135deg,#C8A0A6,#A87C83);color:#fff;padding:15px 16px;display:flex;align-items:center;gap:10px}
+.ppyh-head h4{margin:0;font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:600;flex:1}
+.ppyh-head p{margin:2px 0 0;font-size:11.5px;opacity:.9;font-weight:300}
+.ppyh-x{background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:15px;flex:0 0 auto}
+.ppyh-tabs{display:flex;border-bottom:1px solid #ece3e4;background:#faf6f5}
+.ppyh-tab{flex:1;border:none;background:transparent;padding:10px 6px;font:inherit;font-size:12.5px;color:#9a8f93;cursor:pointer;border-bottom:2px solid transparent}
+.ppyh-tab.on{color:#A87C83;border-bottom-color:#C8A0A6;font-weight:600}
+.ppyh-body{flex:1;overflow:auto;padding:14px;min-height:0}
+.ppyh-foot{border-top:1px solid #ece3e4;padding:10px;display:flex;gap:8px;align-items:flex-end}
+.ppyh-msgs{display:flex;flex-direction:column;gap:10px}
+.ppyh-msg{max-width:85%;padding:9px 12px;border-radius:13px;font-size:13.5px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+.ppyh-msg.bot{align-self:flex-start;background:#f3edee;color:#4a4047;border-bottom-left-radius:4px}
+.ppyh-msg.user{align-self:flex-end;background:#C8A0A6;color:#fff;border-bottom-right-radius:4px}
+.ppyh-msg.err{align-self:flex-start;background:#fbeae6;color:#9c4636}
+.ppyh-empty{color:#9a8f93;font-size:13px;text-align:center;padding:26px 14px;line-height:1.5}
+.ppyh-empty .e-ic{font-size:30px;display:block;margin-bottom:8px}
+.ppyh-faqcat{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#a8ad91;font-weight:600;margin:14px 0 6px}
+.ppyh-faqcat:first-child{margin-top:2px}
+.ppyh-faqq{border:1px solid #ece3e4;border-radius:10px;margin-bottom:7px;overflow:hidden}
+.ppyh-faqq summary{cursor:pointer;padding:10px 12px;font-size:13px;font-weight:500;color:#6f5b61;list-style:none}
+.ppyh-faqq summary::-webkit-details-marker{display:none}
+.ppyh-faqq[open] summary{color:#A87C83;background:#faf6f5}
+.ppyh-faqq .a{padding:9px 12px 11px;font-size:12.5px;color:#6f5b61;line-height:1.5;white-space:pre-wrap}
+.ppyh-signin{text-align:center;padding:30px 16px;color:#6f5b61;font-size:13px;line-height:1.5}
+.ppyh-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;justify-content:center}
+.ppyh-chip{font-size:11.5px;padding:6px 11px;border-radius:999px;border:1px solid #ece3e4;background:#fff;color:#6f5b61;cursor:pointer}
+.ppyh-chip:hover{border-color:#C8A0A6;color:#A87C83}
+.ppyh-ta,.ppyh-in{width:100%;box-sizing:border-box;border:1px solid #e3d8da;border-radius:10px;padding:9px 11px;font:inherit;font-size:13px;color:#4a4047;background:#fff;resize:none}
+.ppyh-ta:focus,.ppyh-in:focus{outline:none;border-color:#C8A0A6}
+.ppyh-send{flex:0 0 auto;background:#C8A0A6;color:#fff;border:none;border-radius:10px;width:42px;height:40px;font-size:17px;cursor:pointer}
+.ppyh-send:disabled{opacity:.5;cursor:default}
+.ppyh-form{display:flex;flex-direction:column;gap:11px}
+.ppyh-form label{font-size:11.5px;font-weight:600;color:#6f5b61;margin-bottom:-5px}
+.ppyh-seg{display:flex;gap:6px}
+.ppyh-seg button{flex:1;border:1px solid #e3d8da;background:#fff;color:#6f5b61;border-radius:9px;padding:8px;font:inherit;font-size:12.5px;cursor:pointer}
+.ppyh-seg button.on{background:#A87C83;color:#fff;border-color:#A87C83}
+.ppyh-btn{background:#C8A0A6;color:#fff;border:none;border-radius:10px;padding:11px;font:inherit;font-weight:600;font-size:13.5px;cursor:pointer}
+.ppyh-btn:disabled{opacity:.5;cursor:default}
+.ppyh-note{font-size:11px;color:#9a8f93;line-height:1.4}
+.ppyh-ok{text-align:center;padding:30px 16px;color:#4a4047}
+.ppyh-ok .ok-ic{font-size:34px;display:block;margin-bottom:10px}
+.ppyh-spin{display:inline-block;animation:ppyhspin 1s linear infinite}
+@keyframes ppyhspin{to{transform:rotate(360deg)}}
+@media(max-width:480px){.ppyh-panel{right:8px;left:8px;width:auto;bottom:80px;height:calc(100vh - 100px)}.ppyh-fab{right:16px;bottom:16px}}
+</style>
+<script>
+(function(){
+  if(window.__ppyHelp)return; window.__ppyHelp=1;
+  var URL_="https://nxjbpgnpblqepathojzr.supabase.co";
+  var KEY_="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54amJwZ25wYmxxZXBhdGhvanpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0OTE3MTYsImV4cCI6MjA5MDA2NzcxNn0.0thRMnySyacG_fcFiHlteEk4scwfWrP6HmjSlBdg3Ik";
+  var FN_=URL_+"/functions/v1/ask-coach";
+  var client=null, sessionUser=null, profile=null, hasLauncher=false, faqCache=null;
+  var askHist=[];
+  function esc(s){return (s||"").replace(/[&<>"]/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]);});}
+  function loadSb(cb){
+    var existing=null;
+    try{ if(typeof sb!=="undefined" && sb && sb.auth) existing=sb; }catch(e){}
+    if(existing){ client=existing; return cb(); }
+    function mk(){ try{ client=window.supabase.createClient(URL_,KEY_); cb(); }catch(e){} }
+    if(window.supabase && window.supabase.createClient){ mk(); return; }
+    var s=document.createElement("script");
+    s.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+    s.onload=mk; s.onerror=function(){}; document.head.appendChild(s);
+  }
+  function build(){
+    var fab=document.createElement("button");
+    fab.className="ppyh-fab"; fab.setAttribute("aria-label","Help & support"); fab.innerHTML="&#128172;";
+    var panel=document.createElement("div"); panel.className="ppyh-panel";
+    panel.innerHTML=
+      '<div class="ppyh-head"><div style="flex:1"><h4>Help &amp; Support</h4><p>FAQs, ask a question, or send feedback</p></div><button class="ppyh-x" id="ppyhX">&#10005;</button></div>'+
+      '<div class="ppyh-tabs"><button class="ppyh-tab on" data-t="faq">FAQs</button><button class="ppyh-tab" data-t="ask">Ask</button><button class="ppyh-tab" data-t="bug">Bug</button><button class="ppyh-tab" data-t="req">Request</button></div>'+
+      '<div class="ppyh-body" id="ppyhBody"></div>'+
+      '<div class="ppyh-foot" id="ppyhFoot" style="display:none"><textarea class="ppyh-ta" id="ppyhAsk" rows="1" placeholder="Ask about a pose, sequencing, or how the app works..."></textarea><button class="ppyh-send" id="ppyhSend">&#10148;</button></div>';
+    document.body.appendChild(fab); document.body.appendChild(panel);
+    window.__ppyhPanel=panel;
+    fab.onclick=function(){ if(panel.classList.contains("open"))closePanel(); else openPanel("ask"); };
+    panel.querySelector("#ppyhX").onclick=closePanel;
+    panel.querySelectorAll(".ppyh-tab").forEach(function(t){ t.onclick=function(){ renderTab(t.dataset.t); }; });
+    var ta=panel.querySelector("#ppyhAsk");
+    ta.addEventListener("input",function(){ ta.style.height="auto"; ta.style.height=Math.min(90,ta.scrollHeight)+"px"; });
+    ta.addEventListener("keydown",function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); sendAsk(); } });
+    panel.querySelector("#ppyhSend").onclick=sendAsk;
+  }
+  function openPanel(tab){ var p=window.__ppyhPanel; if(!p)return; p.classList.add("open"); renderTab(tab||"faq"); }
+  function closePanel(){ var p=window.__ppyhPanel; if(p)p.classList.remove("open"); }
+  function body(){ return document.getElementById("ppyhBody"); }
+  function renderTab(t){
+    var p=window.__ppyhPanel; if(!p)return;
+    p.querySelectorAll(".ppyh-tab").forEach(function(x){ x.classList.toggle("on", x.dataset.t===t); });
+    document.getElementById("ppyhFoot").style.display = (t==="ask"&&sessionUser) ? "flex" : "none";
+    if(t==="faq") return renderFAQ();
+    if(t==="ask") return renderAsk();
+    if(t==="bug") return renderForm("bug");
+    return renderForm("req");
+  }
+  function signInPrompt(action){
+    return '<div class="ppyh-signin"><span class="e-ic" style="font-size:30px;display:block;margin-bottom:8px">&#128274;</span>Please sign in to '+action+'.<div style="margin-top:12px"><a class="ppyh-btn" style="display:inline-block;text-decoration:none" href="/">Sign in</a></div></div>';
+  }
+  /* ---- FAQs ---- */
+  function renderFAQ(){
+    var b=body();
+    if(faqCache){ return paintFAQ(faqCache); }
+    b.innerHTML='<div class="ppyh-empty">Loading FAQs\u2026</div>';
+    client.from("faqs").select("category,question,answer,position").eq("is_published",true).order("category").order("position").then(function(r){
+      if(r.error||!r.data){ b.innerHTML='<div class="ppyh-empty">Couldn\u2019t load FAQs right now.</div>'; return; }
+      faqCache=r.data; paintFAQ(faqCache);
+    });
+  }
+  function paintFAQ(rows){
+    var b=body();
+    if(!rows.length){ b.innerHTML='<div class="ppyh-empty"><span class="e-ic">&#128214;</span>No FAQs yet. Have a question? Try the <b>Ask</b> tab.</div>'; return; }
+    var byCat={}; rows.forEach(function(f){ (byCat[f.category||"General"]=byCat[f.category||"General"]||[]).push(f); });
+    var html='<div class="ppyh-faq">';
+    Object.keys(byCat).forEach(function(c){
+      html+='<div class="ppyh-faqcat">'+esc(c)+'</div>';
+      byCat[c].forEach(function(f){ html+='<details class="ppyh-faqq"><summary>'+esc(f.question)+'</summary><div class="a">'+esc(f.answer)+'</div></details>'; });
+    });
+    html+='</div>'; b.innerHTML=html;
+  }
+  /* ---- Ask AI ---- */
+  function renderAsk(){
+    var b=body();
+    if(!sessionUser){ b.innerHTML=signInPrompt("ask the assistant a question"); return; }
+    if(!askHist.length){
+      b.innerHTML='<div class="ppyh-empty"><span class="e-ic">&#127807;</span>Ask me about yoga &amp; poses or how to use Pure Passion Yoga.'+
+        '<div class="ppyh-chips">'+
+        '<span class="ppyh-chip" data-q="What\'s a good counter-pose after backbends?">Counter-pose after backbends?</span>'+
+        '<span class="ppyh-chip" data-q="How do I use the AI flow generator?">Using the AI generator</span>'+
+        '<span class="ppyh-chip" data-q="Modifications for wrist pain in Down Dog">Wrist pain in Down Dog</span>'+
+        '</div></div>';
+      b.querySelectorAll(".ppyh-chip").forEach(function(c){ c.onclick=function(){ document.getElementById("ppyhAsk").value=c.dataset.q; sendAsk(); }; });
+      return;
+    }
+    var html='<div class="ppyh-msgs">';
+    askHist.forEach(function(m){ html+='<div class="ppyh-msg '+(m.role==="user"?"user":(m.error?"err":"bot"))+'">'+esc(m.content)+'</div>'; });
+    if(window.__ppyhBusy) html+='<div class="ppyh-msg bot"><span class="ppyh-spin">&#127807;</span> thinking...</div>';
+    html+='</div>';
+    b.innerHTML=html; b.scrollTop=b.scrollHeight;
+  }
+  function sendAsk(){
+    if(!sessionUser)return;
+    var inp=document.getElementById("ppyhAsk"); var q=(inp.value||"").trim();
+    if(!q||window.__ppyhBusy)return;
+    inp.value=""; inp.style.height="auto";
+    askHist.push({role:"user",content:q}); window.__ppyhBusy=true; renderAsk();
+    var hist=askHist.filter(function(m){return !m.error;}).slice(-6).map(function(m){return {role:m.role,content:m.content};});
+    client.auth.getSession().then(function(r){
+      var tok=r&&r.data&&r.data.session&&r.data.session.access_token;
+      return fetch(FN_,{method:"POST",headers:{"Content-Type":"application/json","apikey":KEY_,"Authorization":"Bearer "+tok},body:JSON.stringify({question:q,history:hist})});
+    }).then(function(res){ return res.json().then(function(j){ return {ok:res.ok,j:j}; }); })
+    .then(function(o){
+      window.__ppyhBusy=false;
+      if(!o.ok||o.j.error){ askHist.push({role:"assistant",content:o.j.error||"Something went wrong. Please try again.",error:true}); }
+      else { askHist.push({role:"assistant",content:o.j.answer||"(no answer)"}); }
+      renderAsk();
+    }).catch(function(){ window.__ppyhBusy=false; askHist.push({role:"assistant",content:"Network error. Please try again.",error:true}); renderAsk(); });
+  }
+  /* ---- Bug / Request ---- */
+  function renderForm(mode){
+    var b=body(); var isReq=mode==="req";
+    if(!sessionUser){ b.innerHTML=signInPrompt(isReq?"send a request":"report a bug"); return; }
+    b.innerHTML='<div class="ppyh-form">'+
+      (isReq?'<label>What would you like?</label><div class="ppyh-seg" id="ppyhSeg"><button class="on" data-k="pose_request">A new pose</button><button data-k="feature_request">A feature</button></div>':'')+
+      '<label>'+(isReq?'Title':'What went wrong?')+'</label>'+
+      '<input class="ppyh-in" id="ppyhSubj" placeholder="'+(isReq?'e.g. Add Firefly Pose':'e.g. Save button does nothing')+'">'+
+      '<label>Details</label>'+
+      '<textarea class="ppyh-ta" id="ppyhBodyTxt" rows="5" placeholder="'+(isReq?'Tell us a bit more about what you\'d like and why...':'What happened, and what did you expect? Steps to reproduce help a lot.')+'"></textarea>'+
+      '<div class="ppyh-note">'+(isReq?'Requests go straight to the studio team.':'Thanks for helping us squash bugs! We\'ll include the page you\'re on.')+'</div>'+
+      '<button class="ppyh-btn" id="ppyhSubmit">'+(isReq?'Send request':'Send bug report')+'</button>'+
+      '</div>';
+    var kind=isReq?"pose_request":"bug";
+    if(isReq){ b.querySelectorAll("#ppyhSeg button").forEach(function(btn){ btn.onclick=function(){ b.querySelectorAll("#ppyhSeg button").forEach(function(x){x.classList.remove("on");}); btn.classList.add("on"); kind=btn.dataset.k; }; }); }
+    b.querySelector("#ppyhSubmit").onclick=function(){
+      var subj=(b.querySelector("#ppyhSubj").value||"").trim();
+      var body_=(b.querySelector("#ppyhBodyTxt").value||"").trim();
+      if(!body_){ b.querySelector("#ppyhBodyTxt").focus(); return; }
+      var btn=b.querySelector("#ppyhSubmit"); btn.disabled=true; btn.innerHTML='<span class="ppyh-spin">&#127807;</span> Sending...';
+      var row={user_id:sessionUser.id,display_name:(profile&&profile.display_name)||null,email:(profile&&profile.email)||sessionUser.email||null,kind:kind,subject:subj||null,body:body_,page_url:location.href};
+      client.from("feedback_items").insert(row).then(function(r){
+        if(r.error){ btn.disabled=false; btn.textContent="Try again"; b.insertAdjacentHTML("afterbegin",'<div class="ppyh-msg err" style="margin-bottom:10px">'+esc(r.error.message)+'</div>'); return; }
+        b.innerHTML='<div class="ppyh-ok"><span class="ok-ic">&#127881;</span><div style="font-family:\'Playfair Display\',Georgia,serif;font-size:17px;color:#A87C83;margin-bottom:4px">Thank you!</div><div style="font-size:13px;color:#6f5b61">'+(isReq?'Your request has been sent to the team.':'Your bug report has been sent. We appreciate it!')+'</div></div>';
+      });
+    };
+  }
+  function showFab(on){ if(hasLauncher)on=false; var f=document.querySelector(".ppyh-fab"); if(f)f.classList.toggle("show",!!on); if(!on&&window.__ppyhPanel&&!hasLauncher)window.__ppyhPanel.classList.remove("open"); }
+  function refreshAuth(){
+    client.auth.getSession().then(function(r){
+      var sess=r&&r.data&&r.data.session;
+      if(sess&&sess.user){ sessionUser=sess.user; showFab(true);
+        client.from("profiles").select("display_name,email").eq("id",sess.user.id).maybeSingle().then(function(p){ if(p&&p.data)profile=p.data; });
+      } else { sessionUser=null; showFab(false); }
+    });
+  }
+  function wireLauncher(){
+    var tries=0;
+    (function attempt(){
+      var lp=document.querySelector(".ppt-launch");
+      if(lp){
+        var help=null; lp.querySelectorAll("button").forEach(function(btn){ if(!btn.classList.contains("tour")) help=btn; });
+        if(help){ hasLauncher=true; help.textContent="\u2753 Help"; help.onclick=function(e){ if(e&&e.preventDefault)e.preventDefault(); openPanel("faq"); }; showFab(false); return; }
+      }
+      if(tries++<8) setTimeout(attempt,250);
+    })();
+  }
+  function init(){
+    loadSb(function(){
+      if(!client)return;
+      build(); wireLauncher(); refreshAuth();
+      try{ client.auth.onAuthStateChange(function(){ refreshAuth(); }); }catch(e){}
+    });
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",init); else init();
+})();
+</script>
 </body>
 </html>
