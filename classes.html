@@ -319,7 +319,10 @@ function fmtTime(x){ x=Math.max(0,Math.round(x||0)); const m=Math.floor(x/60),ss
 function isFinished(r){ return !!(r&&r.dur&&r.pos>=r.dur-Math.min(20,r.dur*0.1)); }
 function resumeStart(r){ if(!r||!r.pos||r.pos<10||!r.dur)return 0; if(isFinished(r))return 0; return Math.min(r.pos, r.dur-2); }
 function resumeBar(id){ const r=RESUME[id]; if(!r||!r.pos||r.pos<5)return""; if(isFinished(r))return""; const pct=r.dur?Math.min(100,Math.round(r.pos/r.dur*100)):8; return '<div class="cl-progbar"><span style="width:'+(pct||8)+'%"></span></div>'; }
-const CF={theme:"",diff:""};
+const CF={instr:"",theme:"",diff:"",dur:""};
+function durMin(label){ const m=String(label||"").match(/(\d+)/); return m?parseInt(m[1],10):null; }
+function durBucket(mn){ if(mn==null)return null; if(mn<15)return "u15"; if(mn<30)return "15-30"; if(mn<45)return "30-45"; if(mn<60)return "45-60"; return "60+"; }
+const DUR_OPTS=[["","Any length"],["u15","Under 15 min"],["15-30","15\u201330 min"],["30-45","30\u201345 min"],["45-60","45\u201360 min"],["60+","60+ min"]];
 
 function h(hdrs){ return Object.assign({apikey:KEY,Authorization:"Bearer "+(TOKEN||KEY)},hdrs||{}); }
 function readSession(){
@@ -361,11 +364,16 @@ function canWatch(c){ if(IS_ADMIN)return true; if(!UID)return false; const t=eff
 function buildFilters(){
   const themes=[...new Set(CLASSES.map(c=>c.class_theme).filter(Boolean))].sort();
   const diffs=[...new Set(CLASSES.map(c=>c.difficulty_level).filter(Boolean))];
+  const insIds=[...new Set(CLASSES.map(c=>c.instructor_id).filter(Boolean))];
   $("clFilters").innerHTML=
+    `<select id="fInstr"><option value="">All instructors</option>${insIds.map(id=>`<option value="${id}"${CF.instr===id?" selected":""}>${esc((INSTR[id]&&INSTR[id].name)||"\u2014")}</option>`).join("")}</select>`+
     `<select id="fTheme"><option value="">All themes</option>${themes.map(t=>`<option value="${esc(t)}"${CF.theme===t?" selected":""}>${esc(t)}</option>`).join("")}</select>`+
-    `<select id="fDiff"><option value="">All levels</option>${diffs.map(t=>`<option value="${esc(t)}"${CF.diff===t?" selected":""}>${esc(t)}</option>`).join("")}</select>`;
+    `<select id="fDiff"><option value="">All levels</option>${diffs.map(t=>`<option value="${esc(t)}"${CF.diff===t?" selected":""}>${esc(t)}</option>`).join("")}</select>`+
+    `<select id="fDur">${DUR_OPTS.map(d=>`<option value="${d[0]}"${CF.dur===d[0]?" selected":""}>${d[1]}</option>`).join("")}</select>`;
+  $("fInstr").onchange=e=>{CF.instr=e.target.value;render();};
   $("fTheme").onchange=e=>{CF.theme=e.target.value;render();};
   $("fDiff").onchange=e=>{CF.diff=e.target.value;render();};
+  $("fDur").onchange=e=>{CF.dur=e.target.value;render();};
 }
 function renderResume(){ const el=$("clResume"); if(!el)return;
   const items=CLASSES.filter(c=>{const r=RESUME[c.id];return r&&r.pos>5&&!isFinished(r)&&canWatch(c);}).sort((a,b)=>String(RESUME[b.id].upd||"").localeCompare(String(RESUME[a.id].upd||""))).slice(0,10);
@@ -376,8 +384,10 @@ function renderResume(){ const el=$("clResume"); if(!el)return;
 function render(){
   renderResume();
   let list=CLASSES.slice();
+  if(CF.instr)list=list.filter(c=>c.instructor_id===CF.instr);
   if(CF.theme)list=list.filter(c=>c.class_theme===CF.theme);
   if(CF.diff)list=list.filter(c=>c.difficulty_level===CF.diff);
+  if(CF.dur)list=list.filter(c=>durBucket(durMin(c.duration_label))===CF.dur);
   $("clCount").textContent=list.length+" class"+(list.length===1?"":"es");
   if(!list.length){ $("clGrid").innerHTML='<div style="color:var(--ppy-muted,#9a8f93);padding:26px">No classes yet — check back soon.</div>'; return; }
   $("clGrid").innerHTML=list.map(c=>{
