@@ -427,6 +427,7 @@ function parseVideo(url){
   url=(url||"").trim(); let m;
   if(m=url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([\w-]{6,})/))return {type:"youtube",id:m[1]};
   if(m=url.match(/vimeo\.com\/(?:video\/)?(\d+)/))return {type:"vimeo",id:m[1]};
+  if(m=url.match(/(?:iframe\.)?mediadelivery\.net\/(?:embed|play)\/(\d+)\/([0-9a-fA-F-]{36})/))return {type:"bunny",lib:m[1],guid:m[2]};
   if(/\.(mp4|webm|ogg|m3u8)(\?|$)/i.test(url))return {type:"file",url:url};
   if(url)return {type:"iframe",url:url};
   return {type:"none"};
@@ -463,6 +464,13 @@ function startTracker(box, v, cls, resumeFrom){
         const iv=setInterval(()=>tick(pos,playing,dur),1000); st.stop=()=>clearInterval(iv);
       }catch(e){} };
     if(window.Vimeo&&window.Vimeo.Player)setup(); else { const t=document.createElement("script"); t.src="https://player.vimeo.com/api/player.js"; t.onload=setup; document.head.appendChild(t); }
+  } else if(v.type==="bunny"){
+    const ifr=document.createElement("iframe"); ifr.src="https://iframe.mediadelivery.net/embed/"+v.lib+"/"+v.guid+"?autoplay=false&preload=true"; ifr.allow="autoplay; fullscreen; picture-in-picture; encrypted-media"; ifr.setAttribute("allowfullscreen",""); box.appendChild(ifr);
+    const setup=()=>{ try{ const pl=new playerjs.Player(ifr); st.seek=function(t){try{pl.setCurrentTime(t);}catch(e){}}; let pos=0,playing=false,dur=0;
+        pl.on("ready",function(){ pl.on("timeupdate",function(d){pos=d.seconds;dur=d.duration;}); pl.on("play",function(){playing=true;}); pl.on("pause",function(){playing=false;}); pl.on("ended",function(){playing=false;}); if(resumeFrom>0){try{pl.setCurrentTime(resumeFrom);}catch(e){}} });
+        const iv=setInterval(()=>tick(pos,playing,dur),1000); st.stop=()=>clearInterval(iv);
+      }catch(e){} };
+    if(window.playerjs&&window.playerjs.Player)setup(); else { const t=document.createElement("script"); t.src="https://cdn.embed.ly/player-0.1.0.min.js"; t.onload=setup; document.head.appendChild(t); }
   } else {
     const ifr=document.createElement("iframe"); ifr.src=v.type==="iframe"?v.url:"about:blank"; ifr.allow="autoplay; fullscreen"; ifr.setAttribute("allowfullscreen",""); box.appendChild(ifr);
   }
