@@ -316,7 +316,9 @@ let RESUME={};
 async function loadResume(type){ if(!UID)return; try{ const r=await fetch(SB+"/rest/v1/resume_positions?select=content_id,position_seconds,duration_seconds,updated_at&user_id=eq."+UID+"&content_type=eq."+type,{headers:{apikey:KEY,Authorization:"Bearer "+TOKEN}}); (await r.json()||[]).forEach(x=>RESUME[x.content_id]={pos:x.position_seconds,dur:x.duration_seconds,upd:x.updated_at}); }catch(e){} }
 function saveResume(type,id,pos,dur){ if(!UID||!id||(pos||0)<3)return; const upd=new Date().toISOString(); try{ fetch(SB+"/rest/v1/resume_positions",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({user_id:UID,content_type:type,content_id:id,position_seconds:Math.round(pos),duration_seconds:dur?Math.round(dur):null,updated_at:upd}),keepalive:true}); }catch(e){} RESUME[id]={pos:Math.round(pos),dur:dur?Math.round(dur):null,upd:upd}; }
 function fmtTime(x){ x=Math.max(0,Math.round(x||0)); const m=Math.floor(x/60),ss=x%60; return m+":"+(ss<10?"0":"")+ss; }
-function resumeBar(id){ const r=RESUME[id]; if(!r||!r.pos||r.pos<5)return""; if(r.dur&&r.pos>=r.dur-15)return""; const pct=r.dur?Math.min(100,Math.round(r.pos/r.dur*100)):8; return '<div class="cl-progbar"><span style="width:'+(pct||8)+'%"></span></div>'; }
+function isFinished(r){ return !!(r&&r.dur&&r.pos>=r.dur-Math.min(20,r.dur*0.1)); }
+function resumeStart(r){ if(!r||!r.pos||r.pos<10||!r.dur)return 0; if(isFinished(r))return 0; return Math.min(r.pos, r.dur-2); }
+function resumeBar(id){ const r=RESUME[id]; if(!r||!r.pos||r.pos<5)return""; if(isFinished(r))return""; const pct=r.dur?Math.min(100,Math.round(r.pos/r.dur*100)):8; return '<div class="cl-progbar"><span style="width:'+(pct||8)+'%"></span></div>'; }
 const CF={theme:"",diff:""};
 
 function h(hdrs){ return Object.assign({apikey:KEY,Authorization:"Bearer "+(TOKEN||KEY)},hdrs||{}); }
@@ -366,7 +368,7 @@ function buildFilters(){
   $("fDiff").onchange=e=>{CF.diff=e.target.value;render();};
 }
 function renderResume(){ const el=$("clResume"); if(!el)return;
-  const items=CLASSES.filter(c=>{const r=RESUME[c.id];return r&&r.pos>5&&(!r.dur||r.pos<r.dur-15)&&canWatch(c);}).sort((a,b)=>String(RESUME[b.id].upd||"").localeCompare(String(RESUME[a.id].upd||""))).slice(0,10);
+  const items=CLASSES.filter(c=>{const r=RESUME[c.id];return r&&r.pos>5&&!isFinished(r)&&canWatch(c);}).sort((a,b)=>String(RESUME[b.id].upd||"").localeCompare(String(RESUME[a.id].upd||""))).slice(0,10);
   if(!items.length){ el.innerHTML=""; return; }
   el.innerHTML='<div class="cl-cw-h">Continue watching</div><div class="cl-cw-row">'+items.map(c=>{const r=RESUME[c.id],pct=r.dur?Math.min(100,Math.round(r.pos/r.dur*100)):8;return '<div class="cl-cw-card" data-id="'+c.id+'"><div class="cl-cw-thumb" style="background-image:url(\''+esc(c.thumbnail_url||"")+'\')"><div class="cl-progbar"><span style="width:'+(pct||8)+'%"></span></div></div><div class="cl-cw-n">'+esc(c.title)+'</div></div>';}).join("")+'</div>';
   el.querySelectorAll(".cl-cw-card").forEach(x=>x.onclick=()=>openClass(x.dataset.id));
@@ -421,7 +423,7 @@ function parseVideo(url){
 }
 function openPlayer(c){
   const v=parseVideo(c.video_url), ins=INSTR[c.instructor_id];
-  const r=RESUME[c.id]; let resumeFrom=0; if(r&&r.pos>5&&(!r.dur||r.pos<r.dur-15))resumeFrom=r.pos;
+  const r=RESUME[c.id]; let resumeFrom=resumeStart(r);
   const baseMeta=(ins?esc(ins.name):"")+(c.duration_label?" · "+esc(c.duration_label):"")+(c.difficulty_level?" · "+esc(c.difficulty_level):"");
   $("modalRoot").innerHTML='<div class="clv-ovl" id="clvOvl"><div class="clv-modal"><div class="clv-head"><h3>'+esc(c.title)+'</h3><button class="clv-x" id="clvX">✕</button></div><div class="clv-body"><div class="clv-video" id="clvVideo"></div><div class="clv-meta" id="clvMeta">'+baseMeta+'</div></div></div></div>';
   if(resumeFrom>0){ const m=$("clvMeta"); if(m)m.innerHTML=baseMeta+' · <span style="color:var(--ppy-accentDk,#A87C83)">Resuming from '+fmtTime(resumeFrom)+'</span> · <a href="#" id="clvRestart" style="color:var(--ppy-muted,#9a8f93)">start over</a>'; }
