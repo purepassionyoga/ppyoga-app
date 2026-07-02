@@ -302,6 +302,7 @@
       <button class="tab" data-tab="design">Design</button>
       <button class="tab" data-tab="library">Library</button>
       <button class="tab" data-tab="builder">Builder</button>
+      <button class="tab" data-tab="studio">Classes &amp; Videos</button>
       <button class="tab" data-tab="email">Email</button>
       <button class="tab" data-tab="advanced">Advanced</button>
       <button class="tab" data-tab="legal">Legal</button>
@@ -333,6 +334,13 @@
     <div id="design" class="hidden"></div>
     <div id="library" class="hidden"></div>
     <div id="builder" class="hidden"></div>
+    <div id="studio" class="hidden"></div>
+    <style id="stuCSS">
+    #studio .stu-seg{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+    #studio .stu-seg button{border:1px solid var(--line,#ece3e4);background:#fff;color:#6f5b61;border-radius:10px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer}
+    #studio .stu-seg button.on{background:#C8A0A6;color:#fff;border-color:#C8A0A6}
+    #studio .lrow{display:flex;gap:12px;align-items:center}
+    </style>
     <div id="emailtab" class="hidden"></div>
     <div id="advanced" class="hidden"></div>
     <div id="legal" class="hidden"></div>
@@ -658,6 +666,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   $("design").classList.toggle("hidden", t.dataset.tab!=="design");
   $("library").classList.toggle("hidden", t.dataset.tab!=="library");
   $("builder").classList.toggle("hidden", t.dataset.tab!=="builder");
+  $("studio").classList.toggle("hidden", t.dataset.tab!=="studio");
   $("emailtab").classList.toggle("hidden", t.dataset.tab!=="email");
   $("advanced").classList.toggle("hidden", t.dataset.tab!=="advanced");
   $("legal").classList.toggle("hidden", t.dataset.tab!=="legal");
@@ -680,6 +689,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   if(t.dataset.tab==="billing") loadBilling();
   if(t.dataset.tab==="shop") loadShop();
   if(t.dataset.tab==="email") loadEmail();
+  if(t.dataset.tab==="studio") loadStudio();
 });
 
 /* ---------- CLASS THEMES ---------- */
@@ -1224,6 +1234,234 @@ function renderEngagement(){
 const LEGAL_URL="/legal";
 let LEGAL=[], legalLoaded=false, legalQuery="";
 function slugifyL(t){ return (t||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
+
+/* ================= CLASSES & VIDEOS STUDIO ================= */
+let STUDIO_view="classes", STU_loaded=false, INSTR=[], OCLASSES=[], VCHAL=[], DAYS_current=null, DAYS_list=[];
+const STU_TIERS=["free","member","premium","practitioner","teacher","ultimate"];
+const STU_CSTATUS=["draft","published","archived"];
+function slugifyC(s){return String(s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
+function stuF(label,id,val,ph,type){return `<div class="field"><label>${label}</label><input id="${id}" type="${type||"text"}" value="${esc(val==null?"":val)}" placeholder="${esc(ph||"")}"/></div>`;}
+function stuTA(label,id,val,ph,h){return `<div class="field"><label>${label}</label><textarea id="${id}" style="min-height:${h||90}px" placeholder="${esc(ph||"")}">${esc(val||"")}</textarea></div>`;}
+function stuSel(label,id,opts,val){return `<div class="field"><label>${label}</label><select id="${id}">${opts.map(o=>{const v=Array.isArray(o)?o[0]:o,t=Array.isArray(o)?o[1]:o;return `<option value="${esc(v)}"${String(val)===String(v)?" selected":""}>${esc(t)}</option>`;}).join("")}</select></div>`;}
+function stuErr(m){ const e=$("stuMsg"); if(e)e.innerHTML='<span style="color:#A03A22">'+esc(m)+'</span>'; return false; }
+function instrName(id){ const x=INSTR.find(i=>i.id===id); return x?x.name:""; }
+
+async function loadStudio(force){
+  if(STU_loaded && !force) return;
+  $("studio").innerHTML='<div style="padding:18px;color:var(--muted)">Loading…</div>';
+  const [i,c,v]=await Promise.all([
+    sb.from("instructors").select("*").order("name"),
+    sb.from("online_classes").select("*").order("created_at",{ascending:false}),
+    sb.from("video_challenges").select("*").order("created_at",{ascending:false})
+  ]);
+  if(i.error||c.error||v.error){ $("studio").innerHTML='<div style="padding:18px;color:#A03A22">'+esc((i.error||c.error||v.error).message)+'</div>'; return; }
+  INSTR=i.data||[]; OCLASSES=c.data||[]; VCHAL=v.data||[]; STU_loaded=true; renderStudio();
+}
+function renderStudio(){
+  let html=`<div class="stu-seg">
+    <button class="${STUDIO_view==="classes"?"on":""}" data-sv="classes">Online Classes (${OCLASSES.length})</button>
+    <button class="${STUDIO_view==="challenges"?"on":""}" data-sv="challenges">Video Challenges (${VCHAL.length})</button>
+    <button class="${STUDIO_view==="instructors"?"on":""}" data-sv="instructors">Instructors (${INSTR.length})</button>
+  </div>`;
+  html += STUDIO_view==="classes" ? renderClasses() : STUDIO_view==="challenges" ? renderChallenges() : renderInstructors();
+  $("studio").innerHTML=html;
+  $("studio").querySelectorAll("[data-sv]").forEach(b=>b.onclick=()=>{ STUDIO_view=b.dataset.sv; renderStudio(); });
+  const r=$("studio");
+  r.querySelectorAll("[data-new]").forEach(b=>b.onclick=()=>{ const k=b.dataset.new; if(k==="instr")editInstr(null); else if(k==="class")editClass(null); else editChal(null); });
+  r.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{ const parts=b.dataset.edit.split(":"); const k=parts[0], id=parts[1]; if(k==="instr")editInstr(id); else if(k==="class")editClass(id); else editChal(id); });
+  r.querySelectorAll("[data-days]").forEach(b=>b.onclick=()=>openDays(b.dataset.days));
+}
+function renderInstructors(){
+  let html=`<div class="erow-top"><div class="note">Instructors appear on classes and challenge lessons.</div><button class="btn" style="padding:7px 14px" data-new="instr">+ New instructor</button></div>`;
+  if(!INSTR.length) return html+'<div style="padding:24px;color:var(--muted)">No instructors yet.</div>';
+  INSTR.forEach(x=>{ html+=`<div class="lrow">
+    <div style="width:40px;height:40px;border-radius:50%;background:#efe7e6 url('${esc(x.image_url||"")}') center/cover;flex:0 0 auto"></div>
+    <div><div class="mn">${esc(x.name)}</div><div class="ms">${esc((x.bio||"").slice(0,90))}</div></div>
+    <div class="lright"><button class="btn ghost" style="padding:5px 11px" data-edit="instr:${x.id}">Edit</button></div>
+  </div>`; });
+  return html;
+}
+function renderClasses(){
+  let html=`<div class="erow-top"><div class="note">On-demand classes members can watch. Set an access tier and publish when ready.</div><button class="btn" style="padding:7px 14px" data-new="class">+ New class</button></div>`;
+  if(!OCLASSES.length) return html+'<div style="padding:24px;color:var(--muted)">No classes yet.</div>';
+  OCLASSES.forEach(c=>{ html+=`<div class="lrow">
+    <div style="width:62px;height:38px;border-radius:7px;background:#f0e9ea url('${esc(c.thumbnail_url||"")}') center/cover;flex:0 0 auto"></div>
+    <div><div class="mn">${esc(c.title)}</div><div class="ms">${esc(instrName(c.instructor_id)||"—")} · ${esc(c.duration_label||"")} · <b>${esc(c.access_tier)}</b></div></div>
+    <div class="lright"><span class="${c.status==="published"?"pill-on":"pill-off"}">${esc(c.status)}</span><button class="btn ghost" style="padding:5px 11px" data-edit="class:${c.id}">Edit</button></div>
+  </div>`; });
+  return html;
+}
+function renderChallenges(){
+  let html=`<div class="erow-top"><div class="note">Multi-day video challenges. Create the challenge, then add its days.</div><button class="btn" style="padding:7px 14px" data-new="chal">+ New challenge</button></div>`;
+  if(!VCHAL.length) return html+'<div style="padding:24px;color:var(--muted)">No challenges yet.</div>';
+  VCHAL.forEach(c=>{ html+=`<div class="lrow">
+    <div style="width:62px;height:38px;border-radius:7px;background:#f0e9ea url('${esc(c.preview_image_url||"")}') center/cover;flex:0 0 auto"></div>
+    <div><div class="mn">${esc(c.title)}${c.is_free?' <span class="pill-on" style="background:#eef0e8;color:#6b7355">free</span>':""}</div><div class="ms">${c.total_days||0} days · <b>${esc(c.access_tier)}</b></div></div>
+    <div class="lright"><span class="${c.status==="published"?"pill-on":"pill-off"}">${esc(c.status)}</span><button class="btn ghost" style="padding:5px 11px" data-days="${c.id}">Days</button><button class="btn ghost" style="padding:5px 11px" data-edit="chal:${c.id}">Edit</button></div>
+  </div>`; });
+  return html;
+}
+function stuWire(o){
+  const root=$("edRoot"); root.querySelector("[data-x]").onclick=closeEd;
+  const sv=root.querySelector("[data-save]");
+  if(sv)sv.onclick=async()=>{
+    sv.disabled=true; const e=$("stuMsg"); if(e)e.innerHTML='<span style="color:var(--muted)">Saving…</span>';
+    const res=await o.save();
+    if(res===false){ sv.disabled=false; return; }
+    if(res&&res.error){ sv.disabled=false; stuErr(res.error.message); return; }
+    closeEd(); loadStudio(true);
+  };
+  const dl=root.querySelector("[data-del]");
+  if(dl&&o.del)dl.onclick=o.del;
+}
+async function delRow(table,id,label){
+  if(!confirm("Delete this "+label+"? This can’t be undone.")) return;
+  const { error }=await sb.from(table).delete().eq("id",id);
+  if(error){ stuErr(error.message); return; }
+  closeEd(); loadStudio(true);
+}
+function editInstr(id){
+  const x=id?INSTR.find(i=>i.id===id):{name:"",bio:"",image_url:""};
+  $("edRoot").innerHTML=`<div class="ovl"><div class="ed">
+    <div class="edtop"><h2>${id?"Edit instructor":"New instructor"}</h2><button class="btn ghost" style="margin-left:auto;padding:7px 13px" data-x>Close</button></div>
+    <div class="edbody"><div class="grp">
+      ${stuF("Name","iName",x.name)}
+      ${stuTA("Bio","iBio",x.bio,"A short intro shown on their classes.",90)}
+      ${stuF("Photo URL","iImg",x.image_url,"https://…")}
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn" data-save>Save</button>
+      ${id?'<button class="btn ghost" style="color:#A03A22;border-color:#E9C9BE" data-del>Delete</button>':""}
+      <span id="stuMsg" style="font-size:12px"></span>
+    </div></div>
+  </div></div>`;
+  stuWire({
+    save:async()=>{ const name=$("iName").value.trim(); if(!name)return stuErr("Name is required.");
+      const payload={name,bio:$("iBio").value.trim(),image_url:$("iImg").value.trim()};
+      return id?sb.from("instructors").update(payload).eq("id",id):sb.from("instructors").insert(payload); },
+    del:id?()=>delRow("instructors",id,"instructor"):null
+  });
+}
+function editClass(id){
+  const c=id?OCLASSES.find(x=>x.id===id):{title:"",slug:"",video_url:"",thumbnail_url:"",duration_label:"",class_theme:"",instructor_id:"",access_tier:"practitioner",status:"draft"};
+  const instrOpts=[["","— none —"]].concat(INSTR.map(i=>[i.id,i.name]));
+  $("edRoot").innerHTML=`<div class="ovl"><div class="ed">
+    <div class="edtop"><h2>${id?"Edit class":"New class"}</h2><button class="btn ghost" style="margin-left:auto;padding:7px 13px" data-x>Close</button></div>
+    <div class="edbody"><div class="grp">
+      ${stuF("Title","cTitle",c.title)}
+      ${stuF("Video URL","cVideo",c.video_url,"YouTube, Vimeo, or .mp4 link")}
+      <div class="row2">${stuF("Thumbnail URL","cThumb",c.thumbnail_url,"https://…")}${stuF("Duration","cDur",c.duration_label,"e.g. 32 min")}</div>
+      <div class="row2">${stuSel("Instructor","cInstr",instrOpts,c.instructor_id||"")}${stuF("Class theme","cTheme",c.class_theme,"e.g. Hips & Heart")}</div>
+      <div class="row2">${stuSel("Access tier","cTier",STU_TIERS,c.access_tier)}${stuSel("Status","cStatus",STU_CSTATUS,c.status)}</div>
+      ${stuF("Slug (optional)","cSlug",c.slug,"auto from title if blank")}
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn" data-save>Save</button>
+      ${id?'<button class="btn ghost" style="color:#A03A22;border-color:#E9C9BE" data-del>Delete</button>':""}
+      <span id="stuMsg" style="font-size:12px"></span>
+    </div></div>
+  </div></div>`;
+  stuWire({
+    save:async()=>{ const title=$("cTitle").value.trim(); if(!title)return stuErr("Title is required.");
+      const payload={title,slug:($("cSlug").value.trim()||slugifyC(title)),video_url:$("cVideo").value.trim(),thumbnail_url:$("cThumb").value.trim(),duration_label:$("cDur").value.trim(),class_theme:$("cTheme").value.trim(),instructor_id:$("cInstr").value||null,access_tier:$("cTier").value,status:$("cStatus").value};
+      return id?sb.from("online_classes").update(payload).eq("id",id):sb.from("online_classes").insert(payload); },
+    del:id?()=>delRow("online_classes",id,"class"):null
+  });
+}
+function editChal(id){
+  const c=id?VCHAL.find(x=>x.id===id):{title:"",subtitle:"",description:"",preview_image_url:"",badge_image_url:"",completion_badge_name:"",is_free:false,access_tier:"practitioner",total_days:0,status:"draft"};
+  $("edRoot").innerHTML=`<div class="ovl"><div class="ed">
+    <div class="edtop"><h2>${id?"Edit challenge":"New challenge"}</h2><button class="btn ghost" style="margin-left:auto;padding:7px 13px" data-x>Close</button></div>
+    <div class="edbody"><div class="grp">
+      ${stuF("Title","vTitle",c.title)}
+      ${stuF("Subtitle","vSub",c.subtitle)}
+      ${stuTA("Description","vDesc",c.description,"What this challenge is about.",80)}
+      <div class="row2">${stuF("Preview image URL","vPrev",c.preview_image_url)}${stuF("Badge image URL","vBadge",c.badge_image_url)}</div>
+      <div class="row2">${stuF("Completion badge name","vBadgeName",c.completion_badge_name)}${stuF("Total days","vDays",c.total_days,"auto-updates from days","number")}</div>
+      <div class="row2">${stuSel("Access tier","vTier",STU_TIERS,c.access_tier)}${stuSel("Status","vStatus",STU_CSTATUS,c.status)}</div>
+      <label class="toggle"><input type="checkbox" id="vFree" ${c.is_free?"checked":""}/> Free challenge (open to all logged-in members)</label>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn" data-save>Save</button>
+      ${id?'<button class="btn ghost" style="color:#A03A22;border-color:#E9C9BE" data-del>Delete</button>':""}
+      <span id="stuMsg" style="font-size:12px"></span>
+    </div></div>
+  </div></div>`;
+  stuWire({
+    save:async()=>{ const title=$("vTitle").value.trim(); if(!title)return stuErr("Title is required.");
+      const payload={title,subtitle:$("vSub").value.trim(),description:$("vDesc").value.trim(),preview_image_url:$("vPrev").value.trim(),badge_image_url:$("vBadge").value.trim(),completion_badge_name:$("vBadgeName").value.trim(),is_free:$("vFree").checked,access_tier:$("vTier").value,status:$("vStatus").value,total_days:parseInt($("vDays").value,10)||0};
+      return id?sb.from("video_challenges").update(payload).eq("id",id):sb.from("video_challenges").insert(payload); },
+    del:id?()=>delRow("video_challenges",id,"challenge"):null
+  });
+}
+async function openDays(challengeId){
+  DAYS_current=challengeId;
+  const ch=VCHAL.find(c=>c.id===challengeId);
+  $("edRoot").innerHTML=`<div class="ovl"><div class="ed">
+    <div class="edtop"><h2>Days · ${esc(ch?ch.title:"")}</h2><button class="btn ghost" style="margin-left:auto;padding:7px 13px" data-x>Close</button></div>
+    <div class="edbody" id="daysBody"><div style="color:var(--muted)">Loading…</div></div>
+  </div></div>`;
+  $("edRoot").querySelector("[data-x]").onclick=()=>{ closeEd(); loadStudio(true); };
+  const { data, error }=await sb.from("video_challenge_days").select("*").eq("challenge_id",challengeId).order("day_number");
+  if(error){ $("daysBody").innerHTML='<span style="color:#A03A22">'+esc(error.message)+'</span>'; return; }
+  DAYS_list=data||[]; renderDays();
+}
+function renderDays(){
+  let html=`<div class="erow-top"><div class="note">${DAYS_list.length} day(s). “Unlock after” sets how many days into the challenge each lesson opens (0 = right away).</div><button class="btn" style="padding:7px 14px" data-dnew>+ Add day</button></div>`;
+  if(!DAYS_list.length) html+='<div style="padding:18px;color:var(--muted)">No days yet — add the first one.</div>';
+  DAYS_list.forEach(d=>{ html+=`<div class="lrow">
+    <div style="width:34px;height:34px;border-radius:8px;background:#C8A0A6;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex:0 0 auto">${d.day_number}</div>
+    <div><div class="mn">${esc(d.title)}</div><div class="ms">${esc(d.duration_label||"")}${d.unlock_delay_days?" · unlocks after "+d.unlock_delay_days+" day(s)":""}</div></div>
+    <div class="lright"><button class="btn ghost" style="padding:5px 11px" data-dedit="${d.id}">Edit</button></div>
+  </div>`; });
+  $("daysBody").innerHTML=html;
+  $("daysBody").querySelector("[data-dnew]").onclick=()=>editDay(null);
+  $("daysBody").querySelectorAll("[data-dedit]").forEach(b=>b.onclick=()=>editDay(b.dataset.dedit));
+}
+function editDay(id){
+  const d=id?DAYS_list.find(x=>x.id===id):{day_number:(DAYS_list.reduce((m,x)=>Math.max(m,x.day_number||0),0)+1),title:"",video_url:"",thumbnail_url:"",duration_label:"",lesson_description:"",class_theme:"",breath_cue:"",body_focus:"",energy_level:"",goal_benefit:"",props:"",reflection_prompt:"",worksheet_url:"",unlock_delay_days:0,instructor_id:""};
+  const instrOpts=[["","— none —"]].concat(INSTR.map(i=>[i.id,i.name]));
+  $("edRoot").innerHTML=`<div class="ovl"><div class="ed">
+    <div class="edtop"><h2>${id?"Edit day":"New day"}</h2><button class="btn ghost" style="margin-left:auto;padding:7px 13px" data-x>Close</button></div>
+    <div class="edbody"><div class="grp">
+      <div class="row2">${stuF("Day number","dNum",d.day_number,"","number")}${stuF("Unlock after (days)","dUnlock",d.unlock_delay_days,"0 = immediately","number")}</div>
+      ${stuF("Title","dTitle",d.title)}
+      ${stuF("Video URL","dVideo",d.video_url,"YouTube, Vimeo, or .mp4")}
+      <div class="row2">${stuF("Thumbnail URL","dThumb",d.thumbnail_url)}${stuF("Duration","dDur",d.duration_label,"e.g. 18 min")}</div>
+      ${stuTA("Lesson description","dDesc",d.lesson_description,"",70)}
+      <div class="row2">${stuSel("Instructor","dInstr",instrOpts,d.instructor_id||"")}${stuF("Class theme","dTheme",d.class_theme)}</div>
+      <div class="row2">${stuF("Body focus","dBody",d.body_focus)}${stuF("Energy level","dEnergy",d.energy_level)}</div>
+      <div class="row2">${stuF("Goal / benefit","dGoal",d.goal_benefit)}${stuF("Props","dProps",d.props)}</div>
+      ${stuF("Breath cue","dBreath",d.breath_cue)}
+      ${stuTA("Reflection prompt","dReflect",d.reflection_prompt,"",60)}
+      ${stuF("Worksheet URL","dWork",d.worksheet_url)}
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn" data-save>Save</button>
+      ${id?'<button class="btn ghost" style="color:#A03A22;border-color:#E9C9BE" data-del>Delete</button>':""}
+      <span id="stuMsg" style="font-size:12px"></span>
+    </div></div>
+  </div></div>`;
+  $("edRoot").querySelector("[data-x]").onclick=()=>openDays(DAYS_current);
+  const sv=$("edRoot").querySelector("[data-save]");
+  sv.onclick=async()=>{
+    const title=$("dTitle").value.trim(); if(!title){ stuErr("Title is required."); return; }
+    const payload={challenge_id:DAYS_current,day_number:parseInt($("dNum").value,10)||1,unlock_delay_days:parseInt($("dUnlock").value,10)||0,title,video_url:$("dVideo").value.trim(),thumbnail_url:$("dThumb").value.trim(),duration_label:$("dDur").value.trim(),lesson_description:$("dDesc").value.trim(),class_theme:$("dTheme").value.trim(),instructor_id:$("dInstr").value||null,body_focus:$("dBody").value.trim(),energy_level:$("dEnergy").value.trim(),goal_benefit:$("dGoal").value.trim(),props:$("dProps").value.trim(),breath_cue:$("dBreath").value.trim(),reflection_prompt:$("dReflect").value.trim(),worksheet_url:$("dWork").value.trim()};
+    sv.disabled=true; const e=$("stuMsg"); if(e)e.innerHTML='<span style="color:var(--muted)">Saving…</span>';
+    const res=id?await sb.from("video_challenge_days").update(payload).eq("id",id):await sb.from("video_challenge_days").insert(payload);
+    sv.disabled=false;
+    if(res.error){ stuErr(res.error.message); return; }
+    await syncTotalDays(DAYS_current);
+    openDays(DAYS_current);
+  };
+  const dl=$("edRoot").querySelector("[data-del]");
+  if(dl)dl.onclick=async()=>{ if(!confirm("Delete this day?"))return; const { error }=await sb.from("video_challenge_days").delete().eq("id",id); if(error){ stuErr(error.message); return; } await syncTotalDays(DAYS_current); openDays(DAYS_current); };
+}
+async function syncTotalDays(cid){
+  const { data }=await sb.from("video_challenge_days").select("day_number").eq("challenge_id",cid);
+  const n=(data||[]).reduce((m,x)=>Math.max(m,x.day_number||0),0);
+  await sb.from("video_challenges").update({total_days:n}).eq("id",cid);
+}
 
 /* ---------- Support: AI questions + bug/feature/pose feedback ---------- */
 let SUPP_Q=[], SUPP_F=[], suppView="feedback", suppKind="", suppStatus="", suppLoaded=false;
