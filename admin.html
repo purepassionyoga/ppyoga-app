@@ -312,6 +312,7 @@
       <button class="tab" data-tab="themes">Class themes</button>
       <button class="tab" data-tab="site">Site</button>
       <button class="tab" data-tab="billing">Billing</button>
+      <button class="tab" data-tab="royalties">Royalties</button>
       <button class="tab" data-tab="shop">Shop</button>
     </div>
   </div>
@@ -335,6 +336,16 @@
     <div id="library" class="hidden"></div>
     <div id="builder" class="hidden"></div>
     <div id="studio" class="hidden"></div>
+    <div id="royalties" class="hidden"></div>
+    <style id="royCSS">
+    #royalties table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+    #royalties th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:8px;border-bottom:1px solid var(--line,#ece3e4);white-space:nowrap}
+    #royalties td{padding:8px;border-bottom:1px solid #f2ebec;vertical-align:middle}
+    #royalties input,#royalties select{border:1px solid var(--line,#ece3e4);border-radius:8px;padding:6px 8px;font:inherit;font-size:12.5px;box-sizing:border-box}
+    #royalties .roy-card{background:#faf6f5;border:1px solid var(--line,#ece3e4);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+    #royalties .payout{font-weight:600;color:#A87C83}
+    #royalties .ms{font-size:11px;color:var(--muted)}
+    </style>
     <style id="stuCSS">
     #studio .stu-seg{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
     #studio .stu-seg button{border:1px solid var(--line,#ece3e4);background:#fff;color:#6f5b61;border-radius:10px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer}
@@ -676,6 +687,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   $("library").classList.toggle("hidden", t.dataset.tab!=="library");
   $("builder").classList.toggle("hidden", t.dataset.tab!=="builder");
   $("studio").classList.toggle("hidden", t.dataset.tab!=="studio");
+  $("royalties").classList.toggle("hidden", t.dataset.tab!=="royalties");
   $("emailtab").classList.toggle("hidden", t.dataset.tab!=="email");
   $("advanced").classList.toggle("hidden", t.dataset.tab!=="advanced");
   $("legal").classList.toggle("hidden", t.dataset.tab!=="legal");
@@ -699,6 +711,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   if(t.dataset.tab==="shop") loadShop();
   if(t.dataset.tab==="email") loadEmail();
   if(t.dataset.tab==="studio") loadStudio();
+  if(t.dataset.tab==="royalties") loadRoyalties();
 });
 
 /* ---------- CLASS THEMES ---------- */
@@ -1243,6 +1256,138 @@ function renderEngagement(){
 const LEGAL_URL="/legal";
 let LEGAL=[], legalLoaded=false, legalQuery="";
 function slugifyL(t){ return (t||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
+
+/* ================= ROYALTIES & VIDEO ANALYTICS ================= */
+let ROY_loaded=false, ROY_period="month",
+    ROY_set={currency:"USD",view_threshold_type:"seconds",view_threshold_value:30,pool_monthly:0},
+    ROY_instr=[], ROY_pay={}, ROY_classes=[], ROY_views=[];
+const PAY_MODELS=[["per_view","Per view"],["per_minute","Per watch-minute"],["rev_share","Revenue share (pool)"],["flat_per_class","Flat per class"]];
+function royMoney(n){ const c=ROY_set.currency||"USD"; try{ return new Intl.NumberFormat(undefined,{style:"currency",currency:c}).format(n||0); }catch(e){ return "$"+(Number(n)||0).toFixed(2); } }
+function royPeriodStart(){ const n=new Date(); if(ROY_period==="month")return new Date(n.getFullYear(),n.getMonth(),1); if(ROY_period==="lastmonth")return new Date(n.getFullYear(),n.getMonth()-1,1); if(ROY_period==="30d"){ const d=new Date(n); d.setDate(d.getDate()-30); return d; } return null; }
+function royPeriodEnd(){ const n=new Date(); if(ROY_period==="lastmonth")return new Date(n.getFullYear(),n.getMonth(),1); return null; }
+function royInPeriod(ts){ const t=new Date(ts), s=royPeriodStart(), e=royPeriodEnd(); if(s&&t<s)return false; if(e&&t>=e)return false; return true; }
+function royIsView(v){ if(ROY_set.view_threshold_type==="percent"){ if(!v.duration_seconds)return false; return (v.watched_seconds/v.duration_seconds*100)>=(+ROY_set.view_threshold_value||0); } return v.watched_seconds>=(+ROY_set.view_threshold_value||0); }
+function instrById(id){ return ROY_instr.find(i=>i.id===id); }
+
+async function loadRoyalties(force){
+  if(ROY_loaded && !force) return;
+  $("royalties").innerHTML='<div style="padding:18px;color:var(--muted)">Loading…</div>';
+  const [setr,instr,pay,cls,views]=await Promise.all([
+    sb.from("app_settings").select("value").eq("key","royalties").maybeSingle(),
+    sb.from("instructors").select("*").order("name"),
+    sb.from("instructor_pay").select("*"),
+    sb.from("online_classes").select("id,title,instructor_id,duration_label,status"),
+    sb.from("class_views").select("class_id,instructor_id,watched_seconds,duration_seconds,created_at")
+  ]);
+  if(setr&&setr.data&&setr.data.value)ROY_set=Object.assign({currency:"USD",view_threshold_type:"seconds",view_threshold_value:30,pool_monthly:0},setr.data.value);
+  ROY_instr=instr.data||[]; ROY_classes=cls.data||[]; ROY_views=views.data||[];
+  ROY_pay={}; (pay.data||[]).forEach(p=>{ROY_pay[p.instructor_id]=p;});
+  ROY_loaded=true; renderRoyalties();
+}
+function royRollups(){
+  const views=ROY_views.filter(v=>royInPeriod(v.created_at));
+  const perClass={}, perInstr={};
+  views.forEach(v=>{
+    const c=perClass[v.class_id]=perClass[v.class_id]||{plays:0,views:0,secs:0,psum:0,pc:0};
+    c.plays++; c.secs+=v.watched_seconds; if(royIsView(v))c.views++;
+    if(v.duration_seconds){ c.psum+=Math.min(100,v.watched_seconds/v.duration_seconds*100); c.pc++; }
+    if(v.instructor_id){ const it=perInstr[v.instructor_id]=perInstr[v.instructor_id]||{views:0,secs:0}; if(royIsView(v))it.views++; it.secs+=v.watched_seconds; }
+  });
+  const totalMin=Object.keys(perInstr).reduce((m,k)=>m+perInstr[k].secs/60,0);
+  return {perClass,perInstr,totalMin};
+}
+function royPayout(id,perInstr,totalMin){
+  const p=ROY_pay[id]||{pay_model:"per_view",pay_rate:0,active:true};
+  if(p.active===false)return 0;
+  const a=perInstr[id]||{views:0,secs:0}, min=a.secs/60, rate=+p.pay_rate||0;
+  if(p.pay_model==="per_view")return a.views*rate;
+  if(p.pay_model==="per_minute")return min*rate;
+  if(p.pay_model==="flat_per_class")return ROY_classes.filter(c=>c.instructor_id===id).length*rate;
+  if(p.pay_model==="rev_share")return totalMin>0?(min/totalMin)*(+ROY_set.pool_monthly||0):0;
+  return 0;
+}
+function renderRoyalties(){
+  const {perClass,perInstr,totalMin}=royRollups();
+  const totalPayout=ROY_instr.reduce((m,i)=>m+royPayout(i.id,perInstr,totalMin),0);
+  const totViews=Object.keys(perInstr).reduce((m,k)=>m+perInstr[k].views,0);
+  let html=`<div class="erow-top">
+    <div class="note">Track class views &amp; watch time, then compute what each instructor is owed. Adjust rates and the view rule below.</div>
+    <select id="royPeriod" style="border:1px solid var(--line,#ece3e4);border-radius:9px;padding:7px 10px;font:inherit">
+      ${[["month","This month"],["lastmonth","Last month"],["30d","Last 30 days"],["all","All time"]].map(o=>`<option value="${o[0]}"${ROY_period===o[0]?" selected":""}>${o[1]}</option>`).join("")}
+    </select>
+  </div>
+  <div class="roy-card" style="display:flex;gap:22px;flex-wrap:wrap">
+    <div><div class="ms">Billable views</div><div style="font-size:22px;font-weight:600">${totViews}</div></div>
+    <div><div class="ms">Watch time</div><div style="font-size:22px;font-weight:600">${(totalMin/60).toFixed(1)} h</div></div>
+    <div><div class="ms">Total owed (period)</div><div style="font-size:22px;font-weight:600;color:#A87C83">${royMoney(totalPayout)}</div></div>
+  </div>
+
+  <div class="roy-card">
+    <div style="font-weight:600;margin-bottom:10px">Royalty rules</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:end">
+      <div><div class="ms">A “view” counts after</div>
+        <div style="display:flex;gap:6px">
+          <input id="royThVal" type="number" value="${esc(ROY_set.view_threshold_value)}" style="width:80px"/>
+          <select id="royThType"><option value="seconds"${ROY_set.view_threshold_type==="seconds"?" selected":""}>seconds</option><option value="percent"${ROY_set.view_threshold_type==="percent"?" selected":""}>percent watched</option></select>
+        </div></div>
+      <div><div class="ms">Currency</div><input id="royCur" value="${esc(ROY_set.currency)}" style="width:80px"/></div>
+      <div><div class="ms">Monthly pool (rev-share)</div><input id="royPool" type="number" value="${esc(ROY_set.pool_monthly)}" style="width:120px"/></div>
+      <button class="btn" id="roySaveSet" style="padding:8px 14px">Save rules</button>
+      <span id="roySetMsg" style="font-size:12px"></span>
+    </div>
+  </div>
+
+  <div style="font-weight:600;margin:16px 0 4px">Instructors &amp; payouts</div>
+  <table><thead><tr><th>Instructor</th><th>Portal login email</th><th>Model</th><th>Rate</th><th>Active</th><th>Views</th><th>Watch h</th><th>Owed</th><th></th></tr></thead><tbody>`;
+  if(!ROY_instr.length) html+='<tr><td colspan="9" style="color:var(--muted);padding:16px">No instructors yet. Add them in Classes &amp; Videos.</td></tr>';
+  ROY_instr.forEach(i=>{
+    const p=ROY_pay[i.id]||{portal_email:"",pay_model:"per_view",pay_rate:0,active:true};
+    const a=perInstr[i.id]||{views:0,secs:0};
+    html+=`<tr>
+      <td>${esc(i.name)}</td>
+      <td><input id="pe_${i.id}" value="${esc(p.portal_email||"")}" placeholder="email@…" style="width:160px"/></td>
+      <td><select id="pm_${i.id}">${PAY_MODELS.map(m=>`<option value="${m[0]}"${p.pay_model===m[0]?" selected":""}>${m[1]}</option>`).join("")}</select></td>
+      <td><input id="pr_${i.id}" type="number" step="0.01" value="${esc(p.pay_rate)}" style="width:80px"/></td>
+      <td style="text-align:center"><input id="pa_${i.id}" type="checkbox" ${p.active!==false?"checked":""}/></td>
+      <td>${a.views}</td>
+      <td>${(a.secs/3600).toFixed(1)}</td>
+      <td class="payout">${royMoney(royPayout(i.id,perInstr,totalMin))}</td>
+      <td><button class="btn ghost" style="padding:5px 11px" data-saveinstr="${i.id}">Save</button></td>
+    </tr>`;
+  });
+  html+=`</tbody></table>
+  <div class="ms" style="margin-top:6px">Rate meaning: per-view = $ per billable view · per-minute = $ per watch-minute · flat = $ per class they’ve produced · rev-share = split of the monthly pool by watch time.</div>
+
+  <div style="font-weight:600;margin:20px 0 4px">By class</div>
+  <table><thead><tr><th>Class</th><th>Instructor</th><th>Plays</th><th>Views</th><th>Watch h</th><th>Avg % watched</th></tr></thead><tbody>`;
+  const classesWithData=ROY_classes.filter(c=>perClass[c.id]);
+  if(!classesWithData.length) html+='<tr><td colspan="6" style="color:var(--muted);padding:16px">No views recorded in this period yet.</td></tr>';
+  classesWithData.sort((a,b)=>(perClass[b.id].views)-(perClass[a.id].views)).forEach(c=>{
+    const d=perClass[c.id], ins=instrById(c.instructor_id);
+    html+=`<tr><td>${esc(c.title)}</td><td>${esc(ins?ins.name:"—")}</td><td>${d.plays}</td><td>${d.views}</td><td>${(d.secs/3600).toFixed(1)}</td><td>${d.pc?Math.round(d.psum/d.pc)+"%":"—"}</td></tr>`;
+  });
+  html+=`</tbody></table>`;
+  $("royalties").innerHTML=html;
+  $("royPeriod").onchange=e=>{ ROY_period=e.target.value; renderRoyalties(); };
+  $("roySaveSet").onclick=saveRoyaltySettings;
+  $("royalties").querySelectorAll("[data-saveinstr]").forEach(b=>b.onclick=()=>saveInstrPay(b.dataset.saveinstr));
+}
+async function saveRoyaltySettings(){
+  ROY_set.view_threshold_value=parseFloat($("royThVal").value)||0;
+  ROY_set.view_threshold_type=$("royThType").value;
+  ROY_set.currency=($("royCur").value||"USD").trim().toUpperCase();
+  ROY_set.pool_monthly=parseFloat($("royPool").value)||0;
+  $("roySetMsg").innerHTML='<span style="color:var(--muted)">Saving…</span>';
+  const { error }=await sb.from("app_settings").update({ value:ROY_set }).eq("key","royalties");
+  if(error){ $("roySetMsg").innerHTML='<span style="color:#A03A22">'+esc(error.message)+'</span>'; return; }
+  $("roySetMsg").innerHTML='<span style="color:#5a8a52">Saved ✓</span>'; renderRoyalties();
+}
+async function saveInstrPay(id){
+  const payload={ instructor_id:id, portal_email:($("pe_"+id).value||"").trim()||null, pay_model:$("pm_"+id).value, pay_rate:parseFloat($("pr_"+id).value)||0, active:$("pa_"+id).checked, updated_at:new Date().toISOString() };
+  const { error }=await sb.from("instructor_pay").upsert(payload,{onConflict:"instructor_id"});
+  if(error){ alert("Couldn’t save: "+error.message); return; }
+  ROY_pay[id]=payload; renderRoyalties();
+}
 
 /* ================= CLASSES & VIDEOS STUDIO ================= */
 let STUDIO_view="classes", STU_loaded=false, INSTR=[], OCLASSES=[], VCHAL=[], DAYS_current=null, DAYS_list=[];
