@@ -391,6 +391,7 @@ async function openChallenge(id){
     fetch(SB+"/rest/v1/challenge_enrollments?select=*&video_challenge_id=eq."+id+"&user_id=eq."+UID,{headers:{apikey:KEY,Authorization:"Bearer "+TOKEN}})
   ]);
   DAYS=await daysR.json()||[]; const en=await enrR.json()||[]; ENR=en[0]||null; DONE=new Set();
+  if(DAYS.some(d=>/mediadelivery\.net/.test(d.video_url||"")))preloadPlayerJs();
   if(ENR){ const dp=await fetch(SB+"/rest/v1/challenge_day_progress?select=day_number&enrollment_id=eq."+ENR.id,{headers:{apikey:KEY,Authorization:"Bearer "+TOKEN}}); (await dp.json()||[]).forEach(x=>DONE.add(x.day_number)); }
   renderDetail();
 }
@@ -420,7 +421,7 @@ function renderDetail(){
   $("chDetail").innerHTML=html;
   $("chBack").onclick=renderList;
   const en=$("chEnroll"); if(en)en.onclick=enroll;
-  $("chDetail").querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>openDay(b.dataset.day));
+  $("chDetail").querySelectorAll("[data-day]").forEach(b=>{b.onclick=()=>openDay(b.dataset.day);b.onmouseenter=()=>prefetchDay(b.dataset.day);});
 }
 async function enroll(){
   try{
@@ -443,6 +444,18 @@ function parseVideo(url){ url=(url||"").trim(); let m;
   if(m=url.match(/(?:iframe\.)?mediadelivery\.net\/(?:embed|play)\/(\d+)\/([0-9a-fA-F-]{36})/))return {type:"bunny",lib:m[1],guid:m[2]};
   if(/\.(mp4|webm|ogg|m3u8)(\?|$)/i.test(url))return {type:"file",url:url};
   if(url)return {type:"iframe",url:url}; return {type:"none"}; }
+const BUNNY_CACHE={};
+function bunnySign(type,id,v){
+  const key=type+":"+id, now=Date.now(); const c=BUNNY_CACHE[key];
+  if(c && (now-c.ts < 3*60*60*1000)) return c.p;
+  const fallback="https://iframe.mediadelivery.net/embed/"+v.lib+"/"+v.guid;
+  const p=fetch(SB+"/functions/v1/bunny-sign",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+(TOKEN||KEY),"Content-Type":"application/json"},body:JSON.stringify({type:type,id:id})})
+    .then(function(r){return r.ok?r.json():null;}).then(function(j){ return (j&&j.url)?j.url:fallback; }).catch(function(){ return fallback; });
+  BUNNY_CACHE[key]={p:p,ts:now}; return p;
+}
+function prefetchDay(dayId){ const d=DAYS.find(x=>x.id===dayId); if(!d)return; const v=parseVideo(d.video_url); if(v.type==="bunny")bunnySign("challenge_day",dayId,v); }
+let PJ_LOADED=false;
+function preloadPlayerJs(){ if(PJ_LOADED||window.playerjs)return; PJ_LOADED=true; const t=document.createElement("script"); t.src="https://cdn.embed.ly/player-0.1.0.min.js"; t.async=true; document.head.appendChild(t); }
 function openDay(dayId){
   const d=DAYS.find(x=>x.id===dayId); if(!d)return; const v=parseVideo(d.video_url); const isDone=DONE.has(d.day_number);
   const r=RESUME[d.id]; let resumeFrom=resumeStart(r);
@@ -470,9 +483,8 @@ function startTracker(box,v,day,resumeFrom){
   } else if(v.type==="bunny"){ const ifr=document.createElement("iframe"); ifr.allow="autoplay; fullscreen; picture-in-picture; encrypted-media"; ifr.setAttribute("allowfullscreen",""); box.appendChild(ifr);
     const attach=function(){try{const pl=new playerjs.Player(ifr);st.seek=function(t){try{pl.setCurrentTime(t);}catch(e){}};let pos=0,playing=false,dur=0;const toNum=function(x){return (typeof x==="string")?parseFloat(x):x;};pl.on("play",function(){playing=true;});pl.on("pause",function(){playing=false;});pl.on("ended",function(){playing=false;});pl.on("timeupdate",function(d){if(typeof d==="string"){try{d=JSON.parse(d);}catch(e){d=null;}}if(d){var sc=toNum(d.seconds);if(!isNaN(sc))pos=sc;var du=toNum(d.duration);if(du&&!isNaN(du))dur=du;}});pl.on("ready",function(){try{pl.getDuration(function(x){var n=toNum(x);if(n&&!isNaN(n))dur=n;});}catch(e){}if(resumeFrom>0){try{pl.setCurrentTime(resumeFrom);}catch(e){}}});const iv=setInterval(function(){try{pl.getCurrentTime(function(t){var n=toNum(t);if(typeof n==="number"&&!isNaN(n)&&n>=0)pos=n;});}catch(e){}if(!dur){try{pl.getDuration(function(x){var n=toNum(x);if(n&&!isNaN(n))dur=n;});}catch(e){}}tick(pos,playing,dur);},1000);st.stop=function(){clearInterval(iv);};}catch(e){}};
     const loadPlayer=function(){if(window.playerjs&&window.playerjs.Player)attach();else{const t=document.createElement("script");t.src="https://cdn.embed.ly/player-0.1.0.min.js";t.onload=attach;document.head.appendChild(t);}};
-    const fallback="https://iframe.mediadelivery.net/embed/"+v.lib+"/"+v.guid;
     const go=function(u){const sep=u.indexOf("?")>=0?"&":"?";ifr.src=u+sep+"preload=true";loadPlayer();};
-    fetch(SB+"/functions/v1/bunny-sign",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+(TOKEN||KEY),"Content-Type":"application/json"},body:JSON.stringify({type:"challenge_day",id:day.id})}).then(function(r){return r.ok?r.json():null;}).then(function(j){go((j&&j.url)?j.url:fallback);}).catch(function(){go(fallback);});
+    bunnySign("challenge_day",day.id,v).then(go);
 
   } else { const ifr=document.createElement("iframe"); ifr.src=v.type==="iframe"?v.url:"about:blank"; ifr.allow="autoplay; fullscreen"; ifr.setAttribute("allowfullscreen",""); box.appendChild(ifr); }
   st.saveIv=setInterval(()=>{ if(st.lastPos>3)saveResume(day.id,st.lastPos,st.dur); },10000);
