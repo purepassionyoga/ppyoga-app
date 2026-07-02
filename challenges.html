@@ -315,10 +315,7 @@ const arr=v=>Array.isArray(v)?v:[];
 
 let CH=[], INSTR={}, SITE={}, UID=null, TOKEN=null, EMAIL=null, TIER="free", IS_ADMIN=false;
 let CUR=null, DAYS=[], ENR=null, DONE=new Set(), TRK=null, RESUME={};
-let CFch={instr:"",dur:""}, CH_INSTR={}, CH_MIN={};
-function durMin(label){ const m=String(label||"").match(/(\d+)/); return m?parseInt(m[1],10):null; }
-function chDurBucket(mn){ if(!mn)return null; if(mn<30)return "u30"; if(mn<60)return "30-60"; if(mn<120)return "60-120"; return "120+"; }
-const CH_DUR_OPTS=[["","Any length"],["u30","Under 30 min"],["30-60","30\u201360 min"],["60-120","1\u20132 hours"],["120+","2+ hours"]];
+let CFch={instr:"",days:"",theme:"",level:""}, CH_INSTR={}, CH_THEME={};
 async function loadResume(){ if(!UID)return; try{ const r=await fetch(SB+"/rest/v1/resume_positions?select=content_id,position_seconds,duration_seconds&user_id=eq."+UID+"&content_type=eq.challenge_day",{headers:{apikey:KEY,Authorization:"Bearer "+TOKEN}}); (await r.json()||[]).forEach(x=>RESUME[x.content_id]={pos:x.position_seconds,dur:x.duration_seconds}); }catch(e){} }
 function saveResume(id,pos,dur){ if(!UID||!id||(pos||0)<3)return; try{ fetch(SB+"/rest/v1/resume_positions",{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+TOKEN,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({user_id:UID,content_type:"challenge_day",content_id:id,position_seconds:Math.round(pos),duration_seconds:dur?Math.round(dur):null,updated_at:new Date().toISOString()}),keepalive:true}); }catch(e){} RESUME[id]={pos:Math.round(pos),dur:dur?Math.round(dur):null}; }
 function fmtTime(x){ x=Math.max(0,Math.round(x||0)); const m=Math.floor(x/60),ss=x%60; return m+":"+(ss<10?"0":"")+ss; }
@@ -339,13 +336,13 @@ async function load(){
       fetch(SB+"/rest/v1/app_settings?select=value&key=eq.site",{headers:h()}),
       fetch(SB+"/rest/v1/instructors?select=id,name",{headers:h()}),
       fetch(SB+"/rest/v1/video_challenges?select=*&status=eq.published&order=created_at.desc",{headers:h()}),
-      fetch(SB+"/rest/v1/video_challenge_days?select=challenge_id,instructor_id,duration_label",{headers:h()})
+      fetch(SB+"/rest/v1/video_challenge_days?select=challenge_id,instructor_id,class_theme",{headers:h()})
     ]);
     const site=await siteR.json(); SITE=(site&&site[0]&&site[0].value)||{};
     (await insR.json()||[]).forEach(i=>INSTR[i.id]=i);
     CH=await chR.json()||[];
-    CH_INSTR={}; CH_MIN={};
-    (await daysR.json()||[]).forEach(d=>{ if(!d.challenge_id)return; (CH_INSTR[d.challenge_id]=CH_INSTR[d.challenge_id]||new Set()); if(d.instructor_id)CH_INSTR[d.challenge_id].add(d.instructor_id); const mn=durMin(d.duration_label); if(mn)CH_MIN[d.challenge_id]=(CH_MIN[d.challenge_id]||0)+mn; });
+    CH_INSTR={}; CH_THEME={};
+    (await daysR.json()||[]).forEach(d=>{ if(!d.challenge_id)return; (CH_INSTR[d.challenge_id]=CH_INSTR[d.challenge_id]||new Set()); if(d.instructor_id)CH_INSTR[d.challenge_id].add(d.instructor_id); (CH_THEME[d.challenge_id]=CH_THEME[d.challenge_id]||new Set()); if(d.class_theme)CH_THEME[d.challenge_id].add(d.class_theme); });
     await loadResume();
     $("chState").style.display="none"; renderList();
   }catch(e){ $("chState").innerHTML="Couldn’t load challenges right now. Please refresh."; }
@@ -356,14 +353,23 @@ function canAccess(c){ if(IS_ADMIN)return true; if(!UID)return false; if(c.is_fr
 function renderList(){
   $("chDetail").style.display="none"; $("chListWrap").style.display="";
   const insIds=[...new Set([].concat(...Object.keys(CH_INSTR).map(k=>Array.from(CH_INSTR[k]))))];
+  const dayVals=[...new Set(CH.map(c=>c.total_days).filter(n=>n&&n>0))].sort((a,b)=>a-b);
+  const themes=[...new Set([].concat(...Object.keys(CH_THEME).map(k=>Array.from(CH_THEME[k]))))].sort();
+  const levels=[...new Set(CH.map(c=>c.difficulty_level).filter(Boolean))];
   $("chFilters").innerHTML=
     `<select id="cfInstr"><option value="">All instructors</option>${insIds.map(id=>`<option value="${id}"${CFch.instr===id?" selected":""}>${esc((INSTR[id]&&INSTR[id].name)||"\u2014")}</option>`).join("")}</select>`+
-    `<select id="cfDur">${CH_DUR_OPTS.map(d=>`<option value="${d[0]}"${CFch.dur===d[0]?" selected":""}>${d[1]}</option>`).join("")}</select>`;
+    `<select id="cfDays"><option value="">Any length</option>${dayVals.map(n=>`<option value="${n}"${CFch.days===String(n)?" selected":""}>${n} day${n===1?"":"s"}</option>`).join("")}</select>`+
+    `<select id="cfTheme"><option value="">All themes</option>${themes.map(t=>`<option value="${esc(t)}"${CFch.theme===t?" selected":""}>${esc(t)}</option>`).join("")}</select>`+
+    `<select id="cfLevel"><option value="">All levels</option>${levels.map(t=>`<option value="${esc(t)}"${CFch.level===t?" selected":""}>${esc(t)}</option>`).join("")}</select>`;
   $("cfInstr").onchange=e=>{CFch.instr=e.target.value;renderList();};
-  $("cfDur").onchange=e=>{CFch.dur=e.target.value;renderList();};
+  $("cfDays").onchange=e=>{CFch.days=e.target.value;renderList();};
+  $("cfTheme").onchange=e=>{CFch.theme=e.target.value;renderList();};
+  $("cfLevel").onchange=e=>{CFch.level=e.target.value;renderList();};
   let list=CH.slice();
   if(CFch.instr)list=list.filter(c=>(CH_INSTR[c.id]||new Set()).has(CFch.instr));
-  if(CFch.dur)list=list.filter(c=>chDurBucket(CH_MIN[c.id])===CFch.dur);
+  if(CFch.days)list=list.filter(c=>String(c.total_days)===CFch.days);
+  if(CFch.theme)list=list.filter(c=>(CH_THEME[c.id]||new Set()).has(CFch.theme));
+  if(CFch.level)list=list.filter(c=>c.difficulty_level===CFch.level);
   if(!list.length){ $("chGrid").innerHTML='<div style="color:var(--ppy-muted,#9a8f93);padding:26px">'+(CH.length?"No challenges match those filters.":"No challenges yet — check back soon.")+'</div>'; return; }
   $("chGrid").innerHTML=list.map(c=>{
     const locked=!canAccess(c);
