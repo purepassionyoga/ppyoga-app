@@ -296,6 +296,17 @@
 .flow-cuevar{margin-top:10px;max-width:460px;font-size:15px;line-height:1.5;color:var(--ink);text-align:left}
 .flow-cuevar div{padding-left:14px;text-indent:-14px;margin:3px 0}
 .flow-cuevar div:before{content:"\2022 ";opacity:.7}
+.flow-body{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
+.flow-pose{display:flex;flex-direction:column;align-items:center}
+.flow-cues{display:flex;flex-direction:column;align-items:center}
+@media(min-width:760px){
+  .flow-body{flex-direction:row;align-items:center;justify-content:center;gap:44px;max-width:1000px;margin:0 auto}
+  .flow-pose{flex:0 0 auto}
+  .flow-cues{flex:0 1 460px;align-items:flex-start;text-align:left}
+  .flow-cues .flow-cue{margin:6px 0 0;text-align:left;max-width:none}
+  .flow-cues .flow-cuevar{margin-top:8px}
+}
+body.flow-open .ppt-launch,body.flow-open .ppyh-fab,body.flow-open .ppyh-panel{display:none!important}
 .cueref label{display:block;margin-bottom:6px}
 .cuechip{display:inline-block;text-align:left;font:inherit;font-size:12px;line-height:1.35;background:var(--field,#f6efe9);color:var(--ink,#4a4047);border:1px solid rgba(0,0,0,.08);border-radius:8px;padding:5px 9px;margin:0 5px 5px 0;cursor:pointer;max-width:100%}
 .cuechip:hover{border-color:var(--rose,#C8A0A6)}
@@ -1349,7 +1360,7 @@ function startFlow(){
       <div class="flow-toggles"><label><input type="checkbox" id="flowChimeT" ${flowChime?"checked":""}> Chime</label>
         <label><input type="checkbox" id="flowVoiceT" ${flowVoice?"checked":""}> Voice</label></div>
     </div></div>`;
-  document.body.style.overflow="hidden";
+  document.body.style.overflow="hidden";document.body.classList.add("flow-open");
   document.getElementById("flowChimeT").onchange=e=>{flowChime=e.target.checked;try{localStorage.setItem("ppy-flow-chime",flowChime?"1":"0");}catch(_){}};
   document.getElementById("flowVoiceT").onchange=e=>{flowVoice=e.target.checked;try{localStorage.setItem("ppy-flow-voice-on",flowVoice?"1":"0");}catch(_){}if(!flowVoice&&window.speechSynthesis)speechSynthesis.cancel();};
   initFlowVoices();
@@ -1365,11 +1376,11 @@ function flowStep(){
   }
   const pp=it.pose,_iu=varImg(it),thumb=_iu?`<img class="${it.mirror?'mir':''}" src="${esc(_iu)}">`:(pp.emoji||"🧘"),breaths=parseInt(it.breaths)||5;
   flowRemain=breaths*flowBreathSec;
-  document.getElementById("flowMain").innerHTML=`<div class="flow-th">${thumb}</div>
+  const _cl=varCueList(it,CUE_DEPTH);
+  const _cues=(it.notes||_cl.length)?`<div class="flow-cues">${it.notes?`<div class="flow-cue">${esc(it.notes)}</div>`:""}${_cl.length?`<div class="flow-cuevar">${_cl.map(c=>`<div>${esc(c)}</div>`).join("")}</div>`:""}</div>`:"";
+  document.getElementById("flowMain").innerHTML=`<div class="flow-body"><div class="flow-pose"><div class="flow-th">${thumb}</div>
     <div class="flow-name">${esc(varName(it))}</div><div class="flow-san">${esc(varSan(it))}</div>
-    ${it.notes?`<div class="flow-cue">${esc(it.notes)}</div>`:""}
-    ${(()=>{const cl=varCueList(it,CUE_DEPTH);return cl.length?`<div class="flow-cuevar">${cl.map(c=>`<div>${esc(c)}</div>`).join("")}</div>`:"";})()}
-    <div class="flow-count" id="flowCount"></div><div class="flow-sub">${breaths} breaths</div>`;
+    <div class="flow-count" id="flowCount"></div><div class="flow-sub">${breaths} breaths</div></div>${_cues}</div>`;
   if(!flowPaused)speakFlow(flowCueText(it));tickStart();
 }
 function tickStart(){updateFlowCount();flowTimer=setInterval(()=>{if(flowPaused)return;flowRemain--;if(flowRemain<=0){clearInterval(flowTimer);if(flowChime)chimeFlow();flowIdx++;flowStep();return;}updateFlowCount();},1000);}
@@ -1385,7 +1396,7 @@ function flowToggle(){
 function flowNext(){clearInterval(flowTimer);flowIdx++;flowStep();}
 function flowPrev(){clearInterval(flowTimer);flowIdx=Math.max(0,flowIdx-1);flowStep();}
 function flowDone(){clearInterval(flowTimer);document.getElementById("flowMain").innerHTML=`<div class="flow-th">🌸</div><div class="flow-name">Complete</div><div class="flow-sub">Beautiful practice.</div>`;const c=document.querySelector(".flow-ctrls");if(c)c.style.display="none";}
-function endFlow(){clearInterval(flowTimer);if(window.speechSynthesis)speechSynthesis.cancel();document.getElementById("flowRoot").innerHTML="";document.body.style.overflow="";}
+function endFlow(){clearInterval(flowTimer);if(window.speechSynthesis)speechSynthesis.cancel();document.getElementById("flowRoot").innerHTML="";document.body.style.overflow="";document.body.classList.remove("flow-open");}
 function flowVoiceObj(){try{return (speechSynthesis.getVoices()||[]).find(x=>x.name===flowVoiceName)||null;}catch(e){return null;}}
 function populateFlowVoices(){
   const sel=document.getElementById("flowVoiceSel"); if(!sel||!("speechSynthesis"in window))return;
