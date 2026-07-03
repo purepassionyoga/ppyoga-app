@@ -159,7 +159,10 @@
   .ie-select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--field);font:inherit;font-size:13px;color:var(--ink);outline:none}
   .ie-select:focus{border-color:var(--rose)}
 
-  .flow{position:fixed;inset:0;background:linear-gradient(165deg,#fff,#F6EFF4);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+  .flow{--ink:#2C2238;--muted:#6b6270;--card:#fff;--lineDk:#DDD2DD;--aub:#4A3A5A;--field:#f3f3f3;position:fixed;inset:0;background:linear-gradient(165deg,#fff,#F6EFF4);z-index:100;display:flex;flex-direction:column;text-align:center;padding:0;overflow:hidden}
+  .flow-scroll{flex:1 1 auto;min-height:0;width:100%;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:52px 24px 8px}
+  .flow-scroll>#flowMain{margin:auto 0;width:100%;display:flex;flex-direction:column;align-items:center}
+  .flow-foot{flex:0 0 auto;width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--lineDk);background:rgba(255,255,255,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
   .flow-exit{position:absolute;top:16px;right:20px;background:none;border:none;font-size:24px;color:var(--muted);cursor:pointer;line-height:1}
   .flow-prog{position:absolute;top:20px;left:24px;color:var(--muted);font-size:13px}
   .flow-th{height:200px;display:flex;align-items:center;justify-content:center;font-size:96px;margin-bottom:6px}
@@ -170,11 +173,11 @@
   .flow-cue{color:var(--ink);font-size:16px;max-width:560px;margin:14px auto 0;line-height:1.5}
   .flow-count{font-family:var(--font-head);color:var(--clayDk);font-size:54px;margin-top:14px}
   .flow-sub{color:var(--muted);font-size:13px;margin-top:2px}
-  .flow-ctrls{display:flex;gap:10px;align-items:center;margin-top:24px}
+  .flow-ctrls{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:0}
   .flow-ctrls button{background:var(--card);border:1px solid var(--lineDk);color:var(--aub);border-radius:10px;padding:9px 16px;font-size:14px;cursor:pointer}
   .flow-ctrls button.primary{background:var(--clayDk);color:#fff;border-color:var(--clayDk)}
-  .flow-toggles{position:absolute;bottom:20px;display:flex;gap:18px;color:var(--muted);font-size:13px}
-  .flow-voicepick{position:absolute;bottom:54px;display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px;max-width:92vw}
+  .flow-toggles{display:flex;gap:18px;color:var(--muted);font-size:13px}
+  .flow-voicepick{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;color:var(--muted);font-size:12px;max-width:92vw}
   .flow-voicepick select{max-width:220px;padding:5px 8px;border-radius:8px;border:1px solid var(--lineDk);background:var(--card);color:var(--ink);font-size:12px}
   .flow-voicepick button{padding:5px 10px;border-radius:8px;border:1px solid var(--lineDk);background:var(--card);color:var(--ink);cursor:pointer;font-size:12px}
   .flow-toggles label{display:flex;align-items:center;gap:6px;cursor:pointer}
@@ -290,7 +293,7 @@
 .sc-cuevar{font-size:10.5px;color:var(--muted,#9a8f94);line-height:1.45;margin-top:4px;text-align:left;border-top:1px dashed rgba(0,0,0,.08);padding-top:5px}
 .sc-cuevar div{padding-left:9px;text-indent:-9px}
 .sc-cuevar div:before{content:"\2022 ";color:var(--sage,#a8ad91)}
-.flow-cuevar{margin-top:10px;max-width:460px;font-size:15px;line-height:1.5;color:rgba(255,255,255,.85);text-align:left}
+.flow-cuevar{margin-top:10px;max-width:460px;font-size:15px;line-height:1.5;color:var(--ink);text-align:left}
 .flow-cuevar div{padding-left:14px;text-indent:-14px;margin:3px 0}
 .flow-cuevar div:before{content:"\2022 ";opacity:.7}
 .cueref label{display:block;margin-bottom:6px}
@@ -1335,14 +1338,17 @@ function startFlow(){
   flowBreathSec=parseInt(BSET.flow_breath)||5;flowChime=!!BSET.flow_chime;flowVoice=!!BSET.flow_voice;flowIdx=0;flowPaused=true;
   try{var _sc=localStorage.getItem("ppy-flow-chime");if(_sc!==null)flowChime=_sc==="1";var _sv=localStorage.getItem("ppy-flow-voice-on");if(_sv!==null)flowVoice=_sv==="1";flowVoiceName=localStorage.getItem("ppy-flow-voice")||"";}catch(e){}
   document.getElementById("flowRoot").innerHTML=`<div class="flow"><div class="flow-prog" id="flowProg"></div>
-    <button class="flow-exit" onclick="endFlow()">✕</button><div id="flowMain"></div>
-    <div class="flow-ctrls"><button onclick="flowPrev()">◀ Prev</button>
-      <button class="primary" id="flowPause" onclick="flowToggle()">▶ Play</button>
-      <button onclick="flowNext()">Next ▶</button>
-      <button onclick="flowMirror()" title="Mirror left / right">\u21c4 Mirror</button></div>
-    <div class="flow-toggles"><label><input type="checkbox" id="flowChimeT" ${flowChime?"checked":""}> Chime</label>
-      <label><input type="checkbox" id="flowVoiceT" ${flowVoice?"checked":""}> Voice</label></div>
-    <div class="flow-voicepick"><span>Voice</span><select id="flowVoiceSel"></select><button type="button" id="flowVoiceTest">\ud83d\udd0a Test</button></div></div>`;
+    <button class="flow-exit" onclick="endFlow()">✕</button>
+    <div class="flow-scroll"><div id="flowMain"></div></div>
+    <div class="flow-foot">
+      <div class="flow-ctrls"><button onclick="flowPrev()">◀ Prev</button>
+        <button class="primary" id="flowPause" onclick="flowToggle()">▶ Play</button>
+        <button onclick="flowNext()">Next ▶</button>
+        <button onclick="flowMirror()" title="Mirror left / right">\u21c4 Mirror</button></div>
+      <div class="flow-voicepick"><span>Voice</span><select id="flowVoiceSel"></select><button type="button" id="flowVoiceTest">\ud83d\udd0a Test</button></div>
+      <div class="flow-toggles"><label><input type="checkbox" id="flowChimeT" ${flowChime?"checked":""}> Chime</label>
+        <label><input type="checkbox" id="flowVoiceT" ${flowVoice?"checked":""}> Voice</label></div>
+    </div></div>`;
   document.body.style.overflow="hidden";
   document.getElementById("flowChimeT").onchange=e=>{flowChime=e.target.checked;try{localStorage.setItem("ppy-flow-chime",flowChime?"1":"0");}catch(_){}};
   document.getElementById("flowVoiceT").onchange=e=>{flowVoice=e.target.checked;try{localStorage.setItem("ppy-flow-voice-on",flowVoice?"1":"0");}catch(_){}if(!flowVoice&&window.speechSynthesis)speechSynthesis.cancel();};
